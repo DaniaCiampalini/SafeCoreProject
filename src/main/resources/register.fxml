@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10"
+      alignment="CENTER"
+      xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.safecore.ui.controller.RegisterController">
+
+    <Label text="SafeCore – Registrazione"
+           style="-fx-font-size: 18px;"/>
+
+    <TextField fx:id="emailField"
+               promptText="Email"/>
+
+    <PasswordField fx:id="passwordField"
+                   promptText="Password"/>
+
+    <PasswordField fx:id="confirmPasswordField"
+                   promptText="Conferma Password"/>
+
+    <Button text="Registrati"
+            onAction="#handleRegister"/>
+
+    <Label fx:id="messageLabel"/>
+
+</VBox>
