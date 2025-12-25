@@ -3,20 +3,20 @@ package com.safecore.ui.controller;
 import com.safecore.business.service.UserService;
 import com.safecore.business.service.UserServiceImpl;
 import com.safecore.persistence.dao.UserDaoJpa;
+import com.safecore.business.hints.PasswordHint;
+import com.safecore.business.hints.PasswordHintService;
+import com.safecore.business.hints.HintLevel;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 
-import com.safecore.business.hints.PasswordHint;
-import com.safecore.business.hints.PasswordHintService;
-import com.safecore.business.hints.HintLevel;
-
 /**
  * Controller JavaFX per la registrazione.
- * Scelte di Ingegneria del Software:
- * - Il Controller gestisce SOLO input/output UI
- * - La logica di business è delegata al Service Layer
+ *
+ * Smart Hints:
+ * - Suggerimenti NON vincolanti sulla sicurezza
+ * - Supporto decisionale all'utente
  */
 public class RegisterController {
 
@@ -32,12 +32,17 @@ public class RegisterController {
     @FXML
     private Label messageLabel;
 
-    // Dependency Injection manuale (come nel Login)
     private final UserService userService =
             new UserServiceImpl(new UserDaoJpa());
 
     private final PasswordHintService hintService =
             new PasswordHintService();
+
+    @FXML
+    private void handlePasswordTyping() {
+        showHints(passwordField.getText());
+    }
+//così mentre l'utente digita, il sistema consiglia ma non blocca
 
     private void showHints(String password) {
 
@@ -47,7 +52,7 @@ public class RegisterController {
             messageLabel.setStyle("-fx-text-fill: green;");
             messageLabel.setText("Password sicura");
         } else {
-            PasswordHint hint = hints.get(0); // mostriamo il primo
+            PasswordHint hint = hints.get(0);
             messageLabel.setStyle(
                     hint.getLevel() == HintLevel.WARNING
                             ? "-fx-text-fill: orange;"
@@ -57,9 +62,6 @@ public class RegisterController {
         }
     }
 
-    /**
-     * Gestisce il click sul bottone Registrati.
-     */
     @FXML
     private void handleRegister() {
 
@@ -67,7 +69,6 @@ public class RegisterController {
         String password = passwordField.getText();
         String confirmPassword = confirmPasswordField.getText();
 
-        // Validazione lato UI (responsabilità della vista)
         if (email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
             messageLabel.setStyle("-fx-text-fill: red;");
             messageLabel.setText("Tutti i campi sono obbligatori");
@@ -82,12 +83,9 @@ public class RegisterController {
 
         try {
             userService.register(email, password);
-
             messageLabel.setStyle("-fx-text-fill: green;");
             messageLabel.setText("Registrazione completata!");
-
         } catch (IllegalArgumentException e) {
-            // Errore di business (email già registrata)
             messageLabel.setStyle("-fx-text-fill: red;");
             messageLabel.setText(e.getMessage());
         }
