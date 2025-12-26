@@ -23,8 +23,18 @@
     <PasswordField fx:id="confirmPasswordField"
                    promptText="Conferma Password"/>
 
+    <Label
+            fx:id="passwordStrengthLabel"
+            text=""
+            style="-fx-font-weight: bold;" />
+
+
     <Button text="Registrati"
             onAction="#handleRegister"/>
+    <Button
+            text="Generate secure password"
+            onAction="#handleGeneratePassword"
+            prefWidth="220" />
 
     <Label fx:id="messageLabel"/>
 

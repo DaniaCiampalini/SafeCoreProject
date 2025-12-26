@@ -10,6 +10,9 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import com.safecore.security.PasswordGenerator;
+import com.safecore.security.PasswordStrengthEvaluator;
+
 
 /**
  * Controller JavaFX per la registrazione.
@@ -32,6 +35,10 @@ public class RegisterController {
     @FXML
     private Label messageLabel;
 
+    @FXML
+    private Label passwordStrengthLabel;
+
+
     private final UserService userService =
             new UserServiceImpl(new UserDaoJpa());
 
@@ -41,8 +48,30 @@ public class RegisterController {
     @FXML
     private void handlePasswordTyping() {
         showHints(passwordField.getText());
+
     }
 //così mentre l'utente digita, il sistema consiglia ma non blocca
+
+    private void updatePasswordStrength(String password) {
+
+        var strength = PasswordStrengthEvaluator.evaluate(password);
+
+        switch (strength) {
+            case WEAK -> {
+                passwordStrengthLabel.setText("Weak password");
+                passwordStrengthLabel.setStyle("-fx-text-fill: red;");
+            }
+            case MEDIUM -> {
+                passwordStrengthLabel.setText("Medium password");
+                passwordStrengthLabel.setStyle("-fx-text-fill: orange;");
+            }
+            case STRONG -> {
+                passwordStrengthLabel.setText("Strong password");
+                passwordStrengthLabel.setStyle("-fx-text-fill: green;");
+            }
+        }
+    }
+
 
     private void showHints(String password) {
 
