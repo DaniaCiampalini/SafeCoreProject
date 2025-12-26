@@ -12,44 +12,50 @@ import java.util.Base64;
 
 public class PasswordResetServiceImpl implements PasswordResetService {
 
-    private final PasswordResetTokenDao tokenDao = new PasswordResetTokenDaoJpa();
     private final UserDao userDao;
-    private final PasswordHasher hasher;
+    private final PasswordResetTokenDao tokenDao = new PasswordResetTokenDaoJpa();
 
-    public PasswordResetServiceImpl(UserDao userDao, PasswordHasher hasher) {
+    public PasswordResetServiceImpl(UserDao userDao) {
         this.userDao = userDao;
-        this.hasher = hasher;
     }
 
     @Override
     public String requestReset(String email) {
-        if (!userDao.existsByEmail(email)) {
+
+        if (userDao.findByEmail(email).isEmpty()) {
             throw new IllegalArgumentException("Email not registered");
         }
 
         String token = generateToken();
-        String tokenHash = hasher.hash(token);
+        String tokenHash = PasswordHasher.hash(token);
 
-        var expiresAt = LocalDateTime.now().plusMinutes(15);
+        PasswordResetTokenEntity entity =
+                new PasswordResetTokenEntity(
+                        email,
+                        tokenHash,
+                        LocalDateTime.now().plusMinutes(15)
+                );
 
-        tokenDao.save(new PasswordResetTokenEntity(email, tokenHash, expiresAt));
+        tokenDao.save(entity);
 
         return token; // simulazione email
     }
 
     @Override
     public void resetPassword(String email, String token, String newPassword) {
-        var storedToken = tokenDao.findValidTokenByEmail(email);
 
-        if (storedToken == null ||
-                !hasher.verify(token, storedToken.getTokenHash())) {
+        PasswordResetTokenEntity stored =
+                tokenDao.findValidTokenByEmail(email);
+
+        if (stored == null ||
+                !PasswordHasher.verify(token, stored.getTokenHash())) {
             throw new IllegalArgumentException("Invalid or expired token");
         }
 
-        userDao.updatePassword(email, hasher.hash(newPassword));
+        userDao.updatePassword(email, PasswordHasher.hash(newPassword));
 
-        storedToken.setUsed(true);
-        tokenDao.update(storedToken);
+        stored.markUsed();
+        tokenDao.update(stored);
     }
 
     private String generateToken() {

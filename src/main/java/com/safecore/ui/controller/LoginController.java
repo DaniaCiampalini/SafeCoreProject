@@ -7,6 +7,10 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
+import javafx.stage.Stage;
+
 
 /**
  * Controller JavaFX per il login.
@@ -59,4 +63,27 @@ public class LoginController {
             messageLabel.setText("Credenziali non valide");
         }
     }
+    @FXML
+    private void handleForgotPassword() {
+
+        try {
+            FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/password_reset.fxml")
+            );
+
+            Scene scene = new Scene(loader.load());
+
+            // Recupera lo stage corrente partendo da un nodo qualsiasi
+            Stage stage = (Stage) emailField.getScene().getWindow();
+
+            stage.setTitle("SafeCore – Reset Password");
+            stage.setScene(scene);
+            stage.show();
+
+        } catch (Exception e) {
+            messageLabel.setText("Unable to open reset page");
+            messageLabel.setStyle("-fx-text-fill: red;");
+        }
+    }
+
 }

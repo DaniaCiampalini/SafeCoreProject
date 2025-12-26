@@ -4,8 +4,11 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * Entity che rappresenta un token di reset password.
- * Il token è salvato in forma HASHATA per sicurezza.
+ * Entity JPA per il reset della password.
+ *
+ * SE:
+ * - Token hashato (mai salvare token in chiaro)
+ * - Expiration + flag used
  */
 @Entity
 @Table(name = "password_reset_tokens")
@@ -27,7 +30,9 @@ public class PasswordResetTokenEntity {
     @Column(nullable = false)
     private boolean used = false;
 
-    protected PasswordResetTokenEntity() {}
+    protected PasswordResetTokenEntity() {
+        // JPA
+    }
 
     public PasswordResetTokenEntity(String email, String tokenHash, LocalDateTime expiresAt) {
         this.email = email;
@@ -35,24 +40,23 @@ public class PasswordResetTokenEntity {
         this.expiresAt = expiresAt;
     }
 
+    public String getEmail() {
+        return email;
+    }
+
     public String getTokenHash() {
         return tokenHash;
-    }
-
-    public boolean isUsed() {
-        return used;
-    }
-
-    public void setUsed(boolean used) {
-        this.used = used;
     }
 
     public LocalDateTime getExpiresAt() {
         return expiresAt;
     }
 
-    public String getEmail() {
-        return email;
+    public boolean isUsed() {
+        return used;
     }
 
+    public void markUsed() {
+        this.used = true;
+    }
 }

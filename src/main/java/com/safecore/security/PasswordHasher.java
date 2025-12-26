@@ -3,15 +3,20 @@ package com.safecore.security;
 import org.mindrot.jbcrypt.BCrypt;
 
 /**
- * Utility per hashing e verifica password.
+ * Utility stateless per hashing e verifica di segreti (password, token).
  *
- * Scelte di sicurezza:
- * - bcrypt → resistente a brute-force
- * - salt automatico
+ * Scelte di Sicurezza:
+ * - BCrypt: resistente a brute-force e rainbow tables
+ * - Salt automatico gestito dalla libreria
  *
- * Scelte SE:
- * - Classe stateless
- * - Nessuna dipendenza dal resto dell'app
+ * Scelte di Ingegneria del Software:
+ * - Classe utility (final + costruttore privato)
+ * - Nessuno stato interno
+ * - Nessuna dipendenza dal dominio o dalla persistence
+ *
+ * Nota progettuale:
+ * - In futuro può essere sostituita da un'interfaccia se emergono
+ *   più strategie di hashing (es. Argon2)
  */
 public final class PasswordHasher {
 
@@ -20,18 +25,29 @@ public final class PasswordHasher {
     }
 
     /**
-     * Hasha una password in chiaro.
+     * Hasha un segreto in chiaro (password o token).
+     *
+     * @param plain valore in chiaro
+     * @return hash BCrypt
      */
-    public static String hash(String plainPassword) {
-        return BCrypt.hashpw(plainPassword, BCrypt.gensalt());
+    public static String hash(String plain) {
+        if (plain == null || plain.isBlank()) {
+            throw new IllegalArgumentException("Value to hash cannot be null or blank");
+        }
+        return BCrypt.hashpw(plain, BCrypt.gensalt());
     }
 
     /**
-     * Verifica una password in chiaro contro un hash.
+     * Verifica un valore in chiaro contro un hash BCrypt.
+     *
+     * @param plain valore in chiaro
+     * @param hash hash memorizzato
+     * @return true se corrispondono
      */
-    public static boolean verify(String plainPassword, String hashedPassword) {
-        return BCrypt.checkpw(plainPassword, hashedPassword);
+    public static boolean verify(String plain, String hash) {
+        if (plain == null || hash == null) {
+            return false;
+        }
+        return BCrypt.checkpw(plain, hash);
     }
 }
-
-

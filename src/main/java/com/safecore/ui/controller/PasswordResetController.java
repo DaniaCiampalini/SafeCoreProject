@@ -3,12 +3,11 @@ package com.safecore.ui.controller;
 import com.safecore.business.service.PasswordResetService;
 import com.safecore.business.service.PasswordResetServiceImpl;
 import com.safecore.persistence.dao.UserDaoJpa;
-import com.safecore.security.PasswordHasher;
-import com.safecore.security.BCryptPasswordHasher;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+
 
 /**
  * Controller JavaFX per il reset della password.
@@ -33,12 +32,9 @@ public class PasswordResetController {
     @FXML
     private Label messageLabel;
 
-    // Dependency injection manuale (come nel resto del progetto)
     private final PasswordResetService resetService =
-            new PasswordResetServiceImpl(
-                    new UserDaoJpa(),
-                    new BCryptPasswordHasher()
-            );
+            new PasswordResetServiceImpl(new UserDaoJpa());
+
 
     /**
      * Gestisce la richiesta del token di reset.

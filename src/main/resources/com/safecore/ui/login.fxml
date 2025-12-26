@@ -27,5 +27,10 @@
     getClass().getResource("/com/safecore/ui/login.fxml")
     );
 
+    <Hyperlink
+            text="Password dimenticata?"
+            onAction="#handleForgotPassword"
+            style="-fx-text-fill: #2a6df4;" />
+
 
 </VBox>
