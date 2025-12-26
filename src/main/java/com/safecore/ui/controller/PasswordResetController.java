@@ -7,7 +7,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-
+import com.safecore.security.PasswordGenerator;
 
 /**
  * Controller JavaFX per il reset della password.
@@ -81,6 +81,21 @@ public class PasswordResetController {
 
         } catch (IllegalArgumentException e) {
             showError(e.getMessage());
+        }
+    }
+    @FXML
+    private void handleGeneratePassword() {
+
+        try {
+            String generated = PasswordGenerator.generate(16);
+            newPasswordField.setText(generated);
+
+            messageLabel.setStyle("-fx-text-fill: blue;");
+            messageLabel.setText("Secure password generated");
+
+        } catch (Exception e) {
+            messageLabel.setStyle("-fx-text-fill: red;");
+            messageLabel.setText(e.getMessage());
         }
     }
 
