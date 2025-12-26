@@ -26,7 +26,6 @@ public class AppLauncher extends Application {
             // Caricamento della vista iniziale
             FXMLLoader loader = new FXMLLoader(
                     getClass().getResource("/com/safecore/ui/login.fxml")
-                    // oppure: reset-password.fxml se vuoi partire da lì
             );
 
             Scene scene = new Scene(loader.load(), 400, 450);

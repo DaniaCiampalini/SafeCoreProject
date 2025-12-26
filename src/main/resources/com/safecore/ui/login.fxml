@@ -23,4 +23,9 @@
     <Label fx:id="messageLabel"
            style="-fx-text-fill: red;"/>
 
+    FXMLLoader loader = new FXMLLoader(
+    getClass().getResource("/com/safecore/ui/login.fxml")
+    );
+
+
 </VBox>
