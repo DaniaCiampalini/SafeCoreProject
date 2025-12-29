@@ -1,13 +1,18 @@
 package com.safecore.ui.controller;
 
 import com.safecore.ui.navigation.SceneNavigator;
-import com.safecore.ui.session.UserSession;
+import com.safecore.ui.session.SessionContext;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 /**
- * Dashboard post-login.
+ * Controller della Dashboard.
+ *
+ * Responsabilità:
+ * - UI post-login
+ * - Accesso allo stato di sessione
+ * - Logout
  */
 public class DashboardController {
 
@@ -15,27 +20,28 @@ public class DashboardController {
     private Label welcomeLabel;
 
     @FXML
+    private Label securityStatusLabel;
+
+    @FXML
     private void initialize() {
 
-        // blocco accesso diretto
-        if (!UserSession.isLoggedIn()) {
-            Stage stage = (Stage) welcomeLabel.getScene().getWindow();
-            SceneNavigator.switchTo(
-                    stage,
-                    "/login.fxml",
-                    "SafeCore – Login"
-            );
+        if (!SessionContext.isLoggedIn()) {
+            // sicurezza extra
+            welcomeLabel.setText("Unknown user");
             return;
         }
 
         welcomeLabel.setText(
-                "Welcome, " + UserSession.getUserEmail()
+                "Welcome, " + SessionContext.getLoggedUserEmail()
         );
+
+        securityStatusLabel.setText("Security status: OK");
     }
 
     @FXML
     private void handleLogout() {
-        UserSession.logout();
+
+        SessionContext.logout();
 
         Stage stage = (Stage) welcomeLabel.getScene().getWindow();
         SceneNavigator.switchTo(
