@@ -4,13 +4,21 @@ import com.safecore.business.service.UserService;
 import com.safecore.business.service.UserServiceImpl;
 import com.safecore.persistence.dao.UserDaoJpa;
 import com.safecore.ui.navigation.SceneNavigator;
-import com.safecore.ui.session.UserSession;
+import com.safecore.ui.session.SessionContext;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 
+/**
+ * Controller JavaFX per il Login.
+ *
+ * Responsabilità:
+ * - Input UI
+ * - Invocazione service
+ * - Inizializzazione sessione
+ */
 public class LoginController {
 
     @FXML
@@ -39,10 +47,9 @@ public class LoginController {
         try {
             userService.login(email, password);
 
-            // salva sessione
-            UserSession.login(email);
+            // === SESSIONE ===
+            SessionContext.login(email);
 
-            // naviga a dashboard
             Stage stage = (Stage) messageLabel.getScene().getWindow();
             SceneNavigator.switchTo(
                     stage,
