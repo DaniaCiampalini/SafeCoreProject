@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.safecore.ui.controller.DashboardController"
+      spacing="25"
+      alignment="CENTER"
+      prefWidth="450"
+      prefHeight="350">
+
+    <Label fx:id="welcomeLabel"
+           style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+
+    <HBox spacing="15" alignment="CENTER">
+        <Button text="Security Settings" disable="true"/>
+        <Button text="Profile" disable="true"/>
+    </HBox>
+
+    <Button text="Logout"
+            onAction="#handleLogout"
+            prefWidth="120" />
+
+</VBox>

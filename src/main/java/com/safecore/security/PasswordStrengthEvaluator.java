@@ -18,7 +18,7 @@ public final class PasswordStrengthEvaluator {
 
     public static Strength evaluate(String password) {
 
-        if (password == null || password.length() < 8) {
+        if (password == null || password.isBlank()) {
             return Strength.WEAK;
         }
 

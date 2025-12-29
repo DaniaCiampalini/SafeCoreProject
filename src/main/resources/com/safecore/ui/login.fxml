@@ -11,6 +11,15 @@
 
     <Label text="SafeCore Login" style="-fx-font-size: 18px;"/>
 
+    <Label text="Create an account"
+           onMouseClicked="#handleGoToRegister"
+           style="-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;" />
+
+    <Label text="Forgot password?"
+           onMouseClicked="#handleGoToReset"
+           style="-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;" />
+
+
     <TextField fx:id="emailField"
                promptText="Email"/>
 

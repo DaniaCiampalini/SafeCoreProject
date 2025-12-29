@@ -3,24 +3,17 @@ package com.safecore.ui.controller;
 import com.safecore.business.service.UserService;
 import com.safecore.business.service.UserServiceImpl;
 import com.safecore.persistence.dao.UserDaoJpa;
-import com.safecore.business.hints.PasswordHint;
-import com.safecore.business.hints.PasswordHintService;
-import com.safecore.business.hints.HintLevel;
+import com.safecore.security.PasswordGenerator;
+import com.safecore.security.PasswordStrengthEvaluator;
+import com.safecore.ui.navigation.SceneNavigator;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import com.safecore.security.PasswordGenerator;
-import com.safecore.security.PasswordStrengthEvaluator;
+import javafx.stage.Stage;
 
-
-/**
- * Controller JavaFX per la registrazione.
- *
- * Smart Hints:
- * - Suggerimenti NON vincolanti sulla sicurezza
- * - Supporto decisionale all'utente
- */
 public class RegisterController {
 
     @FXML
@@ -35,60 +28,15 @@ public class RegisterController {
     @FXML
     private Label messageLabel;
 
-    @FXML
-    private Label passwordStrengthLabel;
-
-
     private final UserService userService =
             new UserServiceImpl(new UserDaoJpa());
 
-    private final PasswordHintService hintService =
-            new PasswordHintService();
-
     @FXML
-    private void handlePasswordTyping() {
-        showHints(passwordField.getText());
-
-    }
-//così mentre l'utente digita, il sistema consiglia ma non blocca
-
-    private void updatePasswordStrength(String password) {
-
-        var strength = PasswordStrengthEvaluator.evaluate(password);
-
-        switch (strength) {
-            case WEAK -> {
-                passwordStrengthLabel.setText("Weak password");
-                passwordStrengthLabel.setStyle("-fx-text-fill: red;");
-            }
-            case MEDIUM -> {
-                passwordStrengthLabel.setText("Medium password");
-                passwordStrengthLabel.setStyle("-fx-text-fill: orange;");
-            }
-            case STRONG -> {
-                passwordStrengthLabel.setText("Strong password");
-                passwordStrengthLabel.setStyle("-fx-text-fill: green;");
-            }
-        }
-    }
-
-
-    private void showHints(String password) {
-
-        var hints = hintService.evaluate(password);
-
-        if (hints.isEmpty()) {
-            messageLabel.setStyle("-fx-text-fill: green;");
-            messageLabel.setText("Password sicura");
-        } else {
-            PasswordHint hint = hints.get(0);
-            messageLabel.setStyle(
-                    hint.getLevel() == HintLevel.WARNING
-                            ? "-fx-text-fill: orange;"
-                            : "-fx-text-fill: blue;"
-            );
-            messageLabel.setText(hint.getMessage());
-        }
+    private void handleGeneratePassword() {
+        String generated = PasswordGenerator.generate(12);
+        passwordField.setText(generated);
+        confirmPasswordField.setText(generated);
+        showInfo("Secure password generated");
     }
 
     @FXML
@@ -96,27 +44,67 @@ public class RegisterController {
 
         String email = emailField.getText();
         String password = passwordField.getText();
-        String confirmPassword = confirmPasswordField.getText();
+        String confirm = confirmPasswordField.getText();
 
-        if (email.isBlank() || password.isBlank() || confirmPassword.isBlank()) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Tutti i campi sono obbligatori");
+        if (email.isBlank() || password.isBlank() || confirm.isBlank()) {
+            showError("All fields are required");
             return;
         }
 
-        if (!password.equals(confirmPassword)) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText("Le password non coincidono");
+        if (!password.equals(confirm)) {
+            showError("Passwords do not match");
+            return;
+        }
+
+        if (PasswordStrengthEvaluator.evaluate(password)
+                == PasswordStrengthEvaluator.Strength.WEAK) {
+            showError("Password too weak");
             return;
         }
 
         try {
             userService.register(email, password);
-            messageLabel.setStyle("-fx-text-fill: green;");
-            messageLabel.setText("Registrazione completata!");
+            showSuccess("Registration successful");
+
+            userService.register(email, password);
+            showSuccess("Registration successful");
+            disableForm();
+
+
         } catch (IllegalArgumentException e) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText(e.getMessage());
+            showError(e.getMessage());
         }
     }
+
+    /**
+     * Navigazione verso login.
+     */
+    @FXML
+    private void handleBackToLogin() {
+        Stage stage = (Stage) messageLabel.getScene().getWindow();
+        SceneNavigator.switchTo(stage, "/login.fxml", "SafeCore – Login");
+    }
+
+
+    private void showError(String msg) {
+        messageLabel.setStyle("-fx-text-fill: red;");
+        messageLabel.setText(msg);
+    }
+
+    private void showSuccess(String msg) {
+        messageLabel.setStyle("-fx-text-fill: green;");
+        messageLabel.setText(msg);
+    }
+
+    private void showInfo(String msg) {
+        messageLabel.setStyle("-fx-text-fill: blue;");
+        messageLabel.setText(msg);
+    }
+
+    private void disableForm() {
+        emailField.setDisable(true);
+        passwordField.setDisable(true);
+        confirmPasswordField.setDisable(true);
+    }
+
 }

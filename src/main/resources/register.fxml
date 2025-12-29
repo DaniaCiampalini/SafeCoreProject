@@ -38,4 +38,9 @@
 
     <Label fx:id="messageLabel"/>
 
+    <Label text="Back to login"
+           onMouseClicked="#handleBackToLogin"
+           style="-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;" />
+
+
 </VBox>

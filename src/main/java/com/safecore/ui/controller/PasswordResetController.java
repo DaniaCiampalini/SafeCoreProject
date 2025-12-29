@@ -3,11 +3,16 @@ package com.safecore.ui.controller;
 import com.safecore.business.service.PasswordResetService;
 import com.safecore.business.service.PasswordResetServiceImpl;
 import com.safecore.persistence.dao.UserDaoJpa;
+import com.safecore.security.PasswordGenerator;
+import com.safecore.security.PasswordStrengthEvaluator;
+import com.safecore.ui.navigation.SceneNavigator;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import com.safecore.security.PasswordGenerator;
+import javafx.stage.Stage;
 
 /**
  * Controller JavaFX per il reset della password.
@@ -75,9 +80,22 @@ public class PasswordResetController {
             return;
         }
 
+        // Controllo robustezza password
+        if (PasswordStrengthEvaluator.evaluate(newPassword)
+                == PasswordStrengthEvaluator.Strength.WEAK) {
+            showError("Password too weak");
+            return;
+        }
+
         try {
             resetService.resetPassword(email, token, newPassword);
             showSuccess("Password successfully reset");
+            // disabilita il form (già fatto)
+            disableResetForm();
+            // redirect automatico dopo 2 secondi
+            redirectToLoginAfterDelay();
+
+
 
         } catch (IllegalArgumentException e) {
             showError(e.getMessage());
@@ -99,7 +117,32 @@ public class PasswordResetController {
         }
     }
 
-    // --- Metodi di utilità UI ---
+    /**
+     * Navigazione verso la schermata di login.
+     */
+    @FXML
+    private void handleBackToLogin() {
+        Stage stage = (Stage) messageLabel.getScene().getWindow();
+        SceneNavigator.switchTo(stage, "/login.fxml", "SafeCore – Login");
+    }
+
+    private void redirectToLoginAfterDelay() {
+
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000); // 2 secondi
+            } catch (InterruptedException ignored) {}
+
+            javafx.application.Platform.runLater(() -> {
+                Stage stage = (Stage) messageLabel.getScene().getWindow();
+                SceneNavigator.switchTo(stage, "/login.fxml",
+                        "SafeCore – Login");
+            });
+        }).start();
+    }
+
+
+    // Metodi di utilità UI
 
     private void showError(String message) {
         messageLabel.setStyle("-fx-text-fill: red;");
@@ -115,4 +158,11 @@ public class PasswordResetController {
         messageLabel.setStyle("-fx-text-fill: blue;");
         messageLabel.setText(message);
     }
+
+    private void disableResetForm() {
+        emailField.setDisable(true);
+        tokenField.setDisable(true);
+        newPasswordField.setDisable(true);
+    }
+
 }
