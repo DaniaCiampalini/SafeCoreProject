@@ -1,26 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
 
-<VBox xmlns="http://javafx.com/javafx/17"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.safecore.ui.controller.DashboardController"
-      spacing="25"
-      alignment="CENTER"
-      prefWidth="450"
-      prefHeight="350">
+<BorderPane xmlns="http://javafx.com/javafx/17"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="com.safecore.ui.controller.DashboardController">
 
-    <Label fx:id="welcomeLabel"
-           style="-fx-font-size: 18px; -fx-font-weight: bold;" />
+    <!-- HEADER -->
+    <top>
+        <HBox spacing="20" padding="15" style="-fx-background-color: #1f2937;">
+            <Label text="SafeCore"
+                   style="-fx-text-fill: white; -fx-font-size: 18; -fx-font-weight: bold;"/>
 
-    <HBox spacing="15" alignment="CENTER">
-        <Button text="Security Settings" disable="true"/>
-        <Button text="Profile" disable="true"/>
-    </HBox>
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Label fx:id="userLabel"
+                       style="-fx-text-fill: #d1d5db;"/>
+                <Button text="Logout"
+                        onAction="#handleLogout"/>
+            </HBox>
+        </HBox>
+    </top>
 
-    <Button text="Logout"
-            onAction="#handleLogout"
-            prefWidth="120" />
+    <!-- MAIN CONTENT -->
+    <center>
+        <VBox spacing="20" padding="30">
 
-</VBox>
+            <Label text="Dashboard"
+                   style="-fx-font-size: 22; -fx-font-weight: bold;"/>
+
+            <Label fx:id="securityStatusLabel"
+                   style="-fx-text-fill: green;"/>
+
+            <HBox spacing="20">
+
+                <!-- Card 1 -->
+                <VBox spacing="10" padding="20"
+                      style="-fx-background-color: #e5e7eb; -fx-background-radius: 10;">
+                    <Label text="Password Tools"
+                           style="-fx-font-weight: bold;"/>
+                    <Label text="Generate and evaluate secure passwords"/>
+                    <Button text="Open"/>
+                </VBox>
+
+                <!-- Card 2 -->
+                <VBox spacing="10" padding="20"
+                      style="-fx-background-color: #e5e7eb; -fx-background-radius: 10;">
+                    <Label text="Security Status"
+                           style="-fx-font-weight: bold;"/>
+                    <Label text="Check account protection"/>
+                    <Button text="View"/>
+                </VBox>
+
+            </HBox>
+        </VBox>
+    </center>
+
+</BorderPane>
