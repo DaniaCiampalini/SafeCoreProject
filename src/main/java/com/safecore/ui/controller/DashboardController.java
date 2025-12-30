@@ -7,17 +7,19 @@ import javafx.scene.control.Label;
 import javafx.stage.Stage;
 
 /**
- * Controller della Dashboard.
+ * Controller della Dashboard principale.
  *
  * Responsabilità:
- * - UI post-login
- * - Accesso allo stato di sessione
+ * - Visualizzazione info utente
+ * - Entry point post-login
  * - Logout
+ *
+ * Nessuna logica di business.
  */
 public class DashboardController {
 
     @FXML
-    private Label welcomeLabel;
+    private Label userLabel;
 
     @FXML
     private Label securityStatusLabel;
@@ -26,15 +28,12 @@ public class DashboardController {
     private void initialize() {
 
         if (!SessionContext.isLoggedIn()) {
-            // sicurezza extra
-            welcomeLabel.setText("Unknown user");
+            userLabel.setText("Unknown user");
+            securityStatusLabel.setText("Security status: unknown");
             return;
         }
 
-        welcomeLabel.setText(
-                "Welcome, " + SessionContext.getLoggedUserEmail()
-        );
-
+        userLabel.setText(SessionContext.getLoggedUserEmail());
         securityStatusLabel.setText("Security status: OK");
     }
 
@@ -43,11 +42,7 @@ public class DashboardController {
 
         SessionContext.logout();
 
-        Stage stage = (Stage) welcomeLabel.getScene().getWindow();
-        SceneNavigator.switchTo(
-                stage,
-                "/login.fxml",
-                "SafeCore – Login"
-        );
+        Stage stage = (Stage) userLabel.getScene().getWindow();
+        SceneNavigator.switchTo(stage, "/login.fxml", "SafeCore – Login");
     }
 }
