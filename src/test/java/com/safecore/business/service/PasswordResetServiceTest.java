@@ -46,7 +46,7 @@ class PasswordResetServiceTest {
 
         void addUser(String email, String plainPassword) {
             db.put(email, UserFactory.createNew(
-                    1L,
+                    java.util.UUID.randomUUID(), // Genera un ID univoco e sicuro
                     email,
                     PasswordHasher.hash(plainPassword),
                     false
@@ -70,9 +70,8 @@ class PasswordResetServiceTest {
 
         @Override
         public void updatePassword(String email, String newPasswordHash) {
-            User old = db.get(email);
-            db.put(email, UserFactory.createNew(
-                    old.getId(),
+            db.compute(email, (k, old) -> UserFactory.createNew(
+                    Objects.requireNonNull(old).getId(),
                     old.getEmail(),
                     newPasswordHash,
                     old.isMfaEnabled()

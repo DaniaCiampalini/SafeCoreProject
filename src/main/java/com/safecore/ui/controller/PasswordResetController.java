@@ -8,8 +8,6 @@ import com.safecore.security.PasswordGenerator;
 import com.safecore.security.PasswordStrengthEvaluator;
 import com.safecore.ui.navigation.SceneNavigator;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -17,11 +15,9 @@ import javafx.stage.Stage;
 
 /**
  * Controller JavaFX per il reset della password.
- *
  * Responsabilità:
  * - Gestione input/output UI
  * - Nessuna logica di business
- *
  * Il flusso reale (email) è simulato mostrando il token a schermo.
  */
 public class PasswordResetController {

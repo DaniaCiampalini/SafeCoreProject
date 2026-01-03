@@ -4,7 +4,6 @@ import java.util.UUID;
 
 /**
  * Builder Pattern per User.
- *
  * Motivazione:
  * - Evita costruttori con molti parametri
  * - Rende esplicite le scelte di configurazione
@@ -12,7 +11,7 @@ import java.util.UUID;
  */
 public class UserBuilder {
 
-    private Long id;
+    private UUID id;
     private String email;
     private String passwordHash;
     private boolean mfaEnabled;

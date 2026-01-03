@@ -23,7 +23,6 @@ public class UserServiceImpl implements UserService {
 
     /**
      * Dependency Injection manuale.
-     *
      * Scelta SE:
      * - Facilita test
      * - Riduce accoppiamento

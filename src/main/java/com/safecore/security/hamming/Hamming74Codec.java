@@ -4,10 +4,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Implementazione del codice di Hamming (7,4).
- * Corregge errori singoli e rileva errori multipli.
- *
- * Uso limitato ai backup esportati.
+ * Codice di Hamming (7,4).
+ * L'ho implementato per i backup: se un file su disco ha un bit "girato" (corrotto),
+ * Hamming lo rileva e lo corregge al volo durante l'importazione.
  */
 public class Hamming74Codec implements ErrorCorrectionCodec {
 
@@ -81,6 +80,7 @@ public class Hamming74Codec implements ErrorCorrectionCodec {
                 (b & 1);
     }
 
+    // Metodo utility per convertire le liste in array (usato dai backup)
     private byte[] toByteArray(List<Byte> list) {
         byte[] arr = new byte[list.size()];
         for (int i = 0; i < list.size(); i++) {

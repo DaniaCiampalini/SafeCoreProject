@@ -5,8 +5,13 @@ import javax.crypto.spec.IvParameterSpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
-//Implementazione AES della EncryptionStrategy.
-
+/**
+ * Questa è l'implementazione standard AES con CBC e Padding.
+ * Viene istanziata dal Manager delle Password.
+ * Nota tecnica: usiamo un IV (Vettore di Inizializzazione) casuale per ogni cifratura.
+ * Questo garantisce che se cifri due volte la stessa password, il risultato sarà
+ * diverso (evita Rainbow Tables).
+ */
 public class AESEncryptionStrategy implements EncryptionStrategy {
 
     private static final String ALGORITHM = "AES/CBC/PKCS5Padding";
@@ -15,27 +20,20 @@ public class AESEncryptionStrategy implements EncryptionStrategy {
     public byte[] encrypt(String plainText) {
         try {
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-
             byte[] iv = new byte[16];
-            new SecureRandom().nextBytes(iv);
+            new SecureRandom().nextBytes(iv); // IV casuale
             IvParameterSpec ivSpec = new IvParameterSpec(iv);
 
-            cipher.init(
-                    Cipher.ENCRYPT_MODE,
-                    KeyManager.getInstance().getSecretKey(),
-                    ivSpec
-            );
-
+            cipher.init(Cipher.ENCRYPT_MODE, KeyManager.getInstance().getSecretKey(), ivSpec);
             byte[] encrypted = cipher.doFinal(plainText.getBytes(StandardCharsets.UTF_8));
 
+            // Incolliamo l'IV all'inizio del pacchetto così il decrypt sa cosa usare
             byte[] result = new byte[iv.length + encrypted.length];
             System.arraycopy(iv, 0, result, 0, iv.length);
             System.arraycopy(encrypted, 0, result, iv.length, encrypted.length);
-
             return result;
-
         } catch (Exception e) {
-            throw new RuntimeException("Encryption failed", e);
+            throw new RuntimeException("Errore durante la cifratura AES", e);
         }
     }
 
@@ -44,22 +42,15 @@ public class AESEncryptionStrategy implements EncryptionStrategy {
         try {
             byte[] iv = new byte[16];
             byte[] encrypted = new byte[cipherText.length - 16];
-
             System.arraycopy(cipherText, 0, iv, 0, 16);
             System.arraycopy(cipherText, 16, encrypted, 0, encrypted.length);
 
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            cipher.init(
-                    Cipher.DECRYPT_MODE,
-                    KeyManager.getInstance().getSecretKey(),
-                    new IvParameterSpec(iv)
-            );
+            cipher.init(Cipher.DECRYPT_MODE, KeyManager.getInstance().getSecretKey(), new IvParameterSpec(iv));
 
-            byte[] decrypted = cipher.doFinal(encrypted);
-            return new String(decrypted, StandardCharsets.UTF_8);
-
+            return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (Exception e) {
-            throw new RuntimeException("Decryption failed", e);
+            throw new RuntimeException("Errore durante la decifratura AES", e);
         }
     }
 }

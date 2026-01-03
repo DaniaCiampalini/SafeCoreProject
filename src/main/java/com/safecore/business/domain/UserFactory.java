@@ -1,8 +1,7 @@
 package com.safecore.business.domain;
-
+import java.util.UUID;
 /**
  * Factory di dominio per User.
- *
  * Scelte SE:
  * - Centralizza la creazione
  * - Rispetta il costruttore package-private
@@ -14,7 +13,7 @@ public final class UserFactory {
     }
 
     public static User createNew(
-            Long id,
+            UUID id,
             String email,
             String passwordHash,
             boolean mfaEnabled
