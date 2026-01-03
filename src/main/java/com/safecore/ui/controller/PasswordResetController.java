@@ -2,6 +2,7 @@ package com.safecore.ui.controller;
 
 import com.safecore.business.service.PasswordResetService;
 import com.safecore.business.service.PasswordResetServiceImpl;
+import com.safecore.persistence.dao.PasswordResetTokenDaoJpa;
 import com.safecore.persistence.dao.UserDaoJpa;
 import com.safecore.security.PasswordGenerator;
 import com.safecore.security.PasswordStrengthEvaluator;
@@ -38,7 +39,7 @@ public class PasswordResetController {
     private Label messageLabel;
 
     private final PasswordResetService resetService =
-            new PasswordResetServiceImpl(new UserDaoJpa());
+            new PasswordResetServiceImpl(new UserDaoJpa(), new PasswordResetTokenDaoJpa());
 
 
     /**
