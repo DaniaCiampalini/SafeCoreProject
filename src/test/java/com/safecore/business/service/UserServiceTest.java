@@ -18,13 +18,17 @@ class UserServiceTest {
     @Test
     void registerAndLogin_success() {
         service.register("test@mail.com", "Password123!");
-        assertDoesNotThrow(() ->
-                service.login("test@mail.com", "Password123!"));
+        // Modificato: verifichiamo che l'Optional sia presente e l'email corretta
+        Optional<User> loggedUser = service.login("test@mail.com", "Password123!");
+        assertTrue(loggedUser.isPresent());
+        assertEquals("test@mail.com", loggedUser.get().getEmail());
     }
 
     @Test
     void register_duplicateEmail_fails() {
         service.register("a@mail.com", "Password123!");
+        // Questo rimane assertThrows perché il service lancia effettivamente
+        // IllegalArgumentException se l'email esiste già
         assertThrows(IllegalArgumentException.class,
                 () -> service.register("a@mail.com", "Password123!"));
     }
@@ -32,8 +36,10 @@ class UserServiceTest {
     @Test
     void login_wrongPassword_fails() {
         service.register("x@mail.com", "Password123!");
-        assertThrows(IllegalArgumentException.class,
-                () -> service.login("x@mail.com", "WrongPass"));
+        // CORREZIONE: Il service non lancia un'eccezione, ma restituisce Optional.empty()
+        // Quindi dobbiamo verificare che il risultato sia vuoto.
+        Optional<User> result = service.login("x@mail.com", "WrongPass");
+        assertTrue(result.isEmpty(), "Il login dovrebbe fallire con password errata");
     }
 
     // ---------- FAKE DAO ----------
