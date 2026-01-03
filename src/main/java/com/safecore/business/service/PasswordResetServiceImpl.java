@@ -10,13 +10,12 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
-public class PasswordResetServiceImpl implements PasswordResetService {
-
-    private final UserDao userDao;
-    private final PasswordResetTokenDao tokenDao = new PasswordResetTokenDaoJpa();
-
-    public PasswordResetServiceImpl(UserDao userDao) {
+ public PasswordResetServiceImpl(
+            UserDao userDao,
+            PasswordResetTokenDao tokenDao
+    ) {
         this.userDao = userDao;
+        this.tokenDao = tokenDao;
     }
 
     @Override
