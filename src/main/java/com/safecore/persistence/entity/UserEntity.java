@@ -4,23 +4,18 @@ import javax.persistence.*;
 import java.util.UUID;
 
 /**
- * Entity JPA.
- *
- * Responsabilità:
- * - Mappare la tabella DB
- * - Nessuna logica di business
- *
- * NOTA:
- * - È mutabile (JPA lo richiede)
- * - Separata dal Domain Model
+ * Questa è l'immagine riflessa della tabella 'users' sul database.
+ * A differenza del nostro 'User' di business, questa deve essere mutabile (ha i setter)
+ * perché Hibernate deve poterci scrivere dentro quando legge dal database.
  */
 @Entity
 @Table(name = "users")
 public class UserEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    // Nota: rimosso GenerationType.IDENTITY perché con UUID siamo noi a generare l'ID nel Service
+    @Column(columnDefinition = "BINARY(16)")
+    private UUID id;
 
     @Column(nullable = false, unique = true)
     private String email;
@@ -31,39 +26,14 @@ public class UserEntity {
     @Column(nullable = false)
     private boolean mfaEnabled;
 
-    // Costruttore vuoto obbligatorio per JPA
-    public UserEntity() {}
+    public UserEntity() { } // Obbligatorio per JPA
 
-    // Getter e Setter (mutabilità richiesta da Hibernate)
-    public UUID getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public String getEmail() {
-        return email;
-    }
-
-    public void setEmail(String email) {
-        this.email = email;
-    }
-
-    public String getPasswordHash() {
-        return passwordHash;
-    }
-
-    public void setPasswordHash(String passwordHash) {
-        this.passwordHash = passwordHash;
-    }
-
-    public boolean isMfaEnabled() {
-        return mfaEnabled;
-    }
-
-    public void setMfaEnabled(boolean mfaEnabled) {
-        this.mfaEnabled = mfaEnabled;
-    }
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getPasswordHash() { return passwordHash; }
+    public void setPasswordHash(String ph) { this.passwordHash = ph; }
+    public boolean isMfaEnabled() { return mfaEnabled; }
+    public void setMfaEnabled(boolean mfa) { this.mfaEnabled = mfa; }
 }

@@ -9,12 +9,10 @@ import java.util.Optional;
 
 /**
  * Implementazione concreta del Service.
- *
  * Responsabilità:
  * - Validazione input
  * - Hashing password
  * - Coordinamento DAO
- *
  * NON fa:
  * - Query SQL
  * - Gestione EntityManager

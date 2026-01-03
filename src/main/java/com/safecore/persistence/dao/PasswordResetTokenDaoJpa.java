@@ -2,11 +2,15 @@ package com.safecore.persistence.dao;
 
 import com.safecore.persistence.entity.PasswordResetTokenEntity;
 import com.safecore.persistence.util.JpaUtil;
-
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.time.LocalDateTime;
 
+/**
+ * Gestione dei token per il reset password.
+ * Cerchiamo solo token che: appartengono alla mail giusta, non sono già stati usati
+ * e non sono ancora scaduti.
+ */
 public class PasswordResetTokenDaoJpa implements PasswordResetTokenDao {
 
     @Override
@@ -23,25 +27,17 @@ public class PasswordResetTokenDaoJpa implements PasswordResetTokenDao {
 
     @Override
     public PasswordResetTokenEntity findValidTokenByEmail(String email) {
-
         EntityManager em = JpaUtil.getEntityManager();
-
         try {
-            TypedQuery<PasswordResetTokenEntity> query =
-                    em.createQuery(
-                            "SELECT t FROM PasswordResetTokenEntity t " +
-                                    "WHERE t.email = :email AND t.used = false " +
-                                    "AND t.expiresAt > :now",
-                            PasswordResetTokenEntity.class
-                    );
+            TypedQuery<PasswordResetTokenEntity> query = em.createQuery(
+                    "SELECT t FROM PasswordResetTokenEntity t " +
+                            "WHERE t.email = :email AND t.used = false " +
+                            "AND t.expiresAt > :now", PasswordResetTokenEntity.class);
 
             query.setParameter("email", email);
             query.setParameter("now", LocalDateTime.now());
 
-            return query.getResultStream()
-                    .findFirst()
-                    .orElse(null);
-
+            return query.getResultStream().findFirst().orElse(null);
         } finally {
             em.close();
         }

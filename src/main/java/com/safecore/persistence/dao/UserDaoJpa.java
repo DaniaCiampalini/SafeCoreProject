@@ -8,10 +8,10 @@ import javax.persistence.TypedQuery;
 import java.util.Optional;
 
 /**
- * Implementazione JPA.
- * Qui gestiamo le eccezioni per fare il ROLLBACK.
- * Se il database esplode a metà operazione, non vogliamo dati corrotti.
- * Lanciamo 'throw e' alla fine perché il Service deve comunque sapere che il salvataggio è fallito.
+ * Questa è l'implementazione concreta che parla con il database tramite JPA.
+ * Nota: qui dentro gestiamo i rollback. Se il DB crasha
+ * mentre scriviamo, non vogliamo lasciare l'app in uno stato inconsistente.
+ * Inoltre, chiudiamo sempre l'EntityManager nel 'finally' per evitare memory leak!
  */
 public class UserDaoJpa implements UserDao {
 
@@ -20,13 +20,13 @@ public class UserDaoJpa implements UserDao {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             em.getTransaction().begin();
-            // Usiamo il Mapper per convertire il nostro User pulito in una Entity JPA sporca
+            // Traduciamo l'utente di business in una entity che JPA capisce
             UserEntity entity = UserMapper.toEntity(user);
             em.persist(entity);
             em.getTransaction().commit();
         } catch (Exception e) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            throw e;
+            throw e; // Rilanciamo l'errore così il Service sa che il salvataggio è fallito
         } finally {
             em.close();
         }
@@ -36,7 +36,7 @@ public class UserDaoJpa implements UserDao {
     public boolean existsByEmail(String email) {
         EntityManager em = JpaUtil.getEntityManager();
         try {
-            // Query ottimizzata: contiamo e basta, senza scaricare dati inutili
+            // Usiamo COUNT perché è molto più leggero che scaricare tutto l'utente
             Long count = em.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.email = :email", Long.class)
                     .setParameter("email", email)
                     .getSingleResult();
@@ -46,67 +46,35 @@ public class UserDaoJpa implements UserDao {
         }
     }
 
-    /**
-     * Recupera un utente tramite email.
-     *
-     * @param email email dell'utente
-     * @return Optional<User> se presente
-     */
     @Override
     public Optional<User> findByEmail(String email) {
-
         EntityManager em = JpaUtil.getEntityManager();
-
         try {
-            TypedQuery<UserEntity> query =
-                    em.createQuery(
-                            "SELECT u FROM UserEntity u WHERE u.email = :email",
-                            UserEntity.class);
-
+            TypedQuery<UserEntity> query = em.createQuery(
+                    "SELECT u FROM UserEntity u WHERE u.email = :email", UserEntity.class);
             query.setParameter("email", email);
 
-            UserEntity entity = query.getResultStream()
-                    .findFirst()
-                    .orElse(null);
-
-            return Optional.ofNullable(entity)
-                    .map(UserMapper::toDomain);
-
+            UserEntity entity = query.getResultStream().findFirst().orElse(null);
+            // Trasformiamo di nuovo l'entità DB nel nostro oggetto pulito 'User'
+            return Optional.ofNullable(entity).map(UserMapper::toDomain);
         } finally {
             em.close();
         }
     }
 
-
-    /**
-     * Aggiorna la password di un utente esistente.
-     * Usato nel flusso di reset password.
-     * @param email email dell'utente
-     * @param hashedPassword nuova password già hashata
-     */
     @Override
     public void updatePassword(String email, String hashedPassword) {
-
         EntityManager em = JpaUtil.getEntityManager();
-
         try {
             em.getTransaction().begin();
-
-            em.createQuery(
-                            "UPDATE UserEntity u SET u.passwordHash = :pwd WHERE u.email = :email"
-                    )
+            em.createQuery("UPDATE UserEntity u SET u.passwordHash = :pwd WHERE u.email = :email")
                     .setParameter("pwd", hashedPassword)
                     .setParameter("email", email)
                     .executeUpdate();
-
             em.getTransaction().commit();
-
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
             throw e;
-
         } finally {
             em.close();
         }

@@ -47,7 +47,7 @@ public final class User {
         public Builder passwordHash(String p) { this.passwordHash = p; return this; }
         public Builder mfaEnabled(boolean m) { this.mfaEnabled = m; return this; }
 
-        public com.safecore.business.domain.User build(){
+        public com.safecore.model.User build(){
             Objects.requireNonNull(id);
             Objects.requireNonNull(email);
             return new User(this);

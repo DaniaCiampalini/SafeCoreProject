@@ -1,5 +1,7 @@
 package com.safecore.business.domain;
 
+import java.util.UUID;
+
 /**
  * Builder Pattern per User.
  *
@@ -15,7 +17,7 @@ public class UserBuilder {
     private String passwordHash;
     private boolean mfaEnabled;
 
-    public UserBuilder id(Long id) {
+    public UserBuilder id(UUID id) {
         this.id = id;
         return this;
     }

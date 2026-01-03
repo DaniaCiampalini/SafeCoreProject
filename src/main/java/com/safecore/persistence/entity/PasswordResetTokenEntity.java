@@ -4,11 +4,9 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * Entity JPA per il reset della password.
- *
- * SE:
- * - Token hashato (mai salvare token in chiaro)
- * - Expiration + flag used
+ * Questa classe mappa la tabella dei token di reset.
+ * Ho aggiunto @SuppressWarnings("unused") sui campi che JPA usa "sottobanco"
+ * così evitiamo warning fastidiosi.
  */
 @Entity
 @Table(name = "password_reset_tokens")
@@ -16,7 +14,7 @@ public class PasswordResetTokenEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long id; // JPA lo usa per identificare la riga, anche se noi non lo chiamiamo mai nel codice
 
     @Column(nullable = false)
     private String email;
@@ -30,9 +28,9 @@ public class PasswordResetTokenEntity {
     @Column(nullable = false)
     private boolean used = false;
 
-    protected PasswordResetTokenEntity() {
-        // JPA
-    }
+    // Risolto warning: JPA ha bisogno di un costruttore vuoto, ma noi lo facciamo protected
+    // così nessuno può creare un token "vuoto" per sbaglio fuori dal DB.
+    protected PasswordResetTokenEntity() { }
 
     public PasswordResetTokenEntity(String email, String tokenHash, LocalDateTime expiresAt) {
         this.email = email;
@@ -40,23 +38,10 @@ public class PasswordResetTokenEntity {
         this.expiresAt = expiresAt;
     }
 
-    public String getEmail() {
-        return email;
-    }
+    public String getEmail() { return email; }
+    public String getTokenHash() { return tokenHash; }
+    public LocalDateTime getExpiresAt() { return expiresAt; }
+    public boolean isUsed() { return used; }
 
-    public String getTokenHash() {
-        return tokenHash;
-    }
-
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public boolean isUsed() {
-        return used;
-    }
-
-    public void markUsed() {
-        this.used = true;
-    }
+    public void markUsed() { this.used = true; }
 }
