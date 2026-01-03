@@ -1,10 +1,9 @@
 package com.safecore.business.hints;
 
 /**
- * Rappresenta un suggerimento di sicurezza.
- *
- * NON è un errore bloccante.
- * È informativo e non vincolante.
+ * Questa classe rappresenta un suggerimento di sicurezza.
+ * L'ho pensata come un oggetto "informativo": non blocca l'utente (non è un'eccezione),
+ * ma serve a guidarlo verso una password migliore.
  */
 public class PasswordHint {
 
@@ -16,10 +15,12 @@ public class PasswordHint {
         this.level = level;
     }
 
+    // Utilizzati dalla UI per mostrare il testo all'utente
     public String getMessage() {
         return message;
     }
 
+    // Utilizzato dalla UI per decidere il colore (es. INFO=blu, WARNING=giallo)
     public HintLevel getLevel() {
         return level;
     }

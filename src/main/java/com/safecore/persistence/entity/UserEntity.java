@@ -1,6 +1,7 @@
 package com.safecore.persistence.entity;
 
 import javax.persistence.*;
+import java.util.UUID;
 
 /**
  * Entity JPA.
@@ -34,7 +35,7 @@ public class UserEntity {
     public UserEntity() {}
 
     // Getter e Setter (mutabilità richiesta da Hibernate)
-    public Long getId() {
+    public UUID getId() {
         return id;
     }
 

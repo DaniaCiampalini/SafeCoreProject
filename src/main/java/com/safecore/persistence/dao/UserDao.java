@@ -6,7 +6,6 @@ import java.util.Optional;
 
 /**
  * DAO per l'accesso ai dati User.
- *
  * Scelte SE:
  * - Interfaccia → disaccoppiamento dall'implementazione
  * - Usa Domain Model (User), NON Entity

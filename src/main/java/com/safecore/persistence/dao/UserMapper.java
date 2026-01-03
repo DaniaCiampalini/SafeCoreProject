@@ -6,7 +6,6 @@ import com.safecore.persistence.entity.UserEntity;
 
 /**
  * Mapper esplicito Domain ↔ Entity.
- *
  * Scelta progettuale:
  * - Evita accoppiamento diretto
  * - Controllo completo sulla trasformazione

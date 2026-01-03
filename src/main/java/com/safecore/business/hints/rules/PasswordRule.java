@@ -6,7 +6,6 @@ import java.util.Optional;
 
 /**
  * Regola di valutazione password.
- *
  * Strategy Pattern:
  * - Ogni regola valuta un aspetto
  */

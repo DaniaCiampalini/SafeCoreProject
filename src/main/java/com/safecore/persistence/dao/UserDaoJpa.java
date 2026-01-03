@@ -3,50 +3,46 @@ package com.safecore.persistence.dao;
 import com.safecore.business.domain.User;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.util.JpaUtil;
-
 import javax.persistence.EntityManager;
 import javax.persistence.TypedQuery;
 import java.util.Optional;
 
 /**
- * Implementazione JPA del UserDao.
- *
- * Responsabilità:
- * - Gestione dell'accesso ai dati utente
- * - Gestione esplicita di EntityManager e transazioni
- * - Conversione Domain ↔ Entity tramite Mapper
- *
- * Motivazione di Ingegneria del Software:
- * - Il Service Layer non deve conoscere JPA né EntityManager
- * - Le query sono centralizzate e isolate
- * - Favorisce testabilità e manutenibilità
+ * Implementazione JPA.
+ * Qui gestiamo le eccezioni per fare il ROLLBACK.
+ * Se il database esplode a metà operazione, non vogliamo dati corrotti.
+ * Lanciamo 'throw e' alla fine perché il Service deve comunque sapere che il salvataggio è fallito.
  */
 public class UserDaoJpa implements UserDao {
 
-    /**
-     * Salva un nuovo utente nel database.
-     */
     @Override
     public void save(User user) {
-
         EntityManager em = JpaUtil.getEntityManager();
-
         try {
             em.getTransaction().begin();
-
+            // Usiamo il Mapper per convertire il nostro User pulito in una Entity JPA sporca
             UserEntity entity = UserMapper.toEntity(user);
             em.persist(entity);
-
             em.getTransaction().commit();
-
         } catch (Exception e) {
-            // Rollback obbligatorio in caso di errore
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-            throw e; // Propagazione controllata verso il Service
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
+            throw e;
         } finally {
-            em.close(); // Chiusura sempre garantita
+            em.close();
+        }
+    }
+
+    @Override
+    public boolean existsByEmail(String email) {
+        EntityManager em = JpaUtil.getEntityManager();
+        try {
+            // Query ottimizzata: contiamo e basta, senza scaricare dati inutili
+            Long count = em.createQuery("SELECT COUNT(u) FROM UserEntity u WHERE u.email = :email", Long.class)
+                    .setParameter("email", email)
+                    .getSingleResult();
+            return count > 0;
+        } finally {
+            em.close();
         }
     }
 
@@ -81,36 +77,10 @@ public class UserDaoJpa implements UserDao {
         }
     }
 
-    /**
-     * Verifica se esiste un utente registrato con una data email.
-     *
-     * Metodo ottimizzato: usa COUNT per evitare il caricamento di entità.
-     */
-    @Override
-    public boolean existsByEmail(String email) {
-
-        EntityManager em = JpaUtil.getEntityManager();
-
-        try {
-            Long count = em.createQuery(
-                            "SELECT COUNT(u) FROM UserEntity u WHERE u.email = :email",
-                            Long.class
-                    )
-                    .setParameter("email", email)
-                    .getSingleResult();
-
-            return count > 0;
-
-        } finally {
-            em.close();
-        }
-    }
 
     /**
      * Aggiorna la password di un utente esistente.
-     *
      * Usato nel flusso di reset password.
-     *
      * @param email email dell'utente
      * @param hashedPassword nuova password già hashata
      */
