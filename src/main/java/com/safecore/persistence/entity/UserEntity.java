@@ -13,8 +13,8 @@ import java.util.UUID;
 public class UserEntity {
 
     @Id
-    // Nota: rimosso GenerationType.IDENTITY perché con UUID siamo noi a generare l'ID nel Service
-    @Column(columnDefinition = "BINARY(16)")
+    @GeneratedValue
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(nullable = false, unique = true)

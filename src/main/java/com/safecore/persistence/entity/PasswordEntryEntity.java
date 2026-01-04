@@ -9,7 +9,8 @@ import java.util.UUID;
 public class PasswordEntryEntity {
 
     @Id
-    @Column(columnDefinition = "BINARY(16)")
+    @GeneratedValue
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
     @Column(nullable = false)

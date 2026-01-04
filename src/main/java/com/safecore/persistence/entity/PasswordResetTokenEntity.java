@@ -2,6 +2,7 @@ package com.safecore.persistence.entity;
 
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 /**
  * Questa classe mappa la tabella dei token di reset.
@@ -13,10 +14,11 @@ import java.time.LocalDateTime;
 public class PasswordResetTokenEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id; // JPA lo usa per identificare la riga, anche se noi non lo chiamiamo mai nel codice
+    @GeneratedValue
+    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "BINARY(16)")
+    private UUID id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true)
     private String email;
 
     @Column(nullable = false)
