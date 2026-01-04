@@ -30,12 +30,12 @@ public class PasswordServiceImpl implements PasswordService {
 
     @Override
     public void addCredential(String service, String username, String plainPassword) {
-        // 1. Cifratura: Trasformiamo la stringa leggibile in byte protetti
+        // 1. Cifratura
         byte[] encryptedData = encryption.encrypt(plainPassword);
 
-        // 2. Creazione Entry tramite Builder (Immutabile)
+        // 2. Creazione Entry tramite Builder
         PasswordEntry entry = new PasswordEntry.Builder()
-                .id(UUID.randomUUID())
+                // .id(UUID.randomUUID())  <-- COMMENTA O CANCELLA QUESTA RIGA
                 .serviceName(service)
                 .username(username)
                 .encryptedPassword(encryptedData)
@@ -45,6 +45,7 @@ public class PasswordServiceImpl implements PasswordService {
         // 3. Persistenza
         passwordDao.save(entry);
     }
+
 
     @Override
     public String getDecryptedPassword(PasswordEntry entry) {

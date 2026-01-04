@@ -15,13 +15,12 @@ import java.util.stream.Collectors;
 public class PasswordEntryDaoJpa implements PasswordEntryDao {
 
     @Override
-    public void save(PasswordEntry entry) {
+    public void save(PasswordEntry entity) {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             em.getTransaction().begin();
-            // Trasformiamo l'oggetto di business in entità database
-            PasswordEntryEntity entity = PasswordMapper.toEntity(entry);
-            em.persist(entity);
+            // Cambio em.persist(entity) con em.merge(entity)
+            em.merge(entity);
             em.getTransaction().commit();
         } catch (Exception e) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
