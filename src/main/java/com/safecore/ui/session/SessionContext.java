@@ -2,11 +2,9 @@ package com.safecore.ui.session;
 
 /**
  * Contesto di sessione dell'applicazione.
- *
  * Responsabilità:
  * - Memorizzare lo stato dell'utente loggato
  * - Rendere accessibili info di sessione ai controller
- *
  * Scelte SE:
  * - Singleton applicativo
  * - Stato centralizzato

@@ -21,21 +21,14 @@ import javafx.stage.Stage;
  */
 public class LoginController {
 
-    @FXML
-    private TextField emailField;
+    @FXML private TextField emailField;
+    @FXML private PasswordField passwordField;
+    @FXML private Label messageLabel;
 
-    @FXML
-    private PasswordField passwordField;
-
-    @FXML
-    private Label messageLabel;
-
-    private final UserService userService =
-            new UserServiceImpl(new UserDaoJpa());
+    private final UserService userService = new UserServiceImpl(new UserDaoJpa());
 
     @FXML
     private void handleLogin() {
-
         String email = emailField.getText();
         String password = passwordField.getText();
 
@@ -46,33 +39,27 @@ public class LoginController {
 
         try {
             userService.login(email, password);
-
-            // === SESSIONE ===
             SessionContext.login(email);
 
             Stage stage = (Stage) messageLabel.getScene().getWindow();
-            SceneNavigator.switchTo(
-                    stage,
-                    "/dashboard.fxml",
-                    "SafeCore – Dashboard"
-            );
+            // Corretto percorso risorsa
+            SceneNavigator.switchTo(stage, "/com/safecore/ui/dashboard.fxml", "SafeCore – Dashboard");
 
-        } catch (IllegalArgumentException e) {
-            showError(e.getMessage());
+        } catch (Exception e) {
+            showError("Invalid credentials or error: " + e.getMessage());
         }
     }
 
     @FXML
     private void handleGoToRegister() {
         Stage stage = (Stage) messageLabel.getScene().getWindow();
-        SceneNavigator.switchTo(stage, "/register.fxml", "SafeCore – Register");
+        SceneNavigator.switchTo(stage, "/com/safecore/ui/register.fxml", "SafeCore – Register");
     }
 
     @FXML
     private void handleGoToReset() {
         Stage stage = (Stage) messageLabel.getScene().getWindow();
-        SceneNavigator.switchTo(stage, "/password_reset.fxml",
-                "SafeCore – Password Reset");
+        SceneNavigator.switchTo(stage, "/com/safecore/ui/password_reset.fxml", "SafeCore – Password Reset");
     }
 
     private void showError(String msg) {

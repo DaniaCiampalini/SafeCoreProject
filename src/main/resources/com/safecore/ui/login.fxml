@@ -15,10 +15,6 @@
            onMouseClicked="#handleGoToRegister"
            style="-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;" />
 
-    <Label text="Forgot password?"
-           onMouseClicked="#handleGoToReset"
-           style="-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;" />
-
 
     <TextField fx:id="emailField"
                promptText="Email"/>
@@ -32,9 +28,6 @@
     <Label fx:id="messageLabel"
            style="-fx-text-fill: red;"/>
 
-    FXMLLoader loader = new FXMLLoader(
-    getClass().getResource("/com/safecore/ui/login.fxml")
-    );
 
     <Hyperlink
             text="Password dimenticata?"

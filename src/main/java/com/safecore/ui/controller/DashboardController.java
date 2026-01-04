@@ -12,32 +12,19 @@ import javafx.util.Duration;
 
 /**
  * Dashboard principale SafeCore.
- *
  * Stato: FINALE.
  */
 public class DashboardController {
 
-    @FXML
-    private Label userLabel;
-
-    @FXML
-    private Label securityStatusLabel;
-
-    @FXML
-    private Label toastLabel;
-
-    @FXML
-    private VBox passwordCard;
-
-    @FXML
-    private VBox vaultCard;
-
-    @FXML
-    private VBox backupCard;
+    @FXML private Label userLabel;
+    @FXML private Label securityStatusLabel;
+    @FXML private Label toastLabel;
+    @FXML private VBox passwordCard;
+    @FXML private VBox vaultCard;
+    @FXML private VBox backupCard;
 
     @FXML
     private void initialize() {
-
         userLabel.setText(SessionContext.getLoggedUserEmail());
         securityStatusLabel.setText("Security status: OK");
 
@@ -45,8 +32,6 @@ public class DashboardController {
         applyHoverAnimation(vaultCard);
         applyHoverAnimation(backupCard);
     }
-
-    // ---------------- DASHBOARD ACTIONS ----------------
 
     @FXML
     private void handleGeneratePassword() {
@@ -56,7 +41,7 @@ public class DashboardController {
 
     @FXML
     private void handleOpenVault() {
-        showToast("Vault opened (mock)");
+        showToast("Vault opened (Coming Soon)");
     }
 
     @FXML
@@ -68,35 +53,23 @@ public class DashboardController {
     private void handleLogout() {
         SessionContext.logout();
         Stage stage = (Stage) userLabel.getScene().getWindow();
-        SceneNavigator.switchTo(stage, "/login.fxml", "SafeCore – Login");
+        SceneNavigator.switchTo(stage, "/com/safecore/ui/login.fxml", "SafeCore – Login");
     }
-
-    // ---------------- UI HELPERS ----------------
 
     private void applyHoverAnimation(VBox card) {
         card.setStyle(baseCardStyle());
-
-        card.setOnMouseEntered(e ->
-                card.setStyle(baseCardStyle() + "-fx-scale-x: 1.03; -fx-scale-y: 1.03;"));
-
-        card.setOnMouseExited(e ->
-                card.setStyle(baseCardStyle()));
+        card.setOnMouseEntered(e -> card.setStyle(baseCardStyle() + "-fx-scale-x: 1.03; -fx-scale-y: 1.03;"));
+        card.setOnMouseExited(e -> card.setStyle(baseCardStyle()));
     }
 
     private String baseCardStyle() {
-        return "-fx-background-color: white;" +
-                "-fx-background-radius: 12;" +
-                "-fx-border-radius: 12;" +
-                "-fx-border-color: #e5e7eb;" +
-                "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 4);";
+        return "-fx-background-color: white; -fx-background-radius: 12; -fx-border-radius: 12; " +
+                "-fx-border-color: #e5e7eb; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 4);";
     }
 
     private void showToast(String message) {
-
         toastLabel.setText(message);
-        toastLabel.setOpacity(1);
         toastLabel.setVisible(true);
-
         FadeTransition fade = new FadeTransition(Duration.seconds(3), toastLabel);
         fade.setFromValue(1);
         fade.setToValue(0);
