@@ -14,13 +14,22 @@ import java.util.stream.Collectors;
  */
 public class PasswordEntryDaoJpa implements PasswordEntryDao {
 
+    // ... existing code ...
     @Override
-    public void save(PasswordEntry entity) {
+    public void save(PasswordEntry entry) {
         EntityManager em = JpaUtil.getEntityManager();
         try {
             em.getTransaction().begin();
-            // Cambio em.persist(entity) con em.merge(entity)
-            em.merge(entity);
+
+            // CONVERSIONE: Trasformiamo il Domain Model in Entity per Hibernate
+            PasswordEntryEntity entity = PasswordMapper.toEntity(entry);
+
+            if (entity.getId() == null) {
+                em.persist(entity);
+            } else {
+                em.merge(entity);
+            }
+
             em.getTransaction().commit();
         } catch (Exception e) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
@@ -29,6 +38,7 @@ public class PasswordEntryDaoJpa implements PasswordEntryDao {
             em.close();
         }
     }
+// ... existing code ...
 
     @Override
     public List<PasswordEntry> findAll() {

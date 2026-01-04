@@ -60,8 +60,14 @@ public final class PasswordEntry {
         public Builder createdAt(LocalDateTime ca) { this.createdAt = ca; return this; }
 
         public PasswordEntry build() {
-            Objects.requireNonNull(id, "ID obbligatorio");
+            // RIMOSSO: Objects.requireNonNull(id, "ID obbligatorio");
+            // L'ID può essere null per le nuove entry
             Objects.requireNonNull(serviceName, "Nome servizio obbligatorio");
+            Objects.requireNonNull(username, "Username obbligatorio");
+            Objects.requireNonNull(encryptedPassword, "Password cifrata obbligatoria");
+
+            if (createdAt == null) this.createdAt = LocalDateTime.now();
+
             return new PasswordEntry(this);
         }
     }

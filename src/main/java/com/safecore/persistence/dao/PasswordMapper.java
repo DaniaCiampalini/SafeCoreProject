@@ -7,6 +7,7 @@ public class PasswordMapper {
 
     public static PasswordEntryEntity toEntity(PasswordEntry domain) {
         PasswordEntryEntity entity = new PasswordEntryEntity();
+        // Se domain.getId() è null, entity.id rimarrà null -> Hibernate genera l'UUID
         entity.setId(domain.getId());
         entity.setServiceName(domain.getServiceName());
         entity.setUsername(domain.getUsername());

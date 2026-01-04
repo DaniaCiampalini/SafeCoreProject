@@ -39,7 +39,7 @@ public class PasswordResetTokenEntity {
         this.tokenHash = tokenHash;
         this.expiresAt = expiresAt;
     }
-
+    public UUID getId() { return id; }
     public String getEmail() { return email; }
     public String getTokenHash() { return tokenHash; }
     public LocalDateTime getExpiresAt() { return expiresAt; }

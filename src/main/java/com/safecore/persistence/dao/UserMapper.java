@@ -18,7 +18,7 @@ public class UserMapper {
 
     public static UserEntity toEntity(User user) {
         UserEntity entity = new UserEntity();
-        entity.setId(user.getId());
+        entity.setId(user.getId()); // Fondamentale che sia null per i nuovi utenti
         entity.setEmail(user.getEmail());
         entity.setPasswordHash(user.getPasswordHash());
         entity.setMfaEnabled(user.isMfaEnabled());
