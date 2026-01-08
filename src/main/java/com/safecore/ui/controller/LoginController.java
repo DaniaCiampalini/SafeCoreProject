@@ -13,9 +13,12 @@ public class LoginController {
 
     @FXML private TextField emailField;
     @FXML private PasswordField passwordField;
+    @FXML private TextField passwordTextField; // Campo per password in chiaro
+    @FXML private Button togglePasswordBtn;     // Bottone con l'icona dell'occhio
     @FXML private Label messageLabel;
 
     private final UserService userService;
+    private boolean isPasswordVisible = false;
 
     public LoginController(UserService userService) {
         this.userService = userService;
@@ -24,18 +27,43 @@ public class LoginController {
     @FXML
     private void handleLogin() {
         String email = emailField.getText();
-        String password = passwordField.getText();
+
+        // Recupera la password dal campo attualmente attivo/visibile
+        String password = isPasswordVisible ? passwordTextField.getText() : passwordField.getText();
+
         if (email.isBlank() || password.isBlank()) {
-            showError("Campi obbligatori");
+            showError("Email e password sono obbligatorie");
             return;
         }
+
         userService.login(email, password).ifPresentOrElse(
                 user -> {
                     SessionContext.login(email);
                     navigateTo("/com/safecore/ui/view/dashboard.fxml", "SafeCore – Dashboard");
                 },
-                () -> showError("Credenziali errate")
+                () -> showError("Credenziali non valide")
         );
+    }
+
+    /**
+     * Gestisce lo scambio tra PasswordField (pallini) e TextField (testo in chiaro)
+     */
+    @FXML
+    private void togglePasswordVisibility() {
+        if (isPasswordVisible) {
+            // Torna ai pallini: copia il testo dal chiaro al nascosto
+            passwordField.setText(passwordTextField.getText());
+            passwordField.setVisible(true);
+            passwordTextField.setVisible(false);
+            togglePasswordBtn.setText("👁");
+        } else {
+            // Mostra testo: copia il testo dal nascosto al chiaro
+            passwordTextField.setText(passwordField.getText());
+            passwordTextField.setVisible(true);
+            passwordField.setVisible(false);
+            togglePasswordBtn.setText("🙈");
+        }
+        isPasswordVisible = !isPasswordVisible;
     }
 
     @FXML
@@ -54,7 +82,7 @@ public class LoginController {
     }
 
     private void showError(String msg) {
-        messageLabel.setStyle("-fx-text-fill: red;");
+        messageLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
         messageLabel.setText(msg);
     }
 }

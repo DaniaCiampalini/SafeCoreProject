@@ -1,38 +1,49 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<VBox spacing="10"
-      alignment="CENTER"
-      xmlns="http://javafx.com/javafx/17"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.safecore.ui.controller.LoginController">
+<VBox spacing="25" alignment="CENTER" prefWidth="420" prefHeight="550"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.safecore.ui.controller.LoginController"
+      style="-fx-background-color: #F9FAFB; -fx-padding: 50;">
 
-    <Label text="SafeCore Login" style="-fx-font-size: 18px;"/>
+    <VBox alignment="CENTER" spacing="5">
+        <Label text="SafeCore" style="-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #1F2937;"/>
+        <Label text="Il tuo vault crittografato" style="-fx-text-fill: #6B7280; -fx-font-size: 14px;"/>
+    </VBox>
 
-    <Label text="Create an account"
-           onMouseClicked="#handleGoToRegister"
-           style="-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;" />
+    <VBox spacing="15">
+        <VBox spacing="5">
+            <Label text="Email" style="-fx-text-fill: #374151; -fx-font-weight: bold; -fx-font-size: 13px;"/>
+            <TextField fx:id="emailField" promptText="Inserisci la tua email"
+                       style="-fx-background-radius: 8; -fx-padding: 12; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-color: white;"/>
+        </VBox>
 
+        <VBox spacing="5">
+            <Label text="Password" style="-fx-text-fill: #374151; -fx-font-weight: bold; -fx-font-size: 13px;"/>
+            <HBox alignment="CENTER_LEFT" style="-fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-color: white; -fx-background-radius: 8;">
+                <StackPane HBox.hgrow="ALWAYS">
+                    <PasswordField fx:id="passwordField" promptText="••••••••"
+                                   style="-fx-background-color: transparent; -fx-padding: 12;"/>
+                    <TextField fx:id="passwordTextField" visible="false"
+                               style="-fx-background-color: transparent; -fx-padding: 12;"/>
+                </StackPane>
+                <Button fx:id="togglePasswordBtn" text="👁" onAction="#togglePasswordVisibility"
+                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #9CA3AF;"/>
+            </HBox>
+        </VBox>
+    </VBox>
 
-    <TextField fx:id="emailField"
-               promptText="Email"/>
+    <Button text="Accedi" onAction="#handleLogin" maxWidth="Infinity"
+            style="-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 14; -fx-background-radius: 8; -fx-cursor: hand;"/>
 
-    <PasswordField fx:id="passwordField"
-                   promptText="Password"/>
+    <VBox alignment="CENTER" spacing="10">
+        <Label text="Non hai un account?" style="-fx-text-fill: #6B7280;"/>
+        <Label text="Crea un account ora" onMouseClicked="#handleGoToRegister"
+               style="-fx-text-fill: #2563EB; -fx-cursor: hand; -fx-font-weight: bold;"/>
+    </VBox>
 
-    <Button text="Login"
-            onAction="#handleLogin"/>
-
-    <Label fx:id="messageLabel"
-           style="-fx-text-fill: red;"/>
-
-
-    <Hyperlink
-            text="Password dimenticata?"
-            onAction="#handleForgotPassword"
-            style="-fx-text-fill: #2a6df4;" />
-
+    <Label fx:id="messageLabel" wrapText="true" alignment="CENTER" style="-fx-font-size: 12px;"/>
 
 </VBox>

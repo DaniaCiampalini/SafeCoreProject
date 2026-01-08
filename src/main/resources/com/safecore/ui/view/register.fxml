@@ -17,7 +17,7 @@
 
     <PasswordField fx:id="passwordField"
                    promptText="Password"
-                   onKeyReleased="#handlePasswordTyping"/>  //per collegare davvero hints in tempo reale
+                   onKeyReleased="#handlePasswordTyping"/>
 
 
     <PasswordField fx:id="confirmPasswordField"

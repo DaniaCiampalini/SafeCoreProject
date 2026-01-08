@@ -1,13 +1,9 @@
 package com.safecore.ui;
 
 import com.safecore.SafeCoreApplication;
-import com.safecore.business.service.UserService;
-import com.safecore.business.service.PasswordService;
 import com.safecore.ui.navigation.SceneNavigator;
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Scene;
 import javafx.stage.Stage;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.context.ConfigurableApplicationContext;
@@ -18,32 +14,27 @@ public class AppLauncher extends Application {
 
     @Override
     public void init() {
-        // Avvio di Spring Boot
+        // Avviamo Spring Boot
         springContext = new SpringApplicationBuilder(SafeCoreApplication.class).run();
     }
 
     @Override
     public void start(Stage primaryStage) {
         try {
-            // 1. Colleghiamo il Navigator a Spring (Fondamentale per i cambi scena!)
+            // 1. Inizializziamo il navigatore con il contesto Spring
             SceneNavigator.setContext(springContext);
 
-            // Eseguiamo la Demo (opzionale)
-            eseguiDemoSilenziosa();
+            // 2. Usiamo il navigatore per caricare la prima scena
+            // Nota: il path deve essere ESATTAMENTE quello dove si trova il file
+            SceneNavigator.switchTo(primaryStage, "/com/safecore/ui/view/login.fxml", "SafeCore – Secure Vault");
 
-            // 2. Usiamo il Navigator per la prima scena (più pulito)
-            // Oppure carichiamo manualmente la prima volta così:
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/safecore/ui/view/login.fxml"));
-            loader.setControllerFactory(springContext::getBean);
+            // Assicuriamoci che la finestra sia centrata e visibile
+            primaryStage.centerOnScreen();
 
-            Scene scene = new Scene(loader.load(), 400, 500);
-
-            primaryStage.setTitle("SafeCore – Secure Vault");
-            primaryStage.setScene(scene);
-            primaryStage.setResizable(false); // Opzionale: rende la UI più professionale
-            primaryStage.show();
+            System.out.println("=== SafeCore: Interfaccia UI Avviata ===");
 
         } catch (Exception e) {
+            System.err.println("ERRORE FATALE all'avvio della UI:");
             e.printStackTrace();
             Platform.exit();
         }
@@ -51,20 +42,9 @@ public class AppLauncher extends Application {
 
     @Override
     public void stop() {
-        // Spegnimento pulito di Spring (chiude connessioni DB H2)
         if (springContext != null) {
             springContext.close();
         }
         Platform.exit();
-    }
-
-    private void eseguiDemoSilenziosa() {
-        try {
-            UserService userService = springContext.getBean(UserService.class);
-            System.out.println("=== SafeCore: Spring Context Ready ===");
-            // Esempio: System.out.println("Utenti registrati: " + userService.findAll().size());
-        } catch (Exception e) {
-            System.err.println("Errore durante la demo: " + e.getMessage());
-        }
     }
 }
