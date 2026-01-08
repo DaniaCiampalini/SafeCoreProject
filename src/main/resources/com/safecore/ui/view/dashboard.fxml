@@ -21,14 +21,20 @@
             <HBox spacing="15">
                 <VBox fx:id="passwordCard" prefWidth="250" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 12; -fx-border-color: #e5e7eb; -fx-border-radius: 12;">
                     <Label text="Quick Generator" style="-fx-font-weight: 800;"/>
-                    <Button text="Genera &amp; Copia" onAction="#handleGeneratePassword" style="-fx-background-color: #2563eb; -fx-text-fill: white; -fx-margin-top: 10;"/>
+                    <Button text="Genera &amp; Copia" onAction="#handleGeneratePassword" style="-fx-background-color: #2563eb; -fx-text-fill: white;"/>
                 </VBox>
+
+                <VBox fx:id="backupCard" prefWidth="250" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 12; -fx-border-color: #e5e7eb; -fx-border-radius: 12;">
+                    <Label text="Security" style="-fx-font-weight: 800;"/>
+                    <Button text="Esegui Backup" onAction="#handleBackup" style="-fx-background-color: #4b5563; -fx-text-fill: white;"/>
+                </VBox>
+
                 <Label fx:id="toastLabel" visible="false" style="-fx-background-color: #111827; -fx-text-fill: white; -fx-padding: 10; -fx-background-radius: 8;"/>
             </HBox>
 
             <VBox spacing="15" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 12;">
                 <HBox spacing="15" alignment="CENTER_LEFT">
-                    <TextField fx:id="searchField" promptText="🔍 Cerca servizio o username..." prefWidth="300" style="-fx-background-radius: 20;"/>
+                    <TextField fx:id="searchField" promptText="🔍 Cerca servizio..." prefWidth="300" style="-fx-background-radius: 20;"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="+ Aggiungi Segreto" onAction="#handleAddEntry" style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;"/>
                     <Button text="Dettagli" onAction="#handleShowPassword" style="-fx-background-color: #6366f1; -fx-text-fill: white;"/>
@@ -38,7 +44,7 @@
                     <columns>
                         <TableColumn fx:id="serviceColumn" text="Servizio" prefWidth="180"/>
                         <TableColumn fx:id="usernameColumn" text="Username" prefWidth="180"/>
-                        <TableColumn fx:id="actionsColumn" text="Azioni" prefWidth="120" style="-fx-alignment: CENTER;"/>
+                        <TableColumn fx:id="actionsColumn" text="Azioni" prefWidth="120"/>
                     </columns>
                 </TableView>
             </VBox>

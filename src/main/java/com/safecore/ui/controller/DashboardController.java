@@ -179,6 +179,12 @@ public class DashboardController {
         SceneNavigator.switchTo((Stage) userLabel.getScene().getWindow(), "/com/safecore/ui/view/login.fxml", "Login");
     }
 
+    @FXML
+    private void handleBackup() {
+        // Implementazione del backup (puoi chiamare il tuo BackupService qui)
+        System.out.println("Esecuzione backup in corso...");
+    }
+
     @FXML private void handleGeneratePassword() {
         copyToClipboard(passwordGenerator.generateSafe(16));
         showToast("Password sicura copiata!");
