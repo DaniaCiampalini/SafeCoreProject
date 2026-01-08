@@ -1,17 +1,17 @@
 package com.safecore.ui.controller;
 
 import com.safecore.business.service.UserService;
-import com.safecore.business.service.UserServiceImpl;
-import com.safecore.persistence.dao.UserDaoJpa;
 import com.safecore.security.PasswordGenerator;
-import com.safecore.security.PasswordStrengthEvaluator;
 import com.safecore.ui.navigation.SceneNavigator;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import org.springframework.stereotype.Component;
 
+@Component
 public class RegisterController {
 
     @FXML private TextField emailField;
@@ -19,14 +19,10 @@ public class RegisterController {
     @FXML private PasswordField confirmPasswordField;
     @FXML private Label messageLabel;
 
-    private final UserService userService = new UserServiceImpl(new UserDaoJpa());
+    private final UserService userService;
 
-    @FXML
-    private void handleGeneratePassword() {
-        String generated = PasswordGenerator.generate(12);
-        passwordField.setText(generated);
-        confirmPasswordField.setText(generated);
-        showInfo("Secure password generated");
+    public RegisterController(UserService userService) {
+        this.userService = userService;
     }
 
     @FXML
@@ -45,25 +41,28 @@ public class RegisterController {
             return;
         }
 
-        if (PasswordStrengthEvaluator.evaluate(password) == PasswordStrengthEvaluator.Strength.WEAK) {
-            showError("Password too weak");
-            return;
-        }
-
         try {
+            // Il controllo robustezza è ora delegato al Service
             userService.register(email, password);
             showSuccess("Registration successful! Redirecting...");
             disableForm();
 
-            // Piccola pausa prima di tornare al login
             new Thread(() -> {
                 try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
-                javafx.application.Platform.runLater(this::handleBackToLogin);
+                Platform.runLater(this::handleBackToLogin);
             }).start();
 
         } catch (Exception e) {
-            showError("Error: " + e.getMessage());
+            showError(e.getMessage());
         }
+    }
+
+    @FXML
+    private void handleGeneratePassword() {
+        String generated = PasswordGenerator.generate(12);
+        passwordField.setText(generated);
+        confirmPasswordField.setText(generated);
+        showInfo("Secure password generated");
     }
 
     @FXML

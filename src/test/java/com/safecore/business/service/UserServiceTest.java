@@ -1,83 +1,80 @@
 package com.safecore.business.service;
 
 import com.safecore.business.domain.User;
-import com.safecore.business.domain.UserFactory;
-import com.safecore.persistence.dao.UserDao;
+import com.safecore.persistence.entity.UserEntity;
+import com.safecore.persistence.repository.UserRepository;
 import com.safecore.security.PasswordHasher;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
-import java.util.*;
+import java.util.Optional;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class UserServiceTest {
 
-    private final UserDao fakeDao = new InMemoryUserDao();
-    private final UserService service = new UserServiceImpl(fakeDao);
+    private UserRepository userRepository;
+    private UserService service;
+
+    @BeforeEach
+    void setUp() {
+        // Mock del repository Spring
+        userRepository = mock(UserRepository.class);
+        service = new UserServiceImpl(userRepository);
+    }
 
     @Test
     void registerAndLogin_success() {
-        service.register("test@mail.com", "Password123!");
-        // Modificato: verifichiamo che l'Optional sia presente e l'email corretta
-        Optional<User> loggedUser = service.login("test@mail.com", "Password123!");
+        String email = "test@mail.com";
+        String pass = "Password123!";
+
+        // Simuliamo che l'utente non esista ancora
+        when(userRepository.existsByEmail(email)).thenReturn(false);
+
+        // Simuliamo il comportamento del salvataggio
+        UserEntity savedEntity = new UserEntity();
+        savedEntity.setId(UUID.randomUUID());
+        savedEntity.setEmail(email);
+        savedEntity.setPasswordHash(PasswordHasher.hash(pass));
+
+        when(userRepository.save(any(UserEntity.class))).thenReturn(savedEntity);
+        // Simuliamo il ritrovamento dell'utente per il login
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(savedEntity));
+
+        // Test Registrazione
+        User registered = service.register(email, pass);
+        assertNotNull(registered);
+        assertEquals(email, registered.getEmail());
+
+        // Test Login
+        Optional<User> loggedUser = service.login(email, pass);
         assertTrue(loggedUser.isPresent());
-        assertEquals("test@mail.com", loggedUser.get().getEmail());
+        assertEquals(email, loggedUser.get().getEmail());
     }
 
     @Test
     void register_duplicateEmail_fails() {
-        service.register("a@mail.com", "Password123!");
-        // Questo rimane assertThrows perché il service lancia effettivamente
-        // IllegalArgumentException se l'email esiste già
-        assertThrows(IllegalArgumentException.class,
-                () -> service.register("a@mail.com", "Password123!"));
+        String email = "duplicate@mail.com";
+        when(userRepository.existsByEmail(email)).thenReturn(true);
+
+        assertThrows(IllegalArgumentException.class, () ->
+                service.register(email, "Password123!"));
     }
 
     @Test
-    void login_wrongPassword_fails() {
-        service.register("x@mail.com", "Password123!");
-        // CORREZIONE: Il service non lancia un'eccezione, ma restituisce Optional.empty()
-        // Quindi dobbiamo verificare che il risultato sia vuoto.
-        Optional<User> result = service.login("x@mail.com", "WrongPass");
-        assertTrue(result.isEmpty(), "Il login dovrebbe fallire con password errata");
-    }
+    void login_wrongPassword_returnsEmpty() {
+        String email = "user@mail.com";
+        UserEntity entity = new UserEntity();
+        entity.setEmail(email);
+        entity.setPasswordHash(PasswordHasher.hash("CorrectPass123!"));
 
-    // ---------- FAKE DAO ----------
-    static class InMemoryUserDao implements UserDao {
+        when(userRepository.findByEmail(email)).thenReturn(Optional.of(entity));
 
-        private final Map<String, User> db = new HashMap<>();
-        private long idSequence = 1;
-
-        @Override
-        public void save(User user) {
-            db.put(user.getEmail(), user);
-        }
-
-        @Override
-        public Optional<User> findByEmail(String email) {
-            return Optional.ofNullable(db.get(email));
-        }
-
-        @Override
-        public boolean existsByEmail(String email) {
-            return db.containsKey(email);
-        }
-
-        @Override
-        public void updatePassword(String email, String newPasswordHash) {
-            User old = db.get(email);
-            if (old == null) {
-                throw new IllegalArgumentException("User not found");
-            }
-
-            User updated = UserFactory.createNew(
-                    old.getId(),
-                    old.getEmail(),
-                    newPasswordHash,
-                    old.isMfaEnabled()
-            );
-
-            db.put(email, updated);
-        }
+        Optional<User> result = service.login(email, "WrongPassword");
+        assertTrue(result.isEmpty(), "Il login deve fallire con password errata");
     }
 }

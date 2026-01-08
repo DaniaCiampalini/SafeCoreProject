@@ -1,29 +1,27 @@
 package com.safecore.business.service;
 
-import com.safecore.security.hamming.ErrorCorrectionCodec;
-import com.safecore.security.hamming.Hamming74Codec;
+import org.springframework.stereotype.Service;
 
 /**
- * Gestisce i backup applicando l'algoritmo di Hamming.
- * L'idea è: non solo esportiamo i dati, ma aggiungiamo dei bit di controllo
- * così se il file si corrompe leggermente, possiamo ripararlo al volo!
+ * Gestione backup semplificata dopo la rimozione di Hamming.
+ * Si occupa dell'esportazione dei dati cifrati del Vault.
  */
+@Service
 public class BackupServiceImpl implements BackupService {
-
-    private final ErrorCorrectionCodec codec = new Hamming74Codec();
 
     @Override
     public void exportBackup(byte[] encryptedData) {
-        // Codifica con Hamming PRIMA di "salvare"
-        byte[] protectedData = codec.encode(encryptedData);
-        System.out.println("Backup generato con successo. Dimensione protetta: " + protectedData.length + " bytes.");
-        // Qui salveresti protectedData su file
+        if (encryptedData == null || encryptedData.length == 0) {
+            throw new IllegalArgumentException("Nessun dato da esportare");
+        }
+        // Qui la logica si limita a preparare il file per il download/salvataggio
+        System.out.println("[BACKUP] Esportazione di " + encryptedData.length + " bytes completata.");
     }
 
     @Override
     public byte[] importBackup(byte[] backupData) {
-        // backupData dovrebbe essere già codificato con Hamming
-        // Quindi decodifichiamo (e correggiamo errori)
-        return codec.decode(backupData);
+        if (backupData == null) return new byte[0];
+        // Restituisce i dati così come sono (già pronti per essere decifrati dal PasswordService)
+        return backupData;
     }
 }

@@ -1,49 +1,35 @@
 package com.safecore.persistence.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-/**
- * Questa classe mappa la tabella dei token di reset.
- * Ho aggiunto @SuppressWarnings("unused") sui campi che JPA usa "sottobanco"
- * così evitiamo warning fastidiosi.
- */
 @Entity
 @Table(name = "password_reset_tokens")
 public class PasswordResetTokenEntity {
 
     @Id
     @GeneratedValue
-    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "BINARY(16)")
     private UUID id;
 
-    @Column(nullable = false)
     private String email;
-
-    @Column(nullable = false)
     private String tokenHash;
+    private LocalDateTime expiryDate; // Assicurati che si chiami così
+    private boolean used;
 
-    @Column(nullable = false)
-    private LocalDateTime expiresAt;
+    // COSTRUTTORE PUBBLICO: Risolve l'errore "has protected access"
+    public PasswordResetTokenEntity() { }
 
-    @Column(nullable = false)
-    private boolean used = false;
-
-    // Risolto warning: JPA ha bisogno di un costruttore vuoto, ma noi lo facciamo protected
-    // così nessuno può creare un token "vuoto" per sbaglio fuori dal DB.
-    protected PasswordResetTokenEntity() { }
-
-    public PasswordResetTokenEntity(String email, String tokenHash, LocalDateTime expiresAt) {
-        this.email = email;
-        this.tokenHash = tokenHash;
-        this.expiresAt = expiresAt;
-    }
-    public UUID getId() { return id; }
+    // GETTER E SETTER: Risolvono "Cannot resolve method setExpiryDate/getExpiryDate"
     public String getEmail() { return email; }
-    public String getTokenHash() { return tokenHash; }
-    public LocalDateTime getExpiresAt() { return expiresAt; }
-    public boolean isUsed() { return used; }
+    public void setEmail(String email) { this.email = email; }
 
-    public void markUsed() { this.used = true; }
+    public String getTokenHash() { return tokenHash; }
+    public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
+
+    public LocalDateTime getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(LocalDateTime expiryDate) { this.expiryDate = expiryDate; }
+
+    public boolean isUsed() { return used; }
+    public void setUsed(boolean used) { this.used = used; }
 }

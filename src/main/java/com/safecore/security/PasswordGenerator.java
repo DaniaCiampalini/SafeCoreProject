@@ -8,10 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Ehi! Questo è il generatore "definitivo".
- * Invece di avere valori cablati (hardcoded), lui va a bussare alle nostre Rules
- * (MinLengthRule, ComplexityRule) per capire quali sono i requisiti attuali.
- * * Se cambiamo la lunghezza minima in MinLengthRule, il generatore si adegua da solo!
+ * Generatore di password che si adegua dinamicamente alle regole di business.
  */
 public final class PasswordGenerator {
 
@@ -23,7 +20,7 @@ public final class PasswordGenerator {
 
     private static final SecureRandom RANDOM = new SecureRandom();
 
-    // Lista delle regole da rispettare
+    // Allineamento con le regole esistenti
     private static final List<PasswordRule> RULES = new ArrayList<>();
 
     static {
@@ -31,37 +28,33 @@ public final class PasswordGenerator {
         RULES.add(new ComplexityRule());
     }
 
-    public PasswordGenerator() {}
+    private PasswordGenerator() {}
 
     /**
-     * Genera una password che garantisce il massimo livello di sicurezza.
-     * @param requestedLength la lunghezza desiderata (verrà comunque validata contro MinLengthRule)
+     * Genera una password valida basandosi sulle regole (Rules).
      */
     public static GeneratedPassword result(int requestedLength) {
         String password;
         boolean isValid;
 
-        // Recuperiamo la lunghezza minima reale dalla nostra regola di business
         int finalLength = Math.max(requestedLength, 12);
 
         do {
             password = generate(finalLength);
-
-            // Verifichiamo se la password generata passa TUTTE le regole
             final String passToTest = password;
-            isValid = RULES.stream().allMatch(rule -> rule.evaluate(passToTest).isEmpty());
 
-            // E verifichiamo che sia STRONG per il nostro Evaluator
+            // CORRETTO: Cambiato evaluate() in check() per allineamento interfaccia
+            isValid = RULES.stream().allMatch(rule -> rule.check(passToTest).isEmpty());
+
         } while (!isValid || PasswordStrengthEvaluator.evaluate(password) != PasswordStrengthEvaluator.Strength.STRONG);
 
-        // Restituiamo un oggetto che contiene sia la password che il suo livello di forza
         return new GeneratedPassword(password, PasswordStrengthEvaluator.evaluate(password));
     }
 
     public static String generate(int length) {
+        if (length < 4) length = 4; // Sicurezza minima per appendere i 4 tipi di char
         StringBuilder sb = new StringBuilder(length);
 
-        // Garantiamo la base per la ComplexityRule
         sb.append(randomChar(LOWER));
         sb.append(randomChar(UPPER));
         sb.append(randomChar(DIGITS));
@@ -89,9 +82,6 @@ public final class PasswordGenerator {
         return new String(chars);
     }
 
-    /**
-     * Classe contenitore (POJO) per restituire il risultato completo.
-     */
     public static class GeneratedPassword {
         private final String password;
         private final PasswordStrengthEvaluator.Strength strength;

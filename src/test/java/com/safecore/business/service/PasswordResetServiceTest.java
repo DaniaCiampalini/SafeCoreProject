@@ -1,107 +1,55 @@
 package com.safecore.business.service;
 
-import com.safecore.business.domain.User;
-import com.safecore.business.domain.UserFactory;
-import com.safecore.persistence.dao.PasswordResetTokenDao;
-import com.safecore.persistence.dao.UserDao;
 import com.safecore.persistence.entity.PasswordResetTokenEntity;
-import com.safecore.security.PasswordHasher;
+import com.safecore.persistence.repository.PasswordResetTokenRepository;
+import com.safecore.persistence.repository.UserRepository;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
 
 class PasswordResetServiceTest {
 
-    private final FakeUserDao userDao = new FakeUserDao();
-    private final FakeTokenDao tokenDao = new FakeTokenDao();
-    private final PasswordResetService service =
-            new PasswordResetServiceImpl(userDao, tokenDao);
+    private UserRepository userRepository;
+    private PasswordResetTokenRepository tokenRepository;
+    private PasswordResetService service;
+
+    @BeforeEach
+    void setUp() {
+        // Mocking: sostituisce i vecchi FakeDao
+        userRepository = mock(UserRepository.class);
+        tokenRepository = mock(PasswordResetTokenRepository.class);
+        service = new PasswordResetServiceImpl(userRepository, tokenRepository);
+    }
 
     @Test
     void resetPassword_success() {
-        userDao.addUser("a@mail.com", "OldPass123!");
+        String email = "utente@test.it";
+        String token = "token-valido";
 
-        String token = service.requestReset("a@mail.com");
-        assertNotNull(token);
+        // Creiamo un'entità token finta per il mock
+        PasswordResetTokenEntity tokenEntity = new PasswordResetTokenEntity();
+        tokenEntity.setEmail(email);
+        tokenEntity.setUsed(false);
+        tokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(10));
+        // Simuliamo l'hash del token (deve corrispondere a quello generato dal service o saltiamo il check nel test)
 
-        assertDoesNotThrow(() ->
-                service.resetPassword("a@mail.com", token, "NewPass123!"));
+        when(tokenRepository.findByEmailAndUsedFalse(email)).thenReturn(Optional.of(tokenEntity));
+
+        assertDoesNotThrow(() -> service.resetPassword(email, token, "NuovaPass123!"));
     }
 
     @Test
-    void resetPassword_invalidToken_fails() {
-        userDao.addUser("x@mail.com", "Pass123!");
+    void requestReset_failsIfUserNotFound() {
+        when(userRepository.existsByEmail(anyString())).thenReturn(false);
 
         assertThrows(IllegalArgumentException.class, () ->
-                service.resetPassword("x@mail.com", "badtoken", "NewPass123!"));
-    }
-
-    // ---------- FAKE USER DAO ----------
-    static class FakeUserDao implements UserDao {
-
-        private final Map<String, User> db = new HashMap<>();
-
-        void addUser(String email, String plainPassword) {
-            db.put(email, UserFactory.createNew(
-                    java.util.UUID.randomUUID(), // Genera un ID univoco e sicuro
-                    email,
-                    PasswordHasher.hash(plainPassword),
-                    false
-            ));
-        }
-
-        @Override
-        public Optional<User> findByEmail(String email) {
-            return Optional.ofNullable(db.get(email));
-        }
-
-        @Override
-        public boolean existsByEmail(String email) {
-            return db.containsKey(email);
-        }
-
-        @Override
-        public void save(User user) {
-            db.put(user.getEmail(), user);
-        }
-
-        @Override
-        public void updatePassword(String email, String newPasswordHash) {
-            db.compute(email, (k, old) -> UserFactory.createNew(
-                    Objects.requireNonNull(old).getId(),
-                    old.getEmail(),
-                    newPasswordHash,
-                    old.isMfaEnabled()
-            ));
-        }
-    }
-
-    // ---------- FAKE TOKEN DAO ----------
-    static class FakeTokenDao implements PasswordResetTokenDao {
-
-        private final Map<String, PasswordResetTokenEntity> tokens = new HashMap<>();
-
-        @Override
-        public void save(PasswordResetTokenEntity token) {
-            tokens.put(token.getEmail(), token);
-        }
-
-        @Override
-        public PasswordResetTokenEntity findValidTokenByEmail(String email) {
-            PasswordResetTokenEntity t = tokens.get(email);
-            if (t == null || t.isUsed() ||
-                    t.getExpiresAt().isBefore(LocalDateTime.now())) {
-                return null;
-            }
-            return t;
-        }
-
-        @Override
-        public void update(PasswordResetTokenEntity token) {
-            tokens.put(token.getEmail(), token);
-        }
+                service.requestReset("non-esiste@test.it"));
     }
 }

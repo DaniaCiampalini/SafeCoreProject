@@ -1,145 +1,124 @@
 package com.safecore.ui.controller;
 
 import com.safecore.business.service.PasswordResetService;
-import com.safecore.business.service.PasswordResetServiceImpl;
-import com.safecore.persistence.dao.PasswordResetTokenDaoJpa;
-import com.safecore.persistence.dao.UserDaoJpa;
 import com.safecore.security.PasswordGenerator;
-import com.safecore.security.PasswordStrengthEvaluator;
 import com.safecore.ui.navigation.SceneNavigator;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
+import org.springframework.stereotype.Component;
 
 /**
- * Controller JavaFX per il reset della password.
- * Responsabilità:
- * - Gestione input/output UI
- * - Nessuna logica di business
- * Il flusso reale (email) è simulato mostrando il token a schermo.
+ * Controller JavaFX gestito da Spring Boot.
+ * Dimostra il disaccoppiamento totale dalla persistenza.
  */
+@Component
 public class PasswordResetController {
 
-    @FXML
-    private TextField emailField;
+    @FXML private TextField emailField;
+    @FXML private TextField tokenField;
+    @FXML private PasswordField newPasswordField;
+    @FXML private Label messageLabel;
 
-    @FXML
-    private TextField tokenField;
+    // Iniezione tramite interfaccia: non sappiamo (e non ci interessa)
+    // come sia implementato il service o quale DB usi.
+    private final PasswordResetService resetService;
 
-    @FXML
-    private PasswordField newPasswordField;
-
-    @FXML
-    private Label messageLabel;
-
-    private final PasswordResetService resetService =
-            new PasswordResetServiceImpl(new UserDaoJpa(), new PasswordResetTokenDaoJpa());
-
+    // Costruttore per la Dependency Injection di Spring
+    public PasswordResetController(PasswordResetService resetService) {
+        this.resetService = resetService;
+    }
 
     /**
-     * Gestisce la richiesta del token di reset.
+     * Richiede un token di reset delegando al Service.
      */
     @FXML
     private void handleRequestToken() {
-
         String email = emailField.getText();
 
-        if (email.isBlank()) {
+        if (email == null || email.isBlank()) {
             showError("Email is required");
             return;
         }
 
         try {
+            // Logica di business delegata al service
             String token = resetService.requestReset(email);
-
-            // Simulazione invio email
             showInfo("Reset token (simulated): " + token);
-
-        } catch (IllegalArgumentException e) {
+        } catch (Exception e) {
             showError(e.getMessage());
         }
     }
 
     /**
-     * Gestisce il reset effettivo della password.
+     * Esegue il reset della password.
      */
     @FXML
     private void handleResetPassword() {
-
         String email = emailField.getText();
         String token = tokenField.getText();
         String newPassword = newPasswordField.getText();
 
-        if (email.isBlank() || token.isBlank() || newPassword.isBlank()) {
+        if (isInputInvalid(email, token, newPassword)) {
             showError("All fields are required");
             return;
         }
 
-        // Controllo robustezza password
-        if (PasswordStrengthEvaluator.evaluate(newPassword)
-                == PasswordStrengthEvaluator.Strength.WEAK) {
-            showError("Password too weak");
-            return;
-        }
-
         try {
+            // Il controllo robustezza ora è DENTRO resetPassword nel service
             resetService.resetPassword(email, token, newPassword);
+
             showSuccess("Password successfully reset");
-            // disabilita il form (già fatto)
             disableResetForm();
-            // redirect automatico dopo 2 secondi
             redirectToLoginAfterDelay();
 
-
-
         } catch (IllegalArgumentException e) {
+            // Cattura errori di business (password debole, token scaduto)
             showError(e.getMessage());
+        } catch (Exception e) {
+            // Cattura errori infrastrutturali
+            showError("A system error occurred. Please try again.");
         }
     }
+
     @FXML
     private void handleGeneratePassword() {
-
         try {
             String generated = PasswordGenerator.generate(16);
             newPasswordField.setText(generated);
-
-            messageLabel.setStyle("-fx-text-fill: blue;");
-            messageLabel.setText("Secure password generated");
-
+            showInfo("Secure password generated");
         } catch (Exception e) {
-            messageLabel.setStyle("-fx-text-fill: red;");
-            messageLabel.setText(e.getMessage());
+            showError("Error generating password");
         }
     }
 
-    /**
-     * Navigazione verso la schermata di login.
-     */
     @FXML
     private void handleBackToLogin() {
-        Stage stage = (Stage) messageLabel.getScene().getWindow();
+        Stage stage = (Stage) emailField.getScene().getWindow();
         SceneNavigator.switchTo(stage, "/login.fxml", "SafeCore – Login");
     }
 
-    private void redirectToLoginAfterDelay() {
+    // --- Metodi privati di supporto ---
 
-        new Thread(() -> {
-            try {
-                Thread.sleep(2000); // 2 secondi
-            } catch (InterruptedException ignored) {}
-
-            javafx.application.Platform.runLater(() -> {
-                Stage stage = (Stage) messageLabel.getScene().getWindow();
-                SceneNavigator.switchTo(stage, "/login.fxml",
-                        "SafeCore – Login");
-            });
-        }).start();
+    private boolean isInputInvalid(String email, String token, String pwd) {
+        return email == null || email.isBlank() ||
+                token == null || token.isBlank() ||
+                pwd == null || pwd.isBlank();
     }
 
+    private void redirectToLoginAfterDelay() {
+        // Uso di un thread separato per non bloccare la UI (JavaFX Application Thread)
+        new Thread(() -> {
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ignored) {}
 
-    // Metodi di utilità UI
+            Platform.runLater(this::handleBackToLogin);
+        }).start();
+    }
 
     private void showError(String message) {
         messageLabel.setStyle("-fx-text-fill: red;");
@@ -161,5 +140,4 @@ public class PasswordResetController {
         tokenField.setDisable(true);
         newPasswordField.setDisable(true);
     }
-
 }

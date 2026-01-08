@@ -1,6 +1,6 @@
 package com.safecore.persistence.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -9,8 +9,8 @@ import java.util.UUID;
 public class PasswordEntryEntity {
 
     @Id
-    @GeneratedValue
-    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "BINARY(16)")
+    @GeneratedValue // Spring gestisce l'UUID
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(nullable = false)
@@ -19,16 +19,15 @@ public class PasswordEntryEntity {
     @Column(nullable = false)
     private String username;
 
-    @Lob // Large Object: serve per memorizzare l'array di byte cifrati
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARBINARY(1024)")
     private byte[] encryptedPassword;
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public PasswordEntryEntity() {} // Obbligatorio per JPA
+    public PasswordEntryEntity() {}
 
-    // Getter e Setter
+    // Getter e Setter standard...
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getServiceName() { return serviceName; }

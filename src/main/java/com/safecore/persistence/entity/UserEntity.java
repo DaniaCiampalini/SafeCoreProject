@@ -1,20 +1,15 @@
 package com.safecore.persistence.entity;
 
-import javax.persistence.*;
+import jakarta.persistence.*;
 import java.util.UUID;
 
-/**
- * Questa è l'immagine riflessa della tabella 'users' sul database.
- * A differenza del nostro 'User' di business, questa deve essere mutabile (ha i setter)
- * perché Hibernate deve poterci scrivere dentro quando legge dal database.
- */
 @Entity
 @Table(name = "users")
 public class UserEntity {
 
     @Id
-    @GeneratedValue
-    @Column(name = "id", updatable = false, nullable = false, columnDefinition = "BINARY(16)")
+    @GeneratedValue // Spring Boot e H2 gestiranno automaticamente l'UUID
+    @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
     @Column(nullable = false, unique = true)
@@ -26,8 +21,16 @@ public class UserEntity {
     @Column(nullable = false)
     private boolean mfaEnabled;
 
-    public UserEntity() { } // Obbligatorio per JPA
+    public UserEntity() { }
 
+    // Costruttore di utilità per il Service
+    public UserEntity(String email, String passwordHash) {
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.mfaEnabled = false;
+    }
+
+    // Getter e Setter
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getEmail() { return email; }

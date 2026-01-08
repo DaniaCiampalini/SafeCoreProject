@@ -1,63 +1,77 @@
 package com.safecore.business.service;
 
-import com.safecore.persistence.dao.PasswordResetTokenDao;
-import com.safecore.persistence.dao.UserDao;
 import com.safecore.persistence.entity.PasswordResetTokenEntity;
+import com.safecore.persistence.repository.PasswordResetTokenRepository;
+import com.safecore.persistence.repository.UserRepository;
 import com.safecore.security.PasswordHasher;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import com.safecore.persistence.repository.PasswordResetTokenRepository;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
-/**
- * Gestisce il reset della password tramite token.
- * Ho scelto di hashare anche il token nel DB: se bucano il database,
- * l'attaccante non può comunque usare i token attivi perché vede solo gli hash!
- */
+@Service
 public class PasswordResetServiceImpl implements PasswordResetService {
 
-    private final UserDao userDao;
-    private final PasswordResetTokenDao tokenDao;
+    private final UserRepository userRepository;
+    private final PasswordResetTokenRepository tokenRepository;
 
-    public PasswordResetServiceImpl(UserDao userDao, PasswordResetTokenDao tokenDao) {
-        this.userDao = userDao;
-        this.tokenDao = tokenDao;
+    // Dependency Injection: Spring inietta automaticamente i Repository
+    public PasswordResetServiceImpl(UserRepository userRepository, PasswordResetTokenRepository tokenRepository) {
+        this.userRepository = userRepository;
+        this.tokenRepository = tokenRepository;
     }
 
     @Override
+    @Transactional
     public String requestReset(String email) {
-        if (userDao.findByEmail(email).isEmpty()) {
+        // Controllo esistenza utente tramite UserRepository
+        if (!userRepository.existsByEmail(email)) {
             throw new IllegalArgumentException("Email non registrata");
         }
 
         String token = generateToken();
         String tokenHash = PasswordHasher.hash(token);
 
-        // Il token scade dopo 15 minuti per sicurezza
-        PasswordResetTokenEntity entity = new PasswordResetTokenEntity(
-                email,
-                tokenHash,
-                LocalDateTime.now().plusMinutes(15)
-        );
+        // Creazione entità token
+        PasswordResetTokenEntity entity = new PasswordResetTokenEntity();
+        entity.setEmail(email);
+        entity.setTokenHash(tokenHash);
+        entity.setExpiryDate(LocalDateTime.now().plusMinutes(15));
+        entity.setUsed(false);
 
-        tokenDao.save(entity);
-        return token; // In un'app reale, questo verrebbe inviato via mail
+        tokenRepository.save(entity);
+        return token;
     }
 
     @Override
+    @Transactional
     public void resetPassword(String email, String token, String newPassword) {
-        PasswordResetTokenEntity stored = tokenDao.findValidTokenByEmail(email);
+        // Cerchiamo un token valido nel DB
+        PasswordResetTokenEntity stored = tokenRepository.findByEmailAndUsedFalse(email)
+                .orElseThrow(() -> new IllegalArgumentException("Nessun token attivo trovato per questa email"));
 
-        if (stored == null || !PasswordHasher.verify(token, stored.getTokenHash())) {
-            throw new IllegalArgumentException("Token non valido o scaduto");
+        // Verifica scadenza
+        if (stored.getExpiryDate().isBefore(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Il token è scaduto");
         }
 
-        // Aggiorniamo la password dell'utente
-        userDao.updatePassword(email, PasswordHasher.hash(newPassword));
+        // Verifica hash del token
+        if (!PasswordHasher.verify(token, stored.getTokenHash())) {
+            throw new IllegalArgumentException("Token non valido");
+        }
 
-        // Importante: invalidiamo il token dopo l'uso!
-        stored.markUsed();
-        tokenDao.update(stored);
+        // 1. Aggiorniamo la password dell'utente
+        userRepository.updatePassword(email, PasswordHasher.hash(newPassword));
+
+        // 2. Invalidiamo il token (Consumazione)
+        stored.setUsed(true);
+        tokenRepository.save(stored);
+
+        // Grazie a @Transactional, se l'update della password fallisce,
+        // il token non verrà segnato come usato!
     }
 
     private String generateToken() {
