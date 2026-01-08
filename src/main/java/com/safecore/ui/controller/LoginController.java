@@ -26,9 +26,10 @@ public class LoginController {
 
     @FXML
     private void handleLogin() {
-        String email = emailField.getText();
+        // 1. Pulizia input: toglie spazi e mette tutto in minuscolo
+        String email = emailField.getText() != null ? emailField.getText().trim().toLowerCase() : "";
 
-        // Recupera la password in modo sicuro in base alla visibilità dei componenti
+        // 2. Recupero password dal campo visibile
         String password;
         if (passwordTextField.isVisible()) {
             password = passwordTextField.getText();
@@ -36,16 +37,19 @@ public class LoginController {
             password = passwordField.getText();
         }
 
-        if (email == null || email.isBlank() || password == null || password.isBlank()) {
+        if (email.isBlank() || password == null || password.isBlank()) {
             showError("Email e password sono obbligatorie");
             return;
         }
 
-        // DEBUG: Rimuovi questo print in produzione, serve solo per capire se la password è corretta
-        System.out.println("Tentativo login per: " + email + " | Password recuperata: " + password);
+        // DEBUG: Controlla la console di IntelliJ quando clicchi!
+        System.out.println("LOG DEBUG - Tentativo Login:");
+        System.out.println("Email: [" + email + "]");
+        System.out.println("Password (lunghezza): " + password.length());
 
         userService.login(email, password).ifPresentOrElse(
                 user -> {
+                    System.out.println("LOGIN OK per: " + email);
                     SessionContext.login(email);
                     navigateTo("/com/safecore/ui/view/dashboard.fxml", "SafeCore – Dashboard");
                 },
