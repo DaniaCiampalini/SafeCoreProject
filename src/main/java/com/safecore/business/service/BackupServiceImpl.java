@@ -14,17 +14,16 @@ public class BackupServiceImpl implements BackupService {
 
     @Override
     public void exportBackup(byte[] encryptedData) {
-        // Applichiamo Hamming per la protezione
+        // Codifica con Hamming PRIMA di "salvare"
         byte[] protectedData = codec.encode(encryptedData);
-
-        // Risolto il warning: simuliamo l'output o logghiamo la dimensione
         System.out.println("Backup generato con successo. Dimensione protetta: " + protectedData.length + " bytes.");
-        // TODO: In una fase successiva, useremo un FileOutputStream qui.
+        // Qui salveresti protectedData su file
     }
 
     @Override
     public byte[] importBackup(byte[] backupData) {
-        // Qui Hamming prova a correggere eventuali errori prima di restituire i dati
+        // backupData dovrebbe essere già codificato con Hamming
+        // Quindi decodifichiamo (e correggiamo errori)
         return codec.decode(backupData);
     }
 }
