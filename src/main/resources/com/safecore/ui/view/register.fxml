@@ -2,45 +2,66 @@
 
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
 
-<VBox spacing="10"
-      alignment="CENTER"
-      xmlns="http://javafx.com/javafx/17"
-      xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.safecore.ui.controller.RegisterController">
+<VBox spacing="20" alignment="CENTER" prefWidth="420" prefHeight="600"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.safecore.ui.controller.RegisterController"
+      style="-fx-background-color: #F9FAFB; -fx-padding: 40;">
 
-    <Label text="SafeCore – Registrazione"
-           style="-fx-font-size: 18px;"/>
+    <VBox alignment="CENTER" spacing="5">
+        <Label text="Crea Account" style="-fx-font-size: 28px; -fx-font-weight: bold; -fx-text-fill: #1F2937;"/>
+        <Label text="Inizia a proteggere i tuoi dati" style="-fx-text-fill: #6B7280; -fx-font-size: 14px;"/>
+    </VBox>
 
-    <TextField fx:id="emailField"
-               promptText="Email"/>
+    <VBox spacing="12">
+        <VBox spacing="5">
+            <Label text="Email" style="-fx-text-fill: #374151; -fx-font-weight: bold; -fx-font-size: 13px;"/>
+            <TextField fx:id="emailField" promptText="esempio@mail.com"
+                       style="-fx-background-radius: 8; -fx-padding: 10; -fx-border-color: #D1D5DB; -fx-border-radius: 8;"/>
+        </VBox>
 
-    <PasswordField fx:id="passwordField"
-                   promptText="Password"
-                   onKeyReleased="#handlePasswordTyping"/>
+        <VBox spacing="5">
+            <Label text="Password" style="-fx-text-fill: #374151; -fx-font-weight: bold; -fx-font-size: 13px;"/>
+            <HBox alignment="CENTER_LEFT" style="-fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-color: white; -fx-background-radius: 8;">
+                <StackPane HBox.hgrow="ALWAYS">
+                    <PasswordField fx:id="passwordField" promptText="Minimo 8 caratteri" onKeyReleased="#handlePasswordTyping"
+                                   style="-fx-background-color: transparent; -fx-padding: 10;"/>
+                    <TextField fx:id="passwordTextField" visible="false" onKeyReleased="#handlePasswordTyping"
+                               style="-fx-background-color: transparent; -fx-padding: 10;"/>
+                </StackPane>
+                <Button fx:id="togglePwdBtn" text="👁" onAction="#togglePasswordVisibility"
+                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #9CA3AF;"/>
+            </HBox>
+            <Label fx:id="passwordStrengthLabel" style="-fx-font-size: 11px;"/>
+        </VBox>
 
+        <VBox spacing="5">
+            <Label text="Conferma Password" style="-fx-text-fill: #374151; -fx-font-weight: bold; -fx-font-size: 13px;"/>
+            <HBox alignment="CENTER_LEFT" style="-fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-color: white; -fx-background-radius: 8;">
+                <StackPane HBox.hgrow="ALWAYS">
+                    <PasswordField fx:id="confirmPasswordField" promptText="Ripeti password"
+                                   style="-fx-background-color: transparent; -fx-padding: 10;"/>
+                    <TextField fx:id="confirmPasswordTextField" visible="false"
+                               style="-fx-background-color: transparent; -fx-padding: 10;"/>
+                </StackPane>
+                <Button fx:id="toggleConfirmPwdBtn" text="👁" onAction="#toggleConfirmVisibility"
+                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #9CA3AF;"/>
+            </HBox>
+        </VBox>
+    </VBox>
 
-    <PasswordField fx:id="confirmPasswordField"
-                   promptText="Conferma Password"/>
+    <VBox spacing="10" alignment="CENTER">
+        <Button text="Registrati ora" onAction="#handleRegister" maxWidth="Infinity"
+                style="-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 12; -fx-background-radius: 8; -fx-cursor: hand;"/>
 
-    <Label
-            fx:id="passwordStrengthLabel"
-            text=""
-            style="-fx-font-weight: bold;" />
+        <Button text="Genera Password Sicura" onAction="#handleGeneratePassword" maxWidth="Infinity"
+                style="-fx-background-color: white; -fx-text-fill: #374151; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-padding: 10; -fx-background-radius: 8; -fx-cursor: hand;"/>
+    </VBox>
 
+    <Label fx:id="messageLabel" wrapText="true" alignment="CENTER" style="-fx-font-size: 12px;"/>
 
-    <Button text="Registrati"
-            onAction="#handleRegister"/>
-    <Button
-            text="Generate secure password"
-            onAction="#handleGeneratePassword"
-            prefWidth="220" />
-
-    <Label fx:id="messageLabel"/>
-
-    <Label text="Back to login"
-           onMouseClicked="#handleBackToLogin"
-           style="-fx-text-fill: blue; -fx-underline: true; -fx-cursor: hand;" />
-
+    <Label text="Hai già un account? Accedi" onMouseClicked="#handleBackToLogin"
+           style="-fx-text-fill: #2563EB; -fx-cursor: hand; -fx-font-weight: bold;"/>
 
 </VBox>

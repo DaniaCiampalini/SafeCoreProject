@@ -5,9 +5,7 @@ import com.safecore.security.PasswordGenerator;
 import com.safecore.ui.navigation.SceneNavigator;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
@@ -15,15 +13,26 @@ import org.springframework.stereotype.Component;
 public class RegisterController {
 
     @FXML private TextField emailField;
+    @FXML private Label messageLabel;
+    @FXML private Label passwordStrengthLabel;
+
+    // Campi Password (Nascosti)
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmPasswordField;
-    @FXML private Label messageLabel;
 
-    // 1. DICHIARA QUI IL COMPONENTE FXML (così JavaFX lo inizializza all'avvio)
-    @FXML private Label passwordStrengthLabel;
+    // Campi Testo (In chiaro)
+    @FXML private TextField passwordTextField;
+    @FXML private TextField confirmPasswordTextField;
+
+    // Bottoni Occhio
+    @FXML private Button togglePwdBtn;
+    @FXML private Button toggleConfirmPwdBtn;
 
     private final UserService userService;
     private final PasswordGenerator passwordGenerator;
+
+    private boolean isPwdVisible = false;
+    private boolean isConfirmVisible = false;
 
     public RegisterController(UserService userService, PasswordGenerator passwordGenerator) {
         this.userService = userService;
@@ -33,8 +42,9 @@ public class RegisterController {
     @FXML
     private void handleRegister() {
         String email = emailField.getText();
-        String password = passwordField.getText();
-        String confirm = confirmPasswordField.getText();
+        // Recupera i valori dai campi attivi
+        String password = isPwdVisible ? passwordTextField.getText() : passwordField.getText();
+        String confirm = isConfirmVisible ? confirmPasswordTextField.getText() : confirmPasswordField.getText();
 
         if (email.isBlank() || password.isBlank() || confirm.isBlank()) {
             showError("Tutti i campi sono obbligatori");
@@ -62,28 +72,64 @@ public class RegisterController {
     }
 
     @FXML
+    private void togglePasswordVisibility() {
+        if (isPwdVisible) {
+            passwordField.setText(passwordTextField.getText());
+            passwordField.setVisible(true);
+            passwordTextField.setVisible(false);
+            togglePwdBtn.setText("👁");
+        } else {
+            passwordTextField.setText(passwordField.getText());
+            passwordTextField.setVisible(true);
+            passwordField.setVisible(false);
+            togglePwdBtn.setText("🙈");
+        }
+        isPwdVisible = !isPwdVisible;
+    }
+
+    @FXML
+    private void toggleConfirmVisibility() {
+        if (isConfirmVisible) {
+            confirmPasswordField.setText(confirmPasswordTextField.getText());
+            confirmPasswordField.setVisible(true);
+            confirmPasswordTextField.setVisible(false);
+            toggleConfirmPwdBtn.setText("👁");
+        } else {
+            confirmPasswordTextField.setText(confirmPasswordField.getText());
+            confirmPasswordTextField.setVisible(true);
+            confirmPasswordField.setVisible(false);
+            toggleConfirmPwdBtn.setText("🙈");
+        }
+        isConfirmVisible = !isConfirmVisible;
+    }
+
+    @FXML
     private void handleGeneratePassword() {
         String generated = passwordGenerator.generateSafe(12);
+
+        // Aggiorna entrambi i set di campi per sicurezza
         passwordField.setText(generated);
+        passwordTextField.setText(generated);
         confirmPasswordField.setText(generated);
+        confirmPasswordTextField.setText(generated);
+
         showInfo("Password sicura generata");
-        // Aggiorna anche il label della forza quando generi
         handlePasswordTyping();
     }
 
     @FXML
     private void handlePasswordTyping() {
-        String pwd = passwordField.getText();
+        // Legge dal campo corretto in base alla visibilità
+        String pwd = isPwdVisible ? passwordTextField.getText() : passwordField.getText();
 
-        // 2. RIMOSSA LA DICHIARAZIONE LOCALE: ora usa il campo @FXML dichiarato sopra
         if (pwd.isEmpty()) {
             passwordStrengthLabel.setText("");
         } else if (pwd.length() < 8) {
             passwordStrengthLabel.setText("Debole");
-            passwordStrengthLabel.setStyle("-fx-text-fill: red;");
+            passwordStrengthLabel.setStyle("-fx-text-fill: #dc2626;");
         } else {
             passwordStrengthLabel.setText("Forte");
-            passwordStrengthLabel.setStyle("-fx-text-fill: green;");
+            passwordStrengthLabel.setStyle("-fx-text-fill: #16a34a;");
         }
     }
 
@@ -93,13 +139,16 @@ public class RegisterController {
         SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
     }
 
-    private void showError(String msg) { messageLabel.setStyle("-fx-text-fill: red;"); messageLabel.setText(msg); }
-    private void showSuccess(String msg) { messageLabel.setStyle("-fx-text-fill: green;"); messageLabel.setText(msg); }
-    private void showInfo(String msg) { messageLabel.setStyle("-fx-text-fill: blue;"); messageLabel.setText(msg); }
+    // Helper per i messaggi
+    private void showError(String msg) { messageLabel.setStyle("-fx-text-fill: #dc2626;"); messageLabel.setText(msg); }
+    private void showSuccess(String msg) { messageLabel.setStyle("-fx-text-fill: #16a34a;"); messageLabel.setText(msg); }
+    private void showInfo(String msg) { messageLabel.setStyle("-fx-text-fill: #2563eb;"); messageLabel.setText(msg); }
 
     private void disableForm() {
         emailField.setDisable(true);
         passwordField.setDisable(true);
+        passwordTextField.setDisable(true);
         confirmPasswordField.setDisable(true);
+        confirmPasswordTextField.setDisable(true);
     }
 }
