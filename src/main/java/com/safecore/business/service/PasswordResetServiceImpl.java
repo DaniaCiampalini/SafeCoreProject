@@ -1,12 +1,13 @@
 package com.safecore.business.service;
 
+import com.safecore.business.exception.InvalidTokenException; // Da creare
+import com.safecore.business.exception.UserNotFoundException;  // Da creare
 import com.safecore.persistence.entity.PasswordResetTokenEntity;
 import com.safecore.persistence.repository.PasswordResetTokenRepository;
 import com.safecore.persistence.repository.UserRepository;
 import com.safecore.security.PasswordHasher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import com.safecore.persistence.repository.PasswordResetTokenRepository;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -17,25 +18,26 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
+    private final PasswordHasher passwordHasher; // Iniettato!
 
-    // Dependency Injection: Spring inietta automaticamente i Repository
-    public PasswordResetServiceImpl(UserRepository userRepository, PasswordResetTokenRepository tokenRepository) {
+    public PasswordResetServiceImpl(UserRepository userRepository,
+                                    PasswordResetTokenRepository tokenRepository,
+                                    PasswordHasher passwordHasher) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
+        this.passwordHasher = passwordHasher;
     }
 
     @Override
     @Transactional
     public String requestReset(String email) {
-        // Controllo esistenza utente tramite UserRepository
         if (!userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email non registrata");
+            throw new UserNotFoundException(email);
         }
 
         String token = generateToken();
-        String tokenHash = PasswordHasher.hash(token);
+        String tokenHash = passwordHasher.hash(token); // Uso dell'istanza iniettata
 
-        // Creazione entità token
         PasswordResetTokenEntity entity = new PasswordResetTokenEntity();
         entity.setEmail(email);
         entity.setTokenHash(tokenHash);
@@ -49,29 +51,22 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     @Override
     @Transactional
     public void resetPassword(String email, String token, String newPassword) {
-        // Cerchiamo un token valido nel DB
         PasswordResetTokenEntity stored = tokenRepository.findByEmailAndUsedFalse(email)
-                .orElseThrow(() -> new IllegalArgumentException("Nessun token attivo trovato per questa email"));
+                .orElseThrow(() -> new InvalidTokenException("Nessun token attivo trovato"));
 
-        // Verifica scadenza
         if (stored.getExpiryDate().isBefore(LocalDateTime.now())) {
-            throw new IllegalArgumentException("Il token è scaduto");
+            throw new InvalidTokenException("Il token è scaduto");
         }
 
-        // Verifica hash del token
-        if (!PasswordHasher.verify(token, stored.getTokenHash())) {
-            throw new IllegalArgumentException("Token non valido");
+        if (!passwordHasher.verify(token, stored.getTokenHash())) {
+            throw new InvalidTokenException("Token non valido");
         }
 
-        // 1. Aggiorniamo la password dell'utente
-        userRepository.updatePassword(email, PasswordHasher.hash(newPassword));
+        // Hash della nuova password usando l'istanza iniettata
+        userRepository.updatePassword(email, passwordHasher.hash(newPassword));
 
-        // 2. Invalidiamo il token (Consumazione)
         stored.setUsed(true);
         tokenRepository.save(stored);
-
-        // Grazie a @Transactional, se l'update della password fallisce,
-        // il token non verrà segnato come usato!
     }
 
     private String generateToken() {

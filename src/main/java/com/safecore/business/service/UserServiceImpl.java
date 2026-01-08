@@ -2,6 +2,8 @@ package com.safecore.business.service;
 
 import com.safecore.business.domain.User;
 import com.safecore.business.domain.UserBuilder;
+import com.safecore.business.exception.UserAlreadyExistsException; // Da creare
+import com.safecore.business.exception.WeakPasswordException;       // Da creare
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.UserRepository;
 import com.safecore.security.PasswordHasher;
@@ -15,9 +17,15 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final PasswordHasher passwordHasher; // Iniettato!
+    private final PasswordStrengthEvaluator strengthEvaluator; // Iniettato!
 
-    public UserServiceImpl(UserRepository userRepository) {
+    public UserServiceImpl(UserRepository userRepository,
+                           PasswordHasher passwordHasher,
+                           PasswordStrengthEvaluator strengthEvaluator) {
         this.userRepository = userRepository;
+        this.passwordHasher = passwordHasher;
+        this.strengthEvaluator = strengthEvaluator;
     }
 
     @Override
@@ -26,10 +34,10 @@ public class UserServiceImpl implements UserService {
         validatePasswordStrength(plainPassword);
 
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email già registrata");
+            throw new UserAlreadyExistsException(email);
         }
 
-        String hashedPassword = PasswordHasher.hash(plainPassword);
+        String hashedPassword = passwordHasher.hash(plainPassword);
 
         UserEntity entity = new UserEntity();
         entity.setEmail(email);
@@ -49,7 +57,7 @@ public class UserServiceImpl implements UserService {
     @Transactional(readOnly = true)
     public Optional<User> login(String email, String plainPassword) {
         return userRepository.findByEmail(email)
-                .filter(u -> PasswordHasher.verify(plainPassword, u.getPasswordHash()))
+                .filter(u -> passwordHasher.verify(plainPassword, u.getPasswordHash()))
                 .map(u -> new UserBuilder()
                         .id(u.getId())
                         .email(u.getEmail())
@@ -59,8 +67,8 @@ public class UserServiceImpl implements UserService {
 
     private void validatePasswordStrength(String password) {
         if (password == null || password.length() < 8 ||
-                PasswordStrengthEvaluator.evaluate(password) == PasswordStrengthEvaluator.Strength.WEAK) {
-            throw new IllegalArgumentException("Password non valida o troppo debole");
+                strengthEvaluator.evaluate(password) == PasswordStrengthEvaluator.Strength.WEAK) {
+            throw new WeakPasswordException("La password fornita non soddisfa i requisiti minimi di sicurezza.");
         }
     }
 }

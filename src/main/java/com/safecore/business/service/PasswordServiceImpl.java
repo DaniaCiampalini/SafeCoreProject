@@ -3,7 +3,6 @@ package com.safecore.business.service;
 import com.safecore.business.domain.PasswordEntry;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.persistence.repository.PasswordEntryRepository;
-import com.safecore.security.AESEncryptionStrategy;
 import com.safecore.security.EncryptionStrategy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,30 +12,36 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
-@Service // Gestito da Spring
+@Service
 public class PasswordServiceImpl implements PasswordService {
 
     private final PasswordEntryRepository passwordRepository;
-    private final EncryptionStrategy encryption = new AESEncryptionStrategy();
+    private final EncryptionStrategy encryption; // Iniezione tramite interfaccia
 
-    public PasswordServiceImpl(PasswordEntryRepository passwordRepository) {
+    // Spring inietterà automaticamente AESEncryptionStrategy (perché è un @Component)
+    public PasswordServiceImpl(PasswordEntryRepository passwordRepository, EncryptionStrategy encryption) {
         this.passwordRepository = passwordRepository;
+        this.encryption = encryption;
     }
 
     @Override
     @Transactional
     public void addCredential(String service, String username, String plainPassword) {
-        // 1. Cifratura tramite Strategy
+        if (plainPassword == null || plainPassword.isBlank()) {
+            throw new IllegalArgumentException("La password non può essere vuota");
+        }
+
+        // 1. Cifratura tramite Strategy iniettata
         byte[] encryptedData = encryption.encrypt(plainPassword);
 
-        // 2. Creazione Entity (per il DB)
+        // 2. Creazione Entity
         PasswordEntryEntity entity = new PasswordEntryEntity();
         entity.setServiceName(service);
         entity.setUsername(username);
         entity.setEncryptedPassword(encryptedData);
         entity.setCreatedAt(LocalDateTime.now());
 
-        // 3. Salvataggio tramite Repository
+        // 3. Salvataggio
         passwordRepository.save(entity);
     }
 
@@ -48,7 +53,6 @@ public class PasswordServiceImpl implements PasswordService {
     @Override
     @Transactional(readOnly = true)
     public List<PasswordEntry> getAllEntries() {
-        // Recupera le entity e le mappa nel Domain Model per la UI
         return passwordRepository.findAll().stream()
                 .map(this::mapToDomain)
                 .collect(Collectors.toList());
@@ -60,7 +64,6 @@ public class PasswordServiceImpl implements PasswordService {
         passwordRepository.deleteById(id);
     }
 
-    // Mapper interno: trasforma Entity DB in Domain Object pulito
     private PasswordEntry mapToDomain(PasswordEntryEntity entity) {
         return new PasswordEntry.Builder()
                 .id(entity.getId())

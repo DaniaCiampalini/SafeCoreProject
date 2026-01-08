@@ -1,16 +1,12 @@
 package com.safecore.security;
 
-import com.safecore.business.hints.rules.ComplexityRule;
-import com.safecore.business.hints.rules.MinLengthRule;
 import com.safecore.business.hints.rules.PasswordRule;
+import org.springframework.stereotype.Component;
 import java.security.SecureRandom;
-import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Generatore di password che si adegua dinamicamente alle regole di business.
- */
-public final class PasswordGenerator {
+@Component
+public class PasswordGenerator {
 
     private static final String LOWER = "abcdefghijklmnopqrstuvwxyz";
     private static final String UPPER = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -18,43 +14,32 @@ public final class PasswordGenerator {
     private static final String SYMBOLS = "!@#$%^&*()-_=+[]{}";
     private static final String ALL = LOWER + UPPER + DIGITS + SYMBOLS;
 
-    private static final SecureRandom RANDOM = new SecureRandom();
+    private final SecureRandom random = new SecureRandom();
+    private final List<PasswordRule> rules;
+    private final PasswordStrengthEvaluator evaluator;
 
-    // Allineamento con le regole esistenti
-    private static final List<PasswordRule> RULES = new ArrayList<>();
-
-    static {
-        RULES.add(new MinLengthRule());
-        RULES.add(new ComplexityRule());
+    public PasswordGenerator(List<PasswordRule> rules, PasswordStrengthEvaluator evaluator) {
+        this.rules = rules;
+        this.evaluator = evaluator;
     }
 
-    private PasswordGenerator() {}
-
-    /**
-     * Genera una password valida basandosi sulle regole (Rules).
-     */
-    public static GeneratedPassword result(int requestedLength) {
+    public String generateSafe(int length) {
         String password;
         boolean isValid;
-
-        int finalLength = Math.max(requestedLength, 12);
+        int finalLength = Math.max(length, 12);
 
         do {
-            password = generate(finalLength);
-            final String passToTest = password;
+            password = generateRaw(finalLength);
+            String current = password;
+            isValid = rules.stream().allMatch(r -> r.check(current).isEmpty())
+                    && evaluator.evaluate(current) == PasswordStrengthEvaluator.Strength.STRONG;
+        } while (!isValid);
 
-            // CORRETTO: Cambiato evaluate() in check() per allineamento interfaccia
-            isValid = RULES.stream().allMatch(rule -> rule.check(passToTest).isEmpty());
-
-        } while (!isValid || PasswordStrengthEvaluator.evaluate(password) != PasswordStrengthEvaluator.Strength.STRONG);
-
-        return new GeneratedPassword(password, PasswordStrengthEvaluator.evaluate(password));
+        return password;
     }
 
-    public static String generate(int length) {
-        if (length < 4) length = 4; // Sicurezza minima per appendere i 4 tipi di char
+    private String generateRaw(int length) {
         StringBuilder sb = new StringBuilder(length);
-
         sb.append(randomChar(LOWER));
         sb.append(randomChar(UPPER));
         sb.append(randomChar(DIGITS));
@@ -63,35 +48,19 @@ public final class PasswordGenerator {
         for (int i = 4; i < length; i++) {
             sb.append(randomChar(ALL));
         }
-
         return shuffle(sb.toString());
     }
 
-    private static char randomChar(String source) {
-        return source.charAt(RANDOM.nextInt(source.length()));
-    }
+    private char randomChar(String s) { return s.charAt(random.nextInt(s.length())); }
 
-    private static String shuffle(String input) {
+    private String shuffle(String input) {
         char[] chars = input.toCharArray();
         for (int i = chars.length - 1; i > 0; i--) {
-            int j = RANDOM.nextInt(i + 1);
+            int j = random.nextInt(i + 1);
             char temp = chars[i];
             chars[i] = chars[j];
             chars[j] = temp;
         }
         return new String(chars);
-    }
-
-    public static class GeneratedPassword {
-        private final String password;
-        private final PasswordStrengthEvaluator.Strength strength;
-
-        public GeneratedPassword(String password, PasswordStrengthEvaluator.Strength strength) {
-            this.password = password;
-            this.strength = strength;
-        }
-
-        public String getPassword() { return password; }
-        public PasswordStrengthEvaluator.Strength getStrength() { return strength; }
     }
 }

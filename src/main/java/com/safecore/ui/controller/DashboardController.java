@@ -53,7 +53,7 @@ public class DashboardController {
     private void handleLogout() {
         SessionContext.logout();
         Stage stage = (Stage) userLabel.getScene().getWindow();
-        SceneNavigator.switchTo(stage, "/com/safecore/ui/login.fxml", "SafeCore – Login");
+        SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
     }
 
     private void applyHoverAnimation(VBox card) {

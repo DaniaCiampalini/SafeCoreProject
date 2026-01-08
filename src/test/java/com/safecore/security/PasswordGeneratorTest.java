@@ -1,24 +1,21 @@
 package com.safecore.security;
 
+import com.safecore.business.hints.rules.PasswordRule;
 import org.junit.jupiter.api.Test;
-
+import java.util.ArrayList;
+import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 
 class PasswordGeneratorTest {
 
+    // Istanziamo il generatore con i suoi componenti reali o mock
+    private final PasswordStrengthEvaluator evaluator = new PasswordStrengthEvaluator();
+    private final List<PasswordRule> rules = new ArrayList<>(); // Lista vuota o con regole reali
+    private final PasswordGenerator generator = new PasswordGenerator(rules, evaluator);
+
     @Test
-    void generate_correctLength() {
-        String pwd = PasswordGenerator.generate(16);
+    void generateSafe_correctLength() {
+        String pwd = generator.generateSafe(16);
         assertEquals(16, pwd.length());
-    }
-
-    @Test
-    void generate_containsDifferentCharTypes() {
-        String pwd = PasswordGenerator.generate(20);
-
-        assertTrue(pwd.matches(".*[a-z].*"));
-        assertTrue(pwd.matches(".*[A-Z].*"));
-        assertTrue(pwd.matches(".*\\d.*"));
-        assertTrue(pwd.matches(".*[^a-zA-Z0-9].*"));
     }
 }

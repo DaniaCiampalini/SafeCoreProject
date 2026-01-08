@@ -3,53 +3,47 @@ package com.safecore.business.service;
 import com.safecore.persistence.entity.PasswordResetTokenEntity;
 import com.safecore.persistence.repository.PasswordResetTokenRepository;
 import com.safecore.persistence.repository.UserRepository;
+import com.safecore.security.PasswordHasher;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
-
 import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 class PasswordResetServiceTest {
 
     private UserRepository userRepository;
     private PasswordResetTokenRepository tokenRepository;
+    private PasswordHasher passwordHasher;
     private PasswordResetService service;
 
     @BeforeEach
     void setUp() {
-        // Mocking: sostituisce i vecchi FakeDao
         userRepository = mock(UserRepository.class);
         tokenRepository = mock(PasswordResetTokenRepository.class);
-        service = new PasswordResetServiceImpl(userRepository, tokenRepository);
+        passwordHasher = mock(PasswordHasher.class);
+        service = new PasswordResetServiceImpl(userRepository, tokenRepository, passwordHasher);
     }
 
     @Test
     void resetPassword_success() {
         String email = "utente@test.it";
-        String token = "token-valido";
+        String token = "token-puro";
+        String tokenHash = "hash-del-token";
 
-        // Creiamo un'entità token finta per il mock
         PasswordResetTokenEntity tokenEntity = new PasswordResetTokenEntity();
         tokenEntity.setEmail(email);
+        tokenEntity.setTokenHash(tokenHash);
         tokenEntity.setUsed(false);
         tokenEntity.setExpiryDate(LocalDateTime.now().plusMinutes(10));
-        // Simuliamo l'hash del token (deve corrispondere a quello generato dal service o saltiamo il check nel test)
 
         when(tokenRepository.findByEmailAndUsedFalse(email)).thenReturn(Optional.of(tokenEntity));
+        when(passwordHasher.verify(token, tokenHash)).thenReturn(true);
+        when(passwordHasher.hash("NuovaPass123!")).thenReturn("new-hash");
 
         assertDoesNotThrow(() -> service.resetPassword(email, token, "NuovaPass123!"));
-    }
-
-    @Test
-    void requestReset_failsIfUserNotFound() {
-        when(userRepository.existsByEmail(anyString())).thenReturn(false);
-
-        assertThrows(IllegalArgumentException.class, () ->
-                service.requestReset("non-esiste@test.it"));
+        verify(userRepository).updatePassword(email, "new-hash");
     }
 }

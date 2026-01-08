@@ -25,7 +25,7 @@ public class AppLauncher extends Application {
         try {
             // Caricamento della vista iniziale
             FXMLLoader loader = new FXMLLoader(
-                    getClass().getResource("/com/safecore/ui/login.fxml")
+                    getClass().getResource("/com/safecore/ui/view/login.fxml")
             );
 
             Scene scene = new Scene(loader.load(), 400, 450);

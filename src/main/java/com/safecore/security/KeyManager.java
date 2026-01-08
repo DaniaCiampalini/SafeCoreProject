@@ -1,26 +1,20 @@
 package com.safecore.security;
 
+import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
 
-/* Singleton responsabile della gestione della chiave master. */
-public final class KeyManager {
+@Component
+public class KeyManager {
 
-    private static KeyManager instance;
     private final SecretKey secretKey;
 
-    private KeyManager() {
-        byte[] keyBytes = new byte[32]; // 256 bit
+    public KeyManager() {
+        // In un sistema reale, questa chiave verrebbe caricata da un Vault esterno o generata da Master Password
+        byte[] keyBytes = new byte[32];
         new SecureRandom().nextBytes(keyBytes);
         this.secretKey = new SecretKeySpec(keyBytes, "AES");
-    }
-
-    public static synchronized KeyManager getInstance() {
-        if (instance == null) {
-            instance = new KeyManager();
-        }
-        return instance;
     }
 
     public SecretKey getSecretKey() {

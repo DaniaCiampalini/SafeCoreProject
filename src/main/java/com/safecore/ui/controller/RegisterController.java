@@ -68,7 +68,7 @@ public class RegisterController {
     @FXML
     private void handleBackToLogin() {
         Stage stage = (Stage) messageLabel.getScene().getWindow();
-        SceneNavigator.switchTo(stage, "/com/safecore/ui/login.fxml", "SafeCore – Login");
+        SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
     }
 
     private void showError(String msg) { messageLabel.setStyle("-fx-text-fill: red;"); messageLabel.setText(msg); }
