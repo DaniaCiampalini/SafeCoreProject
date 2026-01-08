@@ -9,11 +9,13 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.springframework.stereotype.Component;
 
 /**
  * Dashboard principale SafeCore.
- * Stato: FINALE.
+ * Adesso utilizza il PasswordGenerator iniettato da Spring.
  */
+@Component
 public class DashboardController {
 
     @FXML private Label userLabel;
@@ -23,9 +25,18 @@ public class DashboardController {
     @FXML private VBox vaultCard;
     @FXML private VBox backupCard;
 
+    private final PasswordGenerator passwordGenerator;
+
+    // Costruttore per la Dependency Injection
+    public DashboardController(PasswordGenerator passwordGenerator) {
+        this.passwordGenerator = passwordGenerator;
+    }
+
     @FXML
     private void initialize() {
-        userLabel.setText(SessionContext.getLoggedUserEmail());
+        // Null check preventivo per evitare problemi se SessionContext è vuoto
+        String email = SessionContext.getLoggedUserEmail() != null ? SessionContext.getLoggedUserEmail() : "User";
+        userLabel.setText(email);
         securityStatusLabel.setText("Security status: OK");
 
         applyHoverAnimation(passwordCard);
@@ -35,9 +46,19 @@ public class DashboardController {
 
     @FXML
     private void handleGeneratePassword() {
-        String pwd = PasswordGenerator.generate(16);
+        // CORRETTO: Uso del metodo d'istanza generateSafe
+        String pwd = passwordGenerator.generateSafe(16);
         showToast("Generated password: " + pwd);
     }
+
+    @FXML
+    private void handleLogout() {
+        SessionContext.logout();
+        Stage stage = (Stage) userLabel.getScene().getWindow();
+        SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
+    }
+
+    // ... handleOpenVault, handleBackup e metodi grafici restano uguali ...
 
     @FXML
     private void handleOpenVault() {
@@ -47,13 +68,6 @@ public class DashboardController {
     @FXML
     private void handleBackup() {
         showToast("Encrypted backup exported");
-    }
-
-    @FXML
-    private void handleLogout() {
-        SessionContext.logout();
-        Stage stage = (Stage) userLabel.getScene().getWindow();
-        SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
     }
 
     private void applyHoverAnimation(VBox card) {
