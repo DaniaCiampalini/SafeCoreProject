@@ -20,9 +20,12 @@ public class RegisterController {
     @FXML private Label messageLabel;
 
     private final UserService userService;
+    private final PasswordGenerator passwordGenerator; // Aggiunto come dipendenza
 
-    public RegisterController(UserService userService) {
+    // Spring inietta automaticamente sia il Service che il Generator
+    public RegisterController(UserService userService, PasswordGenerator passwordGenerator) {
         this.userService = userService;
+        this.passwordGenerator = passwordGenerator;
     }
 
     @FXML
@@ -32,19 +35,18 @@ public class RegisterController {
         String confirm = confirmPasswordField.getText();
 
         if (email.isBlank() || password.isBlank() || confirm.isBlank()) {
-            showError("All fields are required");
+            showError("Tutti i campi sono obbligatori");
             return;
         }
 
         if (!password.equals(confirm)) {
-            showError("Passwords do not match");
+            showError("Le password non coincidono");
             return;
         }
 
         try {
-            // Il controllo robustezza è ora delegato al Service
             userService.register(email, password);
-            showSuccess("Registration successful! Redirecting...");
+            showSuccess("Registrazione completata! Reindirizzamento...");
             disableForm();
 
             new Thread(() -> {
@@ -53,16 +55,18 @@ public class RegisterController {
             }).start();
 
         } catch (Exception e) {
+            // Qui verranno catturate le tue nuove Domain Exceptions (es. WeakPasswordException)
             showError(e.getMessage());
         }
     }
 
     @FXML
     private void handleGeneratePassword() {
-        String generated = PasswordGenerator.generate(12);
+        // CORRETTO: Chiamata al metodo d'istanza del bean iniettato
+        String generated = passwordGenerator.generateSafe(12);
         passwordField.setText(generated);
         confirmPasswordField.setText(generated);
-        showInfo("Secure password generated");
+        showInfo("Password sicura generata");
     }
 
     @FXML
@@ -74,6 +78,7 @@ public class RegisterController {
     private void showError(String msg) { messageLabel.setStyle("-fx-text-fill: red;"); messageLabel.setText(msg); }
     private void showSuccess(String msg) { messageLabel.setStyle("-fx-text-fill: green;"); messageLabel.setText(msg); }
     private void showInfo(String msg) { messageLabel.setStyle("-fx-text-fill: blue;"); messageLabel.setText(msg); }
+
     private void disableForm() {
         emailField.setDisable(true);
         passwordField.setDisable(true);
