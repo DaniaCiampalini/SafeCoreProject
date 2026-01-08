@@ -1,6 +1,8 @@
 package com.safecore.ui.controller;
 
 import com.safecore.business.service.UserService;
+import com.safecore.business.service.PasswordHintService; // Servizio esistente
+import com.safecore.business.hints.PasswordHint;
 import com.safecore.security.PasswordGenerator;
 import com.safecore.ui.navigation.SceneNavigator;
 import javafx.application.Platform;
@@ -8,6 +10,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
+import java.util.List;
 
 @Component
 public class RegisterController {
@@ -16,33 +19,32 @@ public class RegisterController {
     @FXML private Label messageLabel;
     @FXML private Label passwordStrengthLabel;
 
-    // Campi Password (Nascosti)
     @FXML private PasswordField passwordField;
     @FXML private PasswordField confirmPasswordField;
-
-    // Campi Testo (In chiaro)
     @FXML private TextField passwordTextField;
     @FXML private TextField confirmPasswordTextField;
 
-    // Bottoni Occhio
     @FXML private Button togglePwdBtn;
     @FXML private Button toggleConfirmPwdBtn;
 
     private final UserService userService;
     private final PasswordGenerator passwordGenerator;
+    private final PasswordHintService hintService; // Per il controllo reale della forza
 
     private boolean isPwdVisible = false;
     private boolean isConfirmVisible = false;
 
-    public RegisterController(UserService userService, PasswordGenerator passwordGenerator) {
+    public RegisterController(UserService userService,
+                              PasswordGenerator passwordGenerator,
+                              PasswordHintService hintService) {
         this.userService = userService;
         this.passwordGenerator = passwordGenerator;
+        this.hintService = hintService;
     }
 
     @FXML
     private void handleRegister() {
         String email = emailField.getText();
-        // Recupera i valori dai campi attivi
         String password = isPwdVisible ? passwordTextField.getText() : passwordField.getText();
         String confirm = isConfirmVisible ? confirmPasswordTextField.getText() : confirmPasswordField.getText();
 
@@ -58,7 +60,7 @@ public class RegisterController {
 
         try {
             userService.register(email, password);
-            showSuccess("Registrazione completata! Reindirizzamento...");
+            showSuccess("Account creato! Reindirizzamento...");
             disableForm();
 
             new Thread(() -> {
@@ -69,6 +71,41 @@ public class RegisterController {
         } catch (Exception e) {
             showError(e.getMessage());
         }
+    }
+
+    @FXML
+    private void handlePasswordTyping() {
+        String pwd = isPwdVisible ? passwordTextField.getText() : passwordField.getText();
+
+        if (pwd.isEmpty()) {
+            passwordStrengthLabel.setText("");
+            return;
+        }
+
+        // Corretta la logica
+        List<PasswordHint> hints = hintService.getHints(pwd);
+
+        if (hints.isEmpty()) {
+            passwordStrengthLabel.setText("SICURA (Forte)");
+            passwordStrengthLabel.setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold; -fx-font-size: 13px;");
+        } else {
+            // Mostriamo il primo suggerimento (es: "Mancano maiuscole")
+            String helpMessage = hints.get(0).getMessage();
+            passwordStrengthLabel.setText("DEBOLE: " + helpMessage);
+            passwordStrengthLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold; -fx-font-size: 13px;");
+        }
+    }
+
+    @FXML
+    private void handleGeneratePassword() {
+        String generated = passwordGenerator.generateSafe(14);
+        passwordField.setText(generated);
+        passwordTextField.setText(generated);
+        confirmPasswordField.setText(generated);
+        confirmPasswordTextField.setText(generated);
+
+        showInfo("Password generata con successo");
+        handlePasswordTyping();
     }
 
     @FXML
@@ -104,45 +141,23 @@ public class RegisterController {
     }
 
     @FXML
-    private void handleGeneratePassword() {
-        String generated = passwordGenerator.generateSafe(12);
-
-        // Aggiorna entrambi i set di campi per sicurezza
-        passwordField.setText(generated);
-        passwordTextField.setText(generated);
-        confirmPasswordField.setText(generated);
-        confirmPasswordTextField.setText(generated);
-
-        showInfo("Password sicura generata");
-        handlePasswordTyping();
-    }
-
-    @FXML
-    private void handlePasswordTyping() {
-        // Legge dal campo corretto in base alla visibilità
-        String pwd = isPwdVisible ? passwordTextField.getText() : passwordField.getText();
-
-        if (pwd.isEmpty()) {
-            passwordStrengthLabel.setText("");
-        } else if (pwd.length() < 8) {
-            passwordStrengthLabel.setText("Debole");
-            passwordStrengthLabel.setStyle("-fx-text-fill: #dc2626;");
-        } else {
-            passwordStrengthLabel.setText("Forte");
-            passwordStrengthLabel.setStyle("-fx-text-fill: #16a34a;");
-        }
-    }
-
-    @FXML
     private void handleBackToLogin() {
         Stage stage = (Stage) emailField.getScene().getWindow();
         SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
     }
 
-    // Helper per i messaggi
-    private void showError(String msg) { messageLabel.setStyle("-fx-text-fill: #dc2626;"); messageLabel.setText(msg); }
-    private void showSuccess(String msg) { messageLabel.setStyle("-fx-text-fill: #16a34a;"); messageLabel.setText(msg); }
-    private void showInfo(String msg) { messageLabel.setStyle("-fx-text-fill: #2563eb;"); messageLabel.setText(msg); }
+    private void showError(String msg) {
+        messageLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
+        messageLabel.setText(msg);
+    }
+    private void showSuccess(String msg) {
+        messageLabel.setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold;");
+        messageLabel.setText(msg);
+    }
+    private void showInfo(String msg) {
+        messageLabel.setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
+        messageLabel.setText(msg);
+    }
 
     private void disableForm() {
         emailField.setDisable(true);

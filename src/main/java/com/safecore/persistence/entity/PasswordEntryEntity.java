@@ -9,7 +9,7 @@ import java.util.UUID;
 public class PasswordEntryEntity {
 
     @Id
-    @GeneratedValue // Spring gestisce l'UUID
+    @GeneratedValue
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
@@ -17,17 +17,24 @@ public class PasswordEntryEntity {
     private String serviceName;
 
     @Column(nullable = false)
-    private String username;
+    private String username;    // L'username usato su quel sito
 
     @Column(nullable = false, columnDefinition = "VARBINARY(1024)")
-    private byte[] encryptedPassword;
+    private byte[] encryptedPassword; // Password cifrata con AES
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
-    public PasswordEntryEntity() {}
+    // Ogni entry appartiene a un utente
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    private UserEntity user;
 
-    // Getter e Setter standard...
+    public PasswordEntryEntity() {
+        this.createdAt = LocalDateTime.now();
+    }
+
+    // Getter e Setter
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
     public String getServiceName() { return serviceName; }
@@ -38,4 +45,6 @@ public class PasswordEntryEntity {
     public void setEncryptedPassword(byte[] encryptedPassword) { this.encryptedPassword = encryptedPassword; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public UserEntity getUser() { return user; }
+    public void setUser(UserEntity user) { this.user = user; }
 }

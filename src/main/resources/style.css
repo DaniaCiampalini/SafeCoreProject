@@ -1,0 +1,52 @@
+/* Configurazione Base */
+.root {
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+}
+
+/* Titoli Bold */
+.title-label {
+    -fx-font-size: 26px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #111827;
+}
+
+/* Label dei campi */
+.field-label {
+    -fx-font-weight: 800;
+    -fx-text-fill: #374151;
+}
+
+/* Input Fields legibili */
+.text-field, .password-field {
+    -fx-background-color: white;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 12;
+    -fx-font-weight: 700; /* Testo in grassetto dentro i campi */
+}
+
+.text-field:focused, .password-field:focused {
+    -fx-border-color: #2563eb;
+    -fx-border-width: 2;
+}
+
+/* Bottoni */
+.button {
+    -fx-font-weight: 900;
+    -fx-cursor: hand;
+    -fx-background-radius: 8;
+}
+
+/* Feedback Forza Password */
+.strength-label {
+    -fx-font-weight: 900;
+    -fx-font-size: 12px;
+}
+
+/* Messaggi di errore */
+.error-label {
+    -fx-font-weight: 800;
+    -fx-text-fill: #dc2626;
+}
