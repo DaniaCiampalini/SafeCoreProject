@@ -3,6 +3,7 @@ package com.safecore.ui;
 import com.safecore.SafeCoreApplication;
 import com.safecore.business.service.UserService;
 import com.safecore.business.service.PasswordService;
+import com.safecore.ui.navigation.SceneNavigator;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -17,50 +18,53 @@ public class AppLauncher extends Application {
 
     @Override
     public void init() {
-        // FASE 1: Avvio di Spring Boot in background durante l'init di JavaFX
+        // Avvio di Spring Boot
         springContext = new SpringApplicationBuilder(SafeCoreApplication.class).run();
     }
 
     @Override
-    public void start(Stage stage) {
+    public void start(Stage primaryStage) {
         try {
-            // Eseguiamo la Demo (vecchia logica Main) in un thread separato per non bloccare la UI
+            // 1. Colleghiamo il Navigator a Spring (Fondamentale per i cambi scena!)
+            SceneNavigator.setContext(springContext);
+
+            // Eseguiamo la Demo (opzionale)
             eseguiDemoSilenziosa();
 
-            // FASE 2: Caricamento FXML con Dependency Injection
+            // 2. Usiamo il Navigator per la prima scena (più pulito)
+            // Oppure carichiamo manualmente la prima volta così:
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/safecore/ui/view/login.fxml"));
-
-            // IL SEGRETO PER IL 30L: Istruiamo JavaFX a chiedere i controller a Spring
             loader.setControllerFactory(springContext::getBean);
 
-            Scene scene = new Scene(loader.load(), 400, 450);
-            stage.setTitle("SafeCore – Secure Vault");
-            stage.setScene(scene);
-            stage.show();
+            Scene scene = new Scene(loader.load(), 400, 500);
+
+            primaryStage.setTitle("SafeCore – Secure Vault");
+            primaryStage.setScene(scene);
+            primaryStage.setResizable(false); // Opzionale: rende la UI più professionale
+            primaryStage.show();
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.exit(1);
+            Platform.exit();
         }
     }
 
     @Override
     public void stop() {
-        // Spegnimento pulito di Spring (chiude DB, JpaUtil, ecc.)
-        springContext.close();
+        // Spegnimento pulito di Spring (chiude connessioni DB H2)
+        if (springContext != null) {
+            springContext.close();
+        }
         Platform.exit();
     }
 
-    /**
-     * Recupera la logica del vecchio Main.
-     * In un'app reale questa demo non servirebbe, ma per l'esame
-     * dimostra che i servizi funzionano al boot.
-     */
     private void eseguiDemoSilenziosa() {
-        UserService userService = springContext.getBean(UserService.class);
-        PasswordService passwordService = springContext.getBean(PasswordService.class);
-
-        System.out.println("=== SafeCore: Demo Logic Injected Successfully ===");
-        // Qui puoi rimettere le chiamate a userService.register() se vuoi testare il DB al boot
+        try {
+            UserService userService = springContext.getBean(UserService.class);
+            System.out.println("=== SafeCore: Spring Context Ready ===");
+            // Esempio: System.out.println("Utenti registrati: " + userService.findAll().size());
+        } catch (Exception e) {
+            System.err.println("Errore durante la demo: " + e.getMessage());
+        }
     }
 }

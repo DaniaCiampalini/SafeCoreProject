@@ -10,21 +10,17 @@ import java.util.List;
 @Service
 public class PasswordHintService {
 
-    private final List<PasswordRule> rules = new ArrayList<>();
+    // Spring inietta automaticamente tutti i bean che implementano PasswordRule
+    private final List<PasswordRule> rules;
 
-    public PasswordHintService() {
-        // Configuriamo le strategie di controllo
-        rules.add(new MinLengthRule());
-        rules.add(new ComplexityRule());
+    public PasswordHintService(List<PasswordRule> rules) {
+        this.rules = rules;
     }
 
-    /**
-     * Analizza la password e restituisce i consigli.
-     * Ho rinominato in getHints per coerenza con i tuoi test precedenti,
-     * o puoi rinominare il test in 'evaluate'.
-     */
     public List<PasswordHint> getHints(String password) {
         List<PasswordHint> hints = new ArrayList<>();
+        if (password == null) return hints;
+
         for (PasswordRule rule : rules) {
             rule.check(password).ifPresent(hints::add);
         }

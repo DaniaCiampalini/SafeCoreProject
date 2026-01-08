@@ -4,9 +4,7 @@ import com.safecore.business.service.UserService;
 import com.safecore.ui.navigation.SceneNavigator;
 import com.safecore.ui.session.SessionContext;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.PasswordField;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
@@ -19,7 +17,6 @@ public class LoginController {
 
     private final UserService userService;
 
-    // Spring inietta automaticamente UserServiceImpl qui
     public LoginController(UserService userService) {
         this.userService = userService;
     }
@@ -28,35 +25,32 @@ public class LoginController {
     private void handleLogin() {
         String email = emailField.getText();
         String password = passwordField.getText();
-
         if (email.isBlank() || password.isBlank()) {
-            showError("All fields are required");
+            showError("Campi obbligatori");
             return;
         }
-
-        try {
-            // Se le credenziali sono errate, il service lancerà un'eccezione o restituirà Optional vuoto
-            if (userService.login(email, password).isPresent()) {
-                SessionContext.login(email);
-                Stage stage = (Stage) messageLabel.getScene().getWindow();
-                SceneNavigator.switchTo(stage, "/com/safecore/ui/dashboard.fxml", "SafeCore – Dashboard");
-            } else {
-                showError("Invalid email or password");
-            }
-
-        } catch (Exception e) {
-            showError("System error: " + e.getMessage());
-        }
+        userService.login(email, password).ifPresentOrElse(
+                user -> {
+                    SessionContext.login(email);
+                    navigateTo("/com/safecore/ui/view/dashboard.fxml", "SafeCore – Dashboard");
+                },
+                () -> showError("Credenziali errate")
+        );
     }
 
-    @FXML private void handleGoToRegister() {
-        Stage stage = (Stage) messageLabel.getScene().getWindow();
-        SceneNavigator.switchTo(stage, "/com/safecore/ui/register.fxml", "SafeCore – Register");
+    @FXML
+    private void handleGoToRegister() {
+        navigateTo("/com/safecore/ui/view/register.fxml", "SafeCore – Registrazione");
     }
 
-    @FXML private void handleGoToReset() {
-        Stage stage = (Stage) messageLabel.getScene().getWindow();
-        SceneNavigator.switchTo(stage, "/com/safecore/ui/password_reset.fxml", "SafeCore – Password Reset");
+    @FXML
+    private void handleForgotPassword() {
+        navigateTo("/com/safecore/ui/view/password_reset.fxml", "SafeCore – Reset Password");
+    }
+
+    private void navigateTo(String path, String title) {
+        Stage stage = (Stage) emailField.getScene().getWindow();
+        SceneNavigator.switchTo(stage, path, title);
     }
 
     private void showError(String msg) {

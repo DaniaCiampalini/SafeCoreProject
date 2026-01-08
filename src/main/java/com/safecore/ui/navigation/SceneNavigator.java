@@ -7,46 +7,50 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import org.springframework.context.ApplicationContext;
 
 /**
- * Utility centralizzata per la navigazione tra scene JavaFX.
- *
- * Responsabilità:
- * - Cambio scena
- * - Protezione scene
- * - Animazioni di transizione
- *
- * Scelte SE:
- * - Punto unico di navigazione
- * - Nessuna logica nei controller
- * - UX consistente
+ * Utility centralizzata per la navigazione tra scene JavaFX integrata con Spring.
  */
 public final class SceneNavigator {
 
     private static final Duration FADE_DURATION = Duration.millis(300);
 
+    // Riferimento al contesto di Spring per l'iniezione dei bean nei controller
+    private static ApplicationContext springContext;
+
     private SceneNavigator() {
     }
 
-    public static void switchTo(Stage stage, String fxmlPath, String title) {
+    /**
+     * Inizializza il navigatore con il contesto Spring.
+     * Va chiamato nel metodo start() della tua applicazione.
+     */
+    public static void setContext(ApplicationContext context) {
+        springContext = context;
+    }
 
+    public static void switchTo(Stage stage, String fxmlPath, String title) {
         try {
             // === ACCESS CONTROL ===
             if (isProtectedScene(fxmlPath) && !SessionContext.isLoggedIn()) {
-                fxmlPath = "/login.fxml";
+                fxmlPath = "/com/safecore/ui/view/login.fxml";
                 title = "SafeCore – Login";
             }
 
-            FXMLLoader loader = new FXMLLoader(
-                    SceneNavigator.class.getResource(fxmlPath)
-            );
+            FXMLLoader loader = new FXMLLoader(SceneNavigator.class.getResource(fxmlPath));
+
+            // === SPRING INTEGRATION ===
+            // Questa riga risolve il NoSuchMethodException:
+            // Dice a FXMLLoader di recuperare i controller dal contesto Spring
+            if (springContext != null) {
+                loader.setControllerFactory(springContext::getBean);
+            }
 
             Parent newRoot = loader.load();
-
             Scene scene = stage.getScene();
 
             if (scene == null) {
-                // primo caricamento (app start)
                 Scene newScene = new Scene(newRoot);
                 stage.setScene(newScene);
                 stage.setTitle(title);
@@ -57,7 +61,7 @@ public final class SceneNavigator {
 
             Parent oldRoot = scene.getRoot();
 
-            // Fade-out della scena corrente
+            // Animazione Fade-out
             FadeTransition fadeOut = new FadeTransition(FADE_DURATION, oldRoot);
             fadeOut.setFromValue(1.0);
             fadeOut.setToValue(0.0);
@@ -72,7 +76,8 @@ public final class SceneNavigator {
             fadeOut.play();
 
         } catch (Exception e) {
-            throw new RuntimeException("Failed to load scene: " + fxmlPath, e);
+            e.printStackTrace(); // Utile per vedere errori nel caricamento FXML
+            throw new RuntimeException("Impossibile caricare la scena: " + fxmlPath, e);
         }
     }
 
@@ -87,4 +92,3 @@ public final class SceneNavigator {
         return fxmlPath.contains("dashboard");
     }
 }
-

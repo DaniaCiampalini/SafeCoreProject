@@ -58,7 +58,6 @@ public class DashboardController {
         SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
     }
 
-    // ... handleOpenVault, handleBackup e metodi grafici restano uguali ...
 
     @FXML
     private void handleOpenVault() {

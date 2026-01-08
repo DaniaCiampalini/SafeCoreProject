@@ -79,7 +79,6 @@ public class PasswordResetController {
     @FXML
     private void handleBackToLogin() {
         Stage stage = (Stage) emailField.getScene().getWindow();
-        // Assicurati che il path sia corretto rispetto alla tua struttura resources
         SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
     }
 

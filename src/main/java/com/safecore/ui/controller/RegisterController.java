@@ -19,10 +19,12 @@ public class RegisterController {
     @FXML private PasswordField confirmPasswordField;
     @FXML private Label messageLabel;
 
-    private final UserService userService;
-    private final PasswordGenerator passwordGenerator; // Aggiunto come dipendenza
+    // 1. DICHIARA QUI IL COMPONENTE FXML (così JavaFX lo inizializza all'avvio)
+    @FXML private Label passwordStrengthLabel;
 
-    // Spring inietta automaticamente sia il Service che il Generator
+    private final UserService userService;
+    private final PasswordGenerator passwordGenerator;
+
     public RegisterController(UserService userService, PasswordGenerator passwordGenerator) {
         this.userService = userService;
         this.passwordGenerator = passwordGenerator;
@@ -55,23 +57,39 @@ public class RegisterController {
             }).start();
 
         } catch (Exception e) {
-            // Qui verranno catturate le tue nuove Domain Exceptions (es. WeakPasswordException)
             showError(e.getMessage());
         }
     }
 
     @FXML
     private void handleGeneratePassword() {
-        // CORRETTO: Chiamata al metodo d'istanza del bean iniettato
         String generated = passwordGenerator.generateSafe(12);
         passwordField.setText(generated);
         confirmPasswordField.setText(generated);
         showInfo("Password sicura generata");
+        // Aggiorna anche il label della forza quando generi
+        handlePasswordTyping();
+    }
+
+    @FXML
+    private void handlePasswordTyping() {
+        String pwd = passwordField.getText();
+
+        // 2. RIMOSSA LA DICHIARAZIONE LOCALE: ora usa il campo @FXML dichiarato sopra
+        if (pwd.isEmpty()) {
+            passwordStrengthLabel.setText("");
+        } else if (pwd.length() < 8) {
+            passwordStrengthLabel.setText("Debole");
+            passwordStrengthLabel.setStyle("-fx-text-fill: red;");
+        } else {
+            passwordStrengthLabel.setText("Forte");
+            passwordStrengthLabel.setStyle("-fx-text-fill: green;");
+        }
     }
 
     @FXML
     private void handleBackToLogin() {
-        Stage stage = (Stage) messageLabel.getScene().getWindow();
+        Stage stage = (Stage) emailField.getScene().getWindow();
         SceneNavigator.switchTo(stage, "/com/safecore/ui/view/login.fxml", "SafeCore – Login");
     }
 
