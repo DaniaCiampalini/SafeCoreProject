@@ -4,23 +4,19 @@ import java.time.LocalDateTime;
 
 /**
  * Contesto di sessione centralizzato (Singleton).
- * Unifica UserSession e SessionContext per eliminare ridondanze.
- * * Scelte di Ingegneria del Software:
- * - Thread-safe: usiamo volatile per garantire visibilità tra i thread JavaFX.
- * - Tracciamento: aggiunta l'ora del login per scopi di auditing.
+ * Gestisce l'identità dell'utente loggato per tutto il ciclo di vita dell'app.
  */
 public final class SessionContext {
 
-    // volatile garantisce che il valore sia aggiornato correttamente tra i thread
     private static volatile String loggedUserEmail;
     private static LocalDateTime loginTime;
 
     private SessionContext() {
-        // Impedisce l'istanziazione esterna
+        // Impedisce l'istanziazione
     }
 
     /**
-     * Inizializza la sessione utente.
+     * Inizializza la sessione utente al login.
      */
     public static void login(String email) {
         if (email == null || email.isBlank()) {
@@ -28,6 +24,7 @@ public final class SessionContext {
         }
         loggedUserEmail = email;
         loginTime = LocalDateTime.now();
+        System.out.println("Sessione avviata per: " + email + " alle " + loginTime);
     }
 
     /**
@@ -46,14 +43,25 @@ public final class SessionContext {
     }
 
     /**
-     * Restituisce l'email dell'utente corrente.
+     * Metodo richiesto dal VaultService per recuperare l'identità dell'utente.
+     * Lancia un'eccezione se chiamato senza una sessione attiva (fail-safe).
      */
-    public static String getLoggedUserEmail() {
+    public static String getCurrentUserEmail() {
+        if (!isLoggedIn()) {
+            throw new IllegalStateException("Nessun utente loggato. Accesso al Vault negato.");
+        }
         return loggedUserEmail;
     }
 
     /**
-     * Restituisce l'orario del login (utile per la Dashboard).
+     * Alias per compatibilità con i controller precedenti (se usati).
+     */
+    public static String getLoggedUserEmail() {
+        return getCurrentUserEmail();
+    }
+
+    /**
+     * Restituisce l'orario del login (utile per mostrare "Sessione attiva da..." nella Dashboard).
      */
     public static LocalDateTime getLoginTime() {
         return loginTime;
