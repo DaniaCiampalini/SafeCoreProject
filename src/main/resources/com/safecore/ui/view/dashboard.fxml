@@ -1,96 +1,47 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
-<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 
-<BorderPane xmlns="http://javafx.com/javafx/17"
-            xmlns:fx="http://javafx.com/fxml"
+<BorderPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
             fx:controller="com.safecore.ui.controller.DashboardController"
-            style="-fx-background-color: #f9fafb;">
+            style="-fx-background-color: #f3f4f6;">
 
-    <!-- HEADER -->
     <top>
-        <HBox spacing="20" padding="15"
-              style="-fx-background-color: #111827;"
-              alignment="CENTER_LEFT">
-
-            <Label text="SafeCore"
-                   style="-fx-text-fill: white;
-                          -fx-font-size: 20;
-                          -fx-font-weight: bold;"/>
-
+        <HBox spacing="20" alignment="CENTER_LEFT" style="-fx-background-color: #111827; -fx-padding: 15;">
+            <Label text="SafeCore Vault" style="-fx-text-fill: white; -fx-font-weight: 900; -fx-font-size: 18;"/>
             <Region HBox.hgrow="ALWAYS"/>
-
-            <Label fx:id="userLabel"
-                   style="-fx-text-fill: #d1d5db;"/>
-
-            <Button text="Logout"
-                    onAction="#handleLogout"
-                    style="-fx-background-color: #ef4444;
-                           -fx-text-fill: white;
-                           -fx-background-radius: 6;"/>
+            <Label fx:id="userLabel" style="-fx-text-fill: #9ca3af; -fx-font-weight: bold;"/>
+            <Button text="Esci" onAction="#handleLogout" style="-fx-background-color: #dc2626; -fx-text-fill: white; -fx-font-weight: bold;"/>
         </HBox>
     </top>
 
-    <!-- CENTER -->
     <center>
-        <VBox spacing="25" padding="30">
+        <VBox spacing="20" style="-fx-padding: 25;">
 
-            <Label text="Dashboard"
-                   style="-fx-font-size: 24;
-                          -fx-font-weight: bold;"/>
-
-            <Label fx:id="securityStatusLabel"
-                   style="-fx-text-fill: #16a34a;"/>
-
-            <HBox spacing="20">
-
-                <!-- PASSWORD CARD -->
-                <VBox fx:id="passwordCard"
-                      spacing="10"
-                      padding="20"
-                      styleClass="card">
-                    <Label text="Password Tools"
-                           style="-fx-font-weight: bold;"/>
-                    <Label text="Generate and test secure passwords"/>
-                    <Button text="Generate"
-                            onAction="#handleGeneratePassword"/>
+            <HBox spacing="15">
+                <VBox fx:id="passwordCard" prefWidth="250" style="-fx-background-color: white; -fx-padding: 15; -fx-background-radius: 12; -fx-border-color: #e5e7eb; -fx-border-radius: 12;">
+                    <Label text="Quick Generator" style="-fx-font-weight: 800;"/>
+                    <Button text="Genera &amp; Copia" onAction="#handleGeneratePassword" style="-fx-background-color: #2563eb; -fx-text-fill: white; -fx-margin-top: 10;"/>
                 </VBox>
-
-                <!-- VAULT CARD -->
-                <VBox fx:id="vaultCard"
-                      spacing="10"
-                      padding="20"
-                      styleClass="card">
-                    <Label text="Vault"
-                           style="-fx-font-weight: bold;"/>
-                    <Label text="View saved secrets (mock)"/>
-                    <Button text="Open"
-                            onAction="#handleOpenVault"/>
-                </VBox>
-
-                <!-- BACKUP CARD -->
-                <VBox fx:id="backupCard"
-                      spacing="10"
-                      padding="20"
-                      styleClass="card">
-                    <Label text="Backup"
-                           style="-fx-font-weight: bold;"/>
-                    <Label text="Export encrypted backup"/>
-                    <Button text="Export"
-                            onAction="#handleBackup"/>
-                </VBox>
-
+                <Label fx:id="toastLabel" visible="false" style="-fx-background-color: #111827; -fx-text-fill: white; -fx-padding: 10; -fx-background-radius: 8;"/>
             </HBox>
 
-            <!-- TOAST -->
-            <Label fx:id="toastLabel"
-                   visible="false"
-                   style="-fx-background-color: #111827;
-                          -fx-text-fill: white;
-                          -fx-padding: 10;
-                          -fx-background-radius: 8;"/>
+            <VBox spacing="15" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 12;">
+                <HBox spacing="15" alignment="CENTER_LEFT">
+                    <TextField fx:id="searchField" promptText="🔍 Cerca servizio o username..." prefWidth="300" style="-fx-background-radius: 20;"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="+ Aggiungi Segreto" onAction="#handleAddEntry" style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-font-weight: bold;"/>
+                    <Button text="Dettagli" onAction="#handleShowPassword" style="-fx-background-color: #6366f1; -fx-text-fill: white;"/>
+                </HBox>
+
+                <TableView fx:id="passwordTable" VBox.vgrow="ALWAYS">
+                    <columns>
+                        <TableColumn fx:id="serviceColumn" text="Servizio" prefWidth="180"/>
+                        <TableColumn fx:id="usernameColumn" text="Username" prefWidth="180"/>
+                        <TableColumn fx:id="actionsColumn" text="Azioni" prefWidth="120" style="-fx-alignment: CENTER;"/>
+                    </columns>
+                </TableView>
+            </VBox>
         </VBox>
     </center>
 </BorderPane>
