@@ -155,6 +155,7 @@ public class DashboardController {
         });
     }
 
+    @FXML
     private void refreshVault() {
         masterData.setAll(vaultService.getEntriesForCurrentUser());
     }

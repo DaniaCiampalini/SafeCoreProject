@@ -28,13 +28,21 @@ public class LoginController {
     private void handleLogin() {
         String email = emailField.getText();
 
-        // Recupera la password dal campo attualmente attivo/visibile
-        String password = isPasswordVisible ? passwordTextField.getText() : passwordField.getText();
+        // Recupera la password in modo sicuro in base alla visibilità dei componenti
+        String password;
+        if (passwordTextField.isVisible()) {
+            password = passwordTextField.getText();
+        } else {
+            password = passwordField.getText();
+        }
 
-        if (email.isBlank() || password.isBlank()) {
+        if (email == null || email.isBlank() || password == null || password.isBlank()) {
             showError("Email e password sono obbligatorie");
             return;
         }
+
+        // DEBUG: Rimuovi questo print in produzione, serve solo per capire se la password è corretta
+        System.out.println("Tentativo login per: " + email + " | Password recuperata: " + password);
 
         userService.login(email, password).ifPresentOrElse(
                 user -> {
