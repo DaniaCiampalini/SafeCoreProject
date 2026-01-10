@@ -1,52 +1,127 @@
 /* Configurazione Base */
 .root {
-    -fx-font-family: "Segoe UI", "Arial", sans-serif;
-    -fx-font-size: 14px;
+    -fx-font-family: "Inter", "Segoe UI", Helvetica, Arial, sans-serif;
+    -fx-font-size: 15px;
+    -fx-base: #f9fafb;
+    -fx-accent: #2563eb;
+    -fx-font-smoothing-type: gray;
 }
 
-/* Titoli Bold */
+/* Palette Colori - Sicurezza e Chiarezza */
+/* Blu Profondo: #1e3a8a, Blu Chiaro: #3b82f6, Grigio Soft: #f3f4f6 */
+
 .title-label {
-    -fx-font-size: 26px;
-    -fx-font-weight: 900;
-    -fx-text-fill: #111827;
+    -fx-font-size: 28px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1e3a8a;
 }
 
-/* Label dei campi */
-.field-label {
-    -fx-font-weight: 800;
+.header-bar {
+    -fx-background-color: #ffffff;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+}
+
+.card {
+    -fx-background-color: white;
+    -fx-padding: 25;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 15, 0, 0, 10);
+}
+
+.card:hover {
+    -fx-border-color: #3b82f6;
+    -fx-effect: dropshadow(three-pass-box, rgba(59,130,246,0.1), 20, 0, 0, 10);
+}
+
+/* Bottoni stile Apple */
+.button {
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+    -fx-background-radius: 12;
+    -fx-padding: 10 20;
+    -fx-transition: 0.2s;
+}
+
+.button-primary {
+    -fx-background-color: #2563eb;
+    -fx-text-fill: white;
+}
+
+.button-primary:hover {
+    -fx-background-color: #1d4ed8;
+}
+
+.button-secondary {
+    -fx-background-color: #f3f4f6;
     -fx-text-fill: #374151;
 }
 
-/* Input Fields legibili */
+.button-secondary:hover {
+    -fx-background-color: #e5e7eb;
+}
+
+.button-danger {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #dc2626;
+}
+
+.button-danger:hover {
+    -fx-background-color: #fecaca;
+}
+
+.button-success {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #15803d;
+}
+
+/* Input Fields */
 .text-field, .password-field {
-    -fx-background-color: white;
-    -fx-border-color: #d1d5db;
-    -fx-border-radius: 8;
-    -fx-background-radius: 8;
+    -fx-background-color: #f9fafb;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
     -fx-padding: 12;
-    -fx-font-weight: 700; /* Testo in grassetto dentro i campi */
+    -fx-font-size: 14px;
 }
 
 .text-field:focused, .password-field:focused {
-    -fx-border-color: #2563eb;
-    -fx-border-width: 2;
+    -fx-background-color: white;
+    -fx-border-color: #3b82f6;
+    -fx-border-width: 1.5;
 }
 
-/* Bottoni */
-.button {
-    -fx-font-weight: 900;
-    -fx-cursor: hand;
-    -fx-background-radius: 8;
+/* TableView moderna */
+.table-view {
+    -fx-background-color: transparent;
+    -fx-background-radius: 15;
+    -fx-border-radius: 15;
+    -fx-border-color: #e5e7eb;
+    -fx-overflow-hidden: true;
 }
 
-/* Feedback Forza Password */
-.strength-label {
-    -fx-font-weight: 900;
-    -fx-font-size: 12px;
+.table-view .column-header-background {
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 15 15 0 0;
+    -fx-padding: 10 0;
 }
 
-/* Messaggi di errore */
-.error-label {
-    -fx-font-weight: 800;
-    -fx-text-fill: #dc2626;
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-font-weight: 700;
+    -fx-text-fill: #6b7280;
+}
+
+.table-view .cell {
+    -fx-cell-size: 50;
+    -fx-alignment: center-left;
+    -fx-text-fill: #1f2937;
+    -fx-border-color: transparent transparent #f3f4f6 transparent;
+}
+
+.table-view .table-row-cell:selected {
+    -fx-background-color: #eff6ff;
 }

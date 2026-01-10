@@ -1,5 +1,6 @@
 package com.safecore.ui.controller;
 
+import com.safecore.business.service.BackupService;
 import com.safecore.business.service.VaultService;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.security.PasswordGenerator;
@@ -18,6 +19,7 @@ import javafx.scene.input.ClipboardContent;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.springframework.stereotype.Component;
@@ -28,6 +30,7 @@ import javafx.stage.Modality;
 import org.springframework.context.ApplicationContext;
 import javafx.scene.layout.Region;
 
+import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -46,19 +49,26 @@ public class DashboardController {
     // Nuovi elementi per l'Overlay
     @FXML private Region overlay;
     @FXML private VBox addEntryCard;
+    @FXML private VBox generatePasswordCard;
     @FXML private TextField newServiceField;
     @FXML private TextField newUsernameField;
     @FXML private PasswordField newPasswordField;
+    @FXML private TextField generatedPasswordField;
 
     private final PasswordGenerator passwordGenerator;
     private final VaultService vaultService;
     private final ApplicationContext applicationContext;
+    private final BackupService backupService;
     private ObservableList<PasswordEntryEntity> masterData = FXCollections.observableArrayList();
 
-    public DashboardController(PasswordGenerator passwordGenerator, VaultService vaultService, ApplicationContext applicationContext) {
+    public DashboardController(PasswordGenerator passwordGenerator,
+                               VaultService vaultService,
+                               ApplicationContext applicationContext,
+                               BackupService backupService) {
         this.passwordGenerator = passwordGenerator;
         this.vaultService = vaultService;
         this.applicationContext = applicationContext;
+        this.backupService = backupService;
     }
 
     @FXML
@@ -93,13 +103,22 @@ public class DashboardController {
 
     private void setupActionsColumn() {
         actionsColumn.setCellFactory(param -> new TableCell<>() {
-            private final Button copyBtn = new Button("📋");
-            private final Button deleteBtn = new Button("🗑");
-            private final HBox container = new HBox(10, copyBtn, deleteBtn);
+            private final Button showBtn = new Button("👁");
+            private final Button copyBtn = new Button("Copia");
+            private final Button deleteBtn = new Button("Elimina");
+            private final HBox container = new HBox(10, showBtn, copyBtn, deleteBtn);
 
             {
+                showBtn.setStyle("-fx-cursor: hand; -fx-background-color: transparent; -fx-font-size: 16px;");
                 copyBtn.setStyle("-fx-cursor: hand; -fx-background-color: #f3f4f6;");
                 deleteBtn.setStyle("-fx-cursor: hand; -fx-background-color: #fee2e2; -fx-text-fill: #ef4444;");
+
+                showBtn.setOnAction(e -> {
+                    PasswordEntryEntity entry = getTableRow().getItem();
+                    if (entry != null) {
+                        showPasswordDetails(entry);
+                    }
+                });
 
                 copyBtn.setOnAction(e -> {
                     PasswordEntryEntity entry = getTableRow().getItem();
@@ -126,21 +145,32 @@ public class DashboardController {
         });
     }
 
+    private void showPasswordDetails(PasswordEntryEntity selected) {
+        String decrypted = vaultService.decryptPassword(selected.getEncryptedPassword());
+        
+        // Logica Scadenza (6 mesi)
+        boolean isExpired = selected.getCreatedAt().isBefore(LocalDateTime.now().minusMonths(6));
+        String prefix = isExpired ? "ATTENZIONE: Password scaduta (più di 6 mesi)!\n\n" : "";
+        
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Dettagli Credenziali");
+        alert.setHeaderText(selected.getServiceName());
+        alert.setContentText(prefix + "Username: " + selected.getUsername() + "\nPassword: " + decrypted);
+        alert.showAndWait();
+    }
+
     @FXML
     private void handleShowPassword() {
         PasswordEntryEntity selected = passwordTable.getSelectionModel().getSelectedItem();
         if (selected != null) {
-            String decrypted = vaultService.decryptPassword(selected.getEncryptedPassword());
+            showPasswordDetails(selected);
+        }
+    }
 
-            // Logica Scadenza (6 mesi)
-            boolean isExpired = selected.getCreatedAt().isBefore(LocalDateTime.now().minusMonths(6));
-            String prefix = isExpired ? "⚠️ ATTENZIONE: Password scaduta (più di 6 mesi)!\n\n" : "";
-
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Dettagli Credenziali");
-            alert.setHeaderText(selected.getServiceName());
-            alert.setContentText(prefix + "Username: " + selected.getUsername() + "\nPassword: " + decrypted);
-            alert.showAndWait();
+    @FXML
+    private void handleTableClick(javafx.scene.input.MouseEvent event) {
+        if (event.getClickCount() == 2) {
+            handleShowPassword();
         }
     }
 
@@ -166,6 +196,7 @@ public class DashboardController {
     private void handleCloseOverlay() {
         overlay.setVisible(false);
         addEntryCard.setVisible(false);
+        generatePasswordCard.setVisible(false);
     }
 
     /**
@@ -219,17 +250,43 @@ public class DashboardController {
 
     @FXML
     private void handleBackup() {
-        // Implementazione del backup (puoi chiamare il tuo BackupService qui)
-        System.out.println("Esecuzione backup in corso...");
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Salva Backup Vault");
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("SafeCore Backup (*.safecore)", "*.safecore"));
+        fileChooser.setInitialFileName("vault_backup_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")) + ".safecore");
+        
+        File file = fileChooser.showSaveDialog(overlay.getScene().getWindow());
+        if (file != null) {
+            try {
+                vaultService.exportVaultAsEncryptedJson(file);
+                showToast("Backup eseguito con successo!");
+            } catch (Exception e) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Errore Backup");
+                alert.setHeaderText("Impossibile eseguire il backup");
+                alert.setContentText(e.getMessage());
+                alert.showAndWait();
+            }
+        }
     }
 
-    @FXML private void handleGeneratePassword() {
-        copyToClipboard(passwordGenerator.generateSafe(16));
-        showToast("Password sicura copiata!");
+    @FXML 
+    private void handleGeneratePassword() {
+        String password = passwordGenerator.generateSafe(16);
+        generatedPasswordField.setText(password);
+        
+        overlay.setVisible(true);
+        generatePasswordCard.setVisible(true);
+    }
+
+    @FXML
+    private void handleConfirmCopy() {
+        copyToClipboard(generatedPasswordField.getText());
+        handleCloseOverlay();
+        showToast("Password copiata!");
     }
 
     private void applyHoverAnimation(VBox card) {
-        card.setOnMouseEntered(e -> card.setStyle("-fx-background-color: white; -fx-scale-x: 1.02; -fx-scale-y: 1.02; -fx-border-color: #2563eb; -fx-background-radius: 12; -fx-border-radius: 12;"));
-        card.setOnMouseExited(e -> card.setStyle("-fx-background-color: white; -fx-background-radius: 12; -fx-border-radius: 12; -fx-border-color: #e5e7eb;"));
+        // Rimosso stile inline per favorire le classi CSS .card:hover definite in style.css
     }
 }

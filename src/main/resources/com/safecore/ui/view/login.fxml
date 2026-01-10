@@ -3,45 +3,43 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="25" alignment="CENTER" prefWidth="420" prefHeight="550"
+<VBox spacing="30" alignment="CENTER" prefWidth="450" prefHeight="600"
       xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
       fx:controller="com.safecore.ui.controller.LoginController"
-      style="-fx-background-color: #F9FAFB; -fx-padding: 50;">
+      style="-fx-background-color: #ffffff; -fx-padding: 60;">
 
-    <VBox alignment="CENTER" spacing="5">
-        <Label text="SafeCore" style="-fx-font-size: 36px; -fx-font-weight: bold; -fx-text-fill: #1F2937;"/>
-        <Label text="Il tuo vault crittografato" style="-fx-text-fill: #6B7280; -fx-font-size: 14px;"/>
+    <VBox alignment="CENTER" spacing="10">
+        <Label text="SafeCore" styleClass="title-label" style="-fx-font-size: 38;"/>
+        <Label text="Proteggi la tua identità digitale" style="-fx-text-fill: #64748b; -fx-font-size: 15;"/>
     </VBox>
 
-    <VBox spacing="15">
-        <VBox spacing="5">
-            <Label text="Email" style="-fx-text-fill: #374151; -fx-font-weight: bold; -fx-font-size: 13px;"/>
-            <TextField fx:id="emailField" promptText="Inserisci la tua email"
-                       style="-fx-background-radius: 8; -fx-padding: 12; -fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-color: white;"/>
+    <VBox spacing="18">
+        <VBox spacing="8">
+            <Label text="Email" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
+            <TextField fx:id="emailField" promptText="Inserisci la tua email" />
         </VBox>
 
-        <VBox spacing="5">
-            <Label text="Password" style="-fx-text-fill: #374151; -fx-font-weight: bold; -fx-font-size: 13px;"/>
-            <HBox alignment="CENTER_LEFT" style="-fx-border-color: #D1D5DB; -fx-border-radius: 8; -fx-background-color: white; -fx-background-radius: 8;">
+        <VBox spacing="8">
+            <Label text="Password" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
+            <HBox alignment="CENTER_LEFT" style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
                 <StackPane HBox.hgrow="ALWAYS">
                     <PasswordField fx:id="passwordField" promptText="••••••••"
                                    style="-fx-background-color: transparent; -fx-padding: 12;"/>
                     <TextField fx:id="passwordTextField" visible="false"
                                style="-fx-background-color: transparent; -fx-padding: 12;"/>
                 </StackPane>
-                <Button fx:id="togglePasswordBtn" text="👁" onAction="#togglePasswordVisibility"
-                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #9CA3AF;"/>
+                <Button fx:id="togglePasswordBtn" text="Show" onAction="#togglePasswordVisibility"
+                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #94a3b8;"/>
             </HBox>
         </VBox>
     </VBox>
 
-    <Button text="Accedi" onAction="#handleLogin" maxWidth="Infinity"
-            style="-fx-background-color: #2563EB; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 14; -fx-background-radius: 8; -fx-cursor: hand;"/>
+    <Button text="Accedi al Vault" onAction="#handleLogin" maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 16;"/>
 
-    <VBox alignment="CENTER" spacing="10">
-        <Label text="Non hai un account?" style="-fx-text-fill: #6B7280;"/>
-        <Label text="Crea un account ora" onMouseClicked="#handleGoToRegister"
-               style="-fx-text-fill: #2563EB; -fx-cursor: hand; -fx-font-weight: bold;"/>
+    <VBox alignment="CENTER" spacing="12">
+        <Label text="Nuovo utente?" style="-fx-text-fill: #64748b;"/>
+        <Label text="Crea un nuovo account" onMouseClicked="#handleGoToRegister"
+               style="-fx-text-fill: #2563eb; -fx-cursor: hand; -fx-font-weight: 700;"/>
     </VBox>
 
     <Label fx:id="messageLabel" wrapText="true" alignment="CENTER" style="-fx-font-size: 12px;"/>
