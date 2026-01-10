@@ -21,6 +21,12 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.springframework.stereotype.Component;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.stage.Modality;
+import org.springframework.context.ApplicationContext;
+import javafx.scene.layout.Region;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,13 +43,22 @@ public class DashboardController {
     @FXML private TableColumn<PasswordEntryEntity, Void> actionsColumn;
     @FXML private VBox passwordCard, vaultCard, backupCard;
 
+    // Nuovi elementi per l'Overlay
+    @FXML private Region overlay;
+    @FXML private VBox addEntryCard;
+    @FXML private TextField newServiceField;
+    @FXML private TextField newUsernameField;
+    @FXML private PasswordField newPasswordField;
+
     private final PasswordGenerator passwordGenerator;
     private final VaultService vaultService;
+    private final ApplicationContext applicationContext;
     private ObservableList<PasswordEntryEntity> masterData = FXCollections.observableArrayList();
 
-    public DashboardController(PasswordGenerator passwordGenerator, VaultService vaultService) {
+    public DashboardController(PasswordGenerator passwordGenerator, VaultService vaultService, ApplicationContext applicationContext) {
         this.passwordGenerator = passwordGenerator;
         this.vaultService = vaultService;
+        this.applicationContext = applicationContext;
     }
 
     @FXML
@@ -129,30 +144,52 @@ public class DashboardController {
         }
     }
 
+    /**
+     * Mostra l'overlay per l'aggiunta di un segreto
+     */
     @FXML
     private void handleAddEntry() {
-        Dialog<ButtonType> dialog = new Dialog<>();
-        dialog.setTitle("Nuovo Segreto");
+        // Pulisce i campi prima di mostrare
+        newServiceField.clear();
+        newUsernameField.clear();
+        newPasswordField.clear();
+        
+        // Rende visibile l'overlay e la card
+        overlay.setVisible(true);
+        addEntryCard.setVisible(true);
+    }
 
-        ButtonType saveBtn = new ButtonType("Salva", ButtonBar.ButtonData.OK_DONE);
-        dialog.getDialogPane().getButtonTypes().addAll(saveBtn, ButtonType.CANCEL);
+    /**
+     * Chiude l'overlay
+     */
+    @FXML
+    private void handleCloseOverlay() {
+        overlay.setVisible(false);
+        addEntryCard.setVisible(false);
+    }
 
-        GridPane grid = new GridPane();
-        grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(20));
+    /**
+     * Conferma il salvataggio e invoca il VaultService
+     */
+    @FXML
+    private void handleConfirmSave() {
+        String service = newServiceField.getText();
+        String user = newUsernameField.getText();
+        String pass = newPasswordField.getText();
 
-        TextField s = new TextField(); TextField u = new TextField(); PasswordField p = new PasswordField();
-        grid.add(new Label("Servizio:"), 0, 0); grid.add(s, 1, 0);
-        grid.add(new Label("Username:"), 0, 1); grid.add(u, 1, 1);
-        grid.add(new Label("Password:"), 0, 2); grid.add(p, 1, 2);
+        if (service == null || service.isBlank() || pass == null || pass.isBlank()) {
+            // Qui si potrebbe aggiungere un feedback visivo di errore
+            return;
+        }
 
-        dialog.getDialogPane().setContent(grid);
-        dialog.showAndWait().ifPresent(response -> {
-            if (response == saveBtn) {
-                vaultService.addEntry(s.getText(), u.getText(), p.getText());
-                refreshVault();
-                showToast("Salvato con successo!");
-            }
-        });
+        // 1. Cifratura e salvataggio (gestito internamente da VaultService)
+        vaultService.addEntry(service, user, pass);
+
+        // 2. Chiudi overlay
+        handleCloseOverlay();
+
+        // 3. Refresh istantaneo della tabella
+        refreshVault();
     }
 
     @FXML
