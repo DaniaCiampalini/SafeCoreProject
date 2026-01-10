@@ -12,6 +12,16 @@ target/
 *.iws
 *.iml
 *.ipr
+.idea/workspace.xml
+.idea/runConfigurations/
+.idea/encodings.xml
+.idea/AICommit.xml
+.idea/misc.xml
+.idea/vcs.xml
+.idea/gradle.xml
+.idea/dictionaries/
+.idea/caches/
+.idea/SweepConfig.xml
 
 ### Eclipse ###
 .apt_generated
@@ -37,7 +47,3 @@ build/
 
 ### Mac OS ###
 .DS_Store
-
-### IntelliJ IDEA ###
-.idea
-.mvn
