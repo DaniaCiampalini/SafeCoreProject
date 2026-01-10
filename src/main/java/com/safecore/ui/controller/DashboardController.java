@@ -1,8 +1,6 @@
 package com.safecore.ui.controller;
 
-import com.safecore.business.service.BackupService;
-import com.safecore.business.service.SecurityAuditService;
-import com.safecore.business.service.VaultService;
+import com.safecore.business.service.*;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.security.PasswordGenerator;
 import com.safecore.ui.navigation.SceneNavigator;
@@ -48,37 +46,45 @@ public class DashboardController {
     @FXML private TableColumn<PasswordEntryEntity, String> serviceColumn;
     @FXML private TableColumn<PasswordEntryEntity, String> usernameColumn;
     @FXML private TableColumn<PasswordEntryEntity, Void> actionsColumn;
-    @FXML private VBox passwordCard, vaultCard, backupCard, auditCard;
+    @FXML private VBox passwordCard, vaultCard, backupCard, auditCard, safeSendCard, aliasCard;
 
     // Nuovi elementi per l'Overlay
     @FXML private Region overlay;
-    @FXML private VBox addEntryCard;
-    @FXML private VBox generatePasswordCard;
-    @FXML private TextField newServiceField;
-    @FXML private TextField newUsernameField;
+    @FXML private VBox addEntryCard, generatePasswordCard, safeSendOverlayCard, aliasOverlayCard;
+    @FXML private TextField newServiceField, newUsernameField, generatedPasswordField, aliasServiceField, safeSendIdField;
     @FXML private PasswordField newPasswordField;
-    @FXML private TextField generatedPasswordField;
+    @FXML private TextArea safeSendTextArea, safeSendResultArea;
+    @FXML private CheckBox oneTimeCheckBox;
     @FXML private ComboBox<Integer> expiryComboBox;
-    @FXML private Label healthScoreLabel;
-    @FXML private Label auditDetailLabel;
+    @FXML private Label healthScoreLabel, auditDetailLabel;
+    @FXML private ListView<String> aliasListView;
 
     private final PasswordGenerator passwordGenerator;
     private final VaultService vaultService;
     private final ApplicationContext applicationContext;
     private final BackupService backupService;
     private final SecurityAuditService auditService;
+    private final SafeSendService safeSendService;
+    private final EmailAliasService emailAliasService;
+    private final AutoFillService autoFillService;
     private ObservableList<PasswordEntryEntity> masterData = FXCollections.observableArrayList();
 
     public DashboardController(PasswordGenerator passwordGenerator,
                                VaultService vaultService,
                                ApplicationContext applicationContext,
                                BackupService backupService,
-                               SecurityAuditService auditService) {
+                               SecurityAuditService auditService,
+                               SafeSendService safeSendService,
+                               EmailAliasService emailAliasService,
+                               AutoFillService autoFillService) {
         this.passwordGenerator = passwordGenerator;
         this.vaultService = vaultService;
         this.applicationContext = applicationContext;
         this.backupService = backupService;
         this.auditService = auditService;
+        this.safeSendService = safeSendService;
+        this.emailAliasService = emailAliasService;
+        this.autoFillService = autoFillService;
     }
 
     @FXML
@@ -100,6 +106,8 @@ public class DashboardController {
         applyHoverAnimation(vaultCard);
         applyHoverAnimation(backupCard);
         applyHoverAnimation(auditCard);
+        applyHoverAnimation(safeSendCard);
+        applyHoverAnimation(aliasCard);
     }
 
     private void setupExpiryOptions() {
@@ -139,12 +147,15 @@ public class DashboardController {
     private void setupActionsColumn() {
         actionsColumn.setCellFactory(param -> new TableCell<>() {
             private final Button showBtn = new Button("👁");
+            private final Button autoFillBtn = new Button("⚡");
             private final Button copyBtn = new Button("Copia");
             private final Button deleteBtn = new Button("Elimina");
-            private final HBox container = new HBox(10, showBtn, copyBtn, deleteBtn);
+            private final HBox container = new HBox(8, showBtn, autoFillBtn, copyBtn, deleteBtn);
 
             {
                 showBtn.setStyle("-fx-cursor: hand; -fx-background-color: transparent; -fx-font-size: 16px;");
+                autoFillBtn.setTooltip(new Tooltip("Auto-Digitazione (2s per cambiare finestra)"));
+                autoFillBtn.setStyle("-fx-cursor: hand; -fx-background-color: #fef3c7; -fx-text-fill: #d97706;");
                 copyBtn.setStyle("-fx-cursor: hand; -fx-background-color: #f3f4f6;");
                 deleteBtn.setStyle("-fx-cursor: hand; -fx-background-color: #fee2e2; -fx-text-fill: #ef4444;");
 
@@ -152,6 +163,15 @@ public class DashboardController {
                     PasswordEntryEntity entry = getTableRow().getItem();
                     if (entry != null) {
                         showPasswordDetails(entry);
+                    }
+                });
+
+                autoFillBtn.setOnAction(e -> {
+                    PasswordEntryEntity entry = getTableRow().getItem();
+                    if (entry != null) {
+                        showToast("Passa al sito... digitazione tra 2 secondi!");
+                        String pass = vaultService.decryptPassword(entry.getEncryptedPassword());
+                        new Thread(() -> autoFillService.typeCredentials(entry.getUsername(), pass)).start();
                     }
                 });
 
@@ -233,6 +253,74 @@ public class DashboardController {
         overlay.setVisible(false);
         addEntryCard.setVisible(false);
         generatePasswordCard.setVisible(false);
+        safeSendOverlayCard.setVisible(false);
+        aliasOverlayCard.setVisible(false);
+    }
+
+    @FXML
+    private void handleNewSafeSend() {
+        safeSendTextArea.clear();
+        safeSendIdField.clear();
+        safeSendResultArea.clear();
+        oneTimeCheckBox.setSelected(true);
+        overlay.setVisible(true);
+        safeSendOverlayCard.setVisible(true);
+    }
+
+    @FXML
+    private void handleConfirmSafeSend() {
+        String content = safeSendTextArea.getText();
+        if (content == null || content.isEmpty()) return;
+        
+        String link = safeSendService.createSafeLink(content, 24, oneTimeCheckBox.isSelected());
+        copyToClipboard(link);
+        showToast("Link SafeSend copiato negli appunti!");
+        safeSendTextArea.clear();
+    }
+
+    @FXML
+    private void handleAccessSafeSend() {
+        String input = safeSendIdField.getText();
+        if (input == null || input.isEmpty()) return;
+
+        try {
+            // Estrai l'UUID se è un URL completo o usa l'ID così com'è
+            String idStr = input.contains("/") ? input.substring(input.lastIndexOf("/") + 1) : input;
+            UUID id = UUID.fromString(idStr);
+            String decrypted = safeSendService.accessSafeLink(id);
+            safeSendResultArea.setText(decrypted);
+            showToast("Messaggio decifrato!");
+        } catch (Exception e) {
+            safeSendResultArea.setText("ERRORE: " + e.getMessage());
+            showToast("Impossibile accedere al link.");
+        }
+    }
+
+    @FXML
+    private void handleGenerateAlias() {
+        refreshAliasList();
+        aliasServiceField.clear();
+        overlay.setVisible(true);
+        aliasOverlayCard.setVisible(true);
+    }
+
+    @FXML
+    private void handleConfirmGenerateAlias() {
+        String service = aliasServiceField.getText();
+        if (service == null || service.trim().isEmpty()) {
+            service = "General";
+        }
+        emailAliasService.generateAlias(service);
+        refreshAliasList();
+        aliasServiceField.clear();
+        showToast("Nuovo alias generato!");
+    }
+
+    private void refreshAliasList() {
+        List<String> aliases = emailAliasService.getAliasesForCurrentUser().stream()
+                .map(a -> a.getServiceName() + ": " + a.getAliasEmail())
+                .collect(Collectors.toList());
+        aliasListView.setItems(FXCollections.observableArrayList(aliases));
     }
 
     /**

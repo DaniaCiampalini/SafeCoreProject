@@ -51,6 +51,18 @@
                         <Region VBox.vgrow="ALWAYS"/>
                         <Button text="Analisi Approfondita" onAction="#handleFullAudit" styleClass="button-primary" maxWidth="Infinity"/>
                     </VBox>
+                    <VBox fx:id="safeSendCard" prefWidth="280" spacing="12" styleClass="card">
+                        <Label text="SafeSend" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <Label text="Invia testi o file cifrati con link a scadenza." wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <Button text="Nuovo Link Sicuro" onAction="#handleNewSafeSend" styleClass="button-primary" maxWidth="Infinity"/>
+                    </VBox>
+                    <VBox fx:id="aliasCard" prefWidth="280" spacing="12" styleClass="card">
+                        <Label text="Email Alias" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <Label text="Crea email usa e getta per proteggere la tua privacy." wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <Button text="Genera Alias" onAction="#handleGenerateAlias" styleClass="button-success" maxWidth="Infinity"/>
+                    </VBox>
                 </FlowPane>
 
                 <VBox spacing="15" VBox.vgrow="ALWAYS" styleClass="card">
@@ -134,6 +146,68 @@
         <HBox spacing="15" alignment="CENTER_RIGHT">
             <Button text="Chiudi" onAction="#handleCloseOverlay" styleClass="button-secondary"/>
             <Button text="Copia negli Appunti" onAction="#handleConfirmCopy" styleClass="button-primary"/>
+        </HBox>
+    </VBox>
+
+    <!-- LIVELLO 5: CARD SAFESEND (Invisibile all'inizio) -->
+    <VBox fx:id="safeSendOverlayCard" visible="false" maxWidth="450" maxHeight="500" spacing="20" styleClass="card"
+          style="-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 5);">
+
+        <Label text="Crea SafeSend" styleClass="title-label" style="-fx-font-size: 24;"/>
+
+        <TabPane fx:id="safeSendTabPane" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+            <Tab text="Crea Nuovo">
+                <VBox spacing="10" style="-fx-padding: 15 0 0 0;">
+                    <Label text="Testo o Segreto da inviare:" style="-fx-font-weight: 700;"/>
+                    <TextArea fx:id="safeSendTextArea" prefHeight="100" promptText="Scrivi qui il messaggio segreto..." wrapText="true"/>
+                    
+                    <HBox spacing="20" alignment="CENTER_LEFT">
+                        <CheckBox fx:id="oneTimeCheckBox" text="Usa e getta (un solo accesso)" selected="true"/>
+                    </HBox>
+                    <Region VBox.vgrow="ALWAYS"/>
+                    <Button text="Genera &amp; Copia Link" onAction="#handleConfirmSafeSend" styleClass="button-primary" maxWidth="Infinity"/>
+                </VBox>
+            </Tab>
+            <Tab text="Accedi a Link">
+                <VBox spacing="10" style="-fx-padding: 15 0 0 0;">
+                    <Label text="Incolla l'ID o il Link ricevuto:" style="-fx-font-weight: 700;"/>
+                    <TextField fx:id="safeSendIdField" promptText="es. 123e4567-e89b..."/>
+                    <Button text="Visualizza Segreto" onAction="#handleAccessSafeSend" styleClass="button-success" maxWidth="Infinity"/>
+                    <Separator/>
+                    <Label text="Risultato:" style="-fx-font-weight: 700;"/>
+                    <TextArea fx:id="safeSendResultArea" editable="false" prefHeight="100" wrapText="true" style="-fx-background-color: #f3f4f6;"/>
+                </VBox>
+            </Tab>
+        </TabPane>
+
+        <HBox spacing="15" alignment="CENTER_RIGHT">
+            <Button text="Chiudi" onAction="#handleCloseOverlay" styleClass="button-secondary"/>
+        </HBox>
+    </VBox>
+
+    <!-- LIVELLO 6: CARD ALIAS EMAIL (Invisibile all'inizio) -->
+    <VBox fx:id="aliasOverlayCard" visible="false" maxWidth="500" maxHeight="500" spacing="20" styleClass="card"
+          style="-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 5);">
+
+        <Label text="Alias Email" styleClass="title-label" style="-fx-font-size: 24;"/>
+
+        <VBox spacing="15" VBox.vgrow="ALWAYS">
+            <VBox spacing="8">
+                <Label text="Nome Servizio:" style="-fx-font-weight: 700;"/>
+                <HBox spacing="10">
+                    <TextField fx:id="aliasServiceField" promptText="es. Amazon, Netflix..." HBox.hgrow="ALWAYS"/>
+                    <Button text="Genera Nuovo" onAction="#handleConfirmGenerateAlias" styleClass="button-primary"/>
+                </HBox>
+            </VBox>
+
+            <Separator/>
+
+            <Label text="I tuoi Alias generati:" style="-fx-font-weight: 700;"/>
+            <ListView fx:id="aliasListView" VBox.vgrow="ALWAYS" prefHeight="200"/>
+        </VBox>
+
+        <HBox spacing="15" alignment="CENTER_RIGHT">
+            <Button text="Chiudi" onAction="#handleCloseOverlay" styleClass="button-secondary"/>
         </HBox>
     </VBox>
 </StackPane>

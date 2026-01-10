@@ -14,8 +14,10 @@ public class AppLauncher extends Application {
 
     @Override
     public void init() {
-        // Avviamo Spring Boot
-        springContext = new SpringApplicationBuilder(SafeCoreApplication.class).run();
+        // Avviamo Spring Boot in modalità NON-headless per permettere l'uso di java.awt.Robot
+        springContext = new SpringApplicationBuilder(SafeCoreApplication.class)
+                .headless(false)
+                .run();
     }
 
     @Override
