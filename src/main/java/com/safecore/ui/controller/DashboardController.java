@@ -10,12 +10,10 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
-import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
 import javafx.scene.input.ClipboardContent;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
@@ -23,10 +21,6 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.springframework.stereotype.Component;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
-import javafx.stage.Modality;
 import org.springframework.context.ApplicationContext;
 import javafx.scene.layout.Region;
 
@@ -41,23 +35,38 @@ import java.util.stream.Collectors;
 public class DashboardController implements VaultObserver {
 
     // Tutte queste sono le "collegamenti" con il file FXML (la grafica)
+    // I campi FXML vengono iniettati automaticamente dal FXMLLoader
+    @SuppressWarnings("unused")
     @FXML private Label userLabel, securityStatusLabel, toastLabel;
+    @SuppressWarnings("unused")
     @FXML private TextField searchField;
+    @SuppressWarnings("unused")
     @FXML private TableView<PasswordEntryEntity> passwordTable;
+    @SuppressWarnings("unused")
     @FXML private TableColumn<PasswordEntryEntity, String> serviceColumn;
+    @SuppressWarnings("unused")
     @FXML private TableColumn<PasswordEntryEntity, String> usernameColumn;
+    @SuppressWarnings("unused")
     @FXML private TableColumn<PasswordEntryEntity, Void> actionsColumn;
-    @FXML private VBox passwordCard, vaultCard, backupCard, auditCard, safeSendCard, aliasCard;
 
     // Componenti per l'interfaccia degli Overlay (i pannelli che appaiono sopra)
+    @SuppressWarnings("unused")
     @FXML private Region overlay;
+    @SuppressWarnings("unused")
     @FXML private VBox addEntryCard, generatePasswordCard, safeSendOverlayCard, aliasOverlayCard;
+    @SuppressWarnings("unused")
     @FXML private TextField newServiceField, newUsernameField, generatedPasswordField, aliasServiceField, safeSendIdField;
+    @SuppressWarnings("unused")
     @FXML private PasswordField newPasswordField;
+    @SuppressWarnings("unused")
     @FXML private TextArea safeSendTextArea, safeSendResultArea;
+    @SuppressWarnings("unused")
     @FXML private CheckBox oneTimeCheckBox;
+    @SuppressWarnings("unused")
     @FXML private ComboBox<Integer> expiryComboBox;
+    @SuppressWarnings("unused")
     @FXML private Label healthScoreLabel, auditDetailLabel;
+    @SuppressWarnings("unused")
     @FXML private ListView<String> aliasListView;
 
     // Qui iniettiamo tutti i servizi che ci servono per far funzionare la logica
@@ -107,17 +116,9 @@ public class DashboardController implements VaultObserver {
 
         // Pulizia automatica delle password scadute e registrazione come "osservatore"
         // Così se il Vault cambia, questa classe viene avvisata e aggiorna la tabella.
-        vaultService.cleanupExpiredEntries(); 
+        vaultService.cleanupExpiredEntries();
         vaultService.addObserver(this);
         refreshVault();
-
-        // Un tocco di classe: animazioni quando passi il mouse sulle card
-        applyHoverAnimation(passwordCard);
-        applyHoverAnimation(vaultCard);
-        applyHoverAnimation(backupCard);
-        applyHoverAnimation(auditCard);
-        applyHoverAnimation(safeSendCard);
-        applyHoverAnimation(aliasCard);
     }
 
     private void setupExpiryOptions() {
@@ -471,9 +472,5 @@ public class DashboardController implements VaultObserver {
         copyToClipboard(generatedPasswordField.getText());
         handleCloseOverlay();
         showToast("Password copiata!");
-    }
-
-    private void applyHoverAnimation(VBox card) {
-        // Rimosso stile inline per favorire le classi CSS .card:hover definite in style.css
     }
 }
