@@ -1,9 +1,9 @@
 package com.safecore.business.hints;
 
 /**
- * Severità del suggerimento.
- * INFO → solo informativo
- * WARNING → attenzione consigliata
+ * Quanto è grave il suggerimento?
+ * INFO: Un consiglio amichevole.
+ * WARNING: Faresti meglio ad ascoltarmi se non vuoi essere hackerato!
  */
 public enum HintLevel {
     INFO,

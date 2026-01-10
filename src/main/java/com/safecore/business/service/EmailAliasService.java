@@ -11,6 +11,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Random;
 
+/**
+ * Questo servizio crea degli "alias" email. 
+ * Serve a proteggere la tua vera email quando ti iscrivi a siti poco affidabili.
+ * Invece di dare "mario.rossi@gmail.com", dai un alias tipo "amazon.ghost.shield1234@safecore.io".
+ * Se quel sito inizia a mandarti spam, sai chi è stato!
+ */
 @Service
 public class EmailAliasService {
 
@@ -27,15 +33,20 @@ public class EmailAliasService {
         this.userRepository = userRepository;
     }
 
+    /**
+     * Genera un nuovo indirizzo email fittizio e lo salva nel database.
+     */
     @Transactional
     public String generateAlias(String serviceName) {
         String email = SessionContext.getCurrentUserEmail();
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
+        // Puliamo il nome del servizio (es: "FaceBook!" -> "facebook")
         String cleanService = serviceName.toLowerCase().replaceAll("[^a-z0-9]", "");
         if (cleanService.isEmpty()) cleanService = "service";
         
+        // Componiamo l'alias usando parole casuali
         String adjective = ADJECTIVES[random.nextInt(ADJECTIVES.length)];
         String noun = NOUNS[random.nextInt(NOUNS.length)];
         int number = 1000 + random.nextInt(9000);
@@ -51,6 +62,9 @@ public class EmailAliasService {
         return alias;
     }
 
+    /**
+     * Recupera tutti gli alias creati dall'utente loggato.
+     */
     public List<EmailAliasEntity> getAliasesForCurrentUser() {
         return emailAliasRepository.findByUserEmail(SessionContext.getCurrentUserEmail());
     }

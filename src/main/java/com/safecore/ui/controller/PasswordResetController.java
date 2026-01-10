@@ -11,6 +11,12 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
+/**
+ * Controller per il recupero password.
+ * Se un utente dimentica la password, può richiedere un "token" di reset.
+ * In questa versione demo, il token viene mostrato direttamente a video invece
+ * di essere inviato per email.
+ */
 @Component
 public class PasswordResetController {
 
@@ -20,29 +26,35 @@ public class PasswordResetController {
     @FXML private Label messageLabel;
 
     private final PasswordResetService resetService;
-    private final PasswordGenerator passwordGenerator; // 1. AGGIUNTO CAMPO PER INIEZIONE
+    private final PasswordGenerator passwordGenerator; 
 
-    // 2. AGGIUNTO AL COSTRUTTORE PER SPRING
     public PasswordResetController(PasswordResetService resetService, PasswordGenerator passwordGenerator) {
         this.resetService = resetService;
         this.passwordGenerator = passwordGenerator;
     }
 
+    /**
+     * Chiede al sistema di generare un token di reset per l'email inserita.
+     */
     @FXML
     private void handleRequestToken() {
         String email = emailField.getText();
         if (email == null || email.isBlank()) {
-            showError("Email is required");
+            showError("L'email è obbligatoria");
             return;
         }
         try {
+            // Simuliamo l'invio: il service genera il token e noi lo mostriamo
             String token = resetService.requestReset(email);
-            showInfo("Reset token (simulated): " + token);
+            showInfo("Token di Reset (simulato): " + token);
         } catch (Exception e) {
             showError(e.getMessage());
         }
     }
 
+    /**
+     * Usa il token ricevuto per impostare una nuova password.
+     */
     @FXML
     private void handleResetPassword() {
         String email = emailField.getText();
@@ -50,13 +62,14 @@ public class PasswordResetController {
         String newPassword = newPasswordField.getText();
 
         if (isInputInvalid(email, token, newPassword)) {
-            showError("All fields are required");
+            showError("Tutti i campi sono obbligatori");
             return;
         }
 
         try {
+            // Se il token è valido, la password viene aggiornata
             resetService.resetPassword(email, token, newPassword);
-            showSuccess("Password successfully reset");
+            showSuccess("Password resettata con successo!");
             disableResetForm();
             redirectToLoginAfterDelay();
         } catch (Exception e) {
@@ -64,15 +77,17 @@ public class PasswordResetController {
         }
     }
 
+    /**
+     * Anche qui, aiutiamo l'utente a scegliere una password forte.
+     */
     @FXML
     private void handleGeneratePassword() {
         try {
-            // 3. CORRETTO: Uso dell'istanza iniettata e del metodo generateSafe
             String generated = passwordGenerator.generateSafe(16);
             newPasswordField.setText(generated);
-            showInfo("Secure password generated");
+            showInfo("Password sicura generata!");
         } catch (Exception e) {
-            showError("Error generating password");
+            showError("Errore durante la generazione");
         }
     }
 
@@ -94,17 +109,17 @@ public class PasswordResetController {
     }
 
     private void showError(String message) {
-        messageLabel.setStyle("-fx-text-fill: red;");
+        messageLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
         messageLabel.setText(message);
     }
 
     private void showSuccess(String message) {
-        messageLabel.setStyle("-fx-text-fill: green;");
+        messageLabel.setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold;");
         messageLabel.setText(message);
     }
 
     private void showInfo(String message) {
-        messageLabel.setStyle("-fx-text-fill: blue;");
+        messageLabel.setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
         messageLabel.setText(message);
     }
 

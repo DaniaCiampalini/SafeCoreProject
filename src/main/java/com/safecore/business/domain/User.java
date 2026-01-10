@@ -2,13 +2,12 @@ package com.safecore.business.domain;
 import java.util.UUID;
 
 /**
- * Domain Model User.
- * Scelte di ingegneria del software:
- * - Classe IMMUTABILE → stato consistente
- * - Nessuna annotazione JPA
- * - Nessuna dipendenza da DB o framework
- * Questo oggetto rappresenta il concetto di "Utente"
- * nel dominio applicativo, NON nel database.
+ * Questo è un Domain Model per l'Utente.
+ * Nota le scelte tecniche:
+ * - Classe IMMUTABILE (final e senza setter): una volta creato, l'oggetto non cambia.
+ *   Questo evita un sacco di bug strani dovuti a stati inconsistenti.
+ * - È un oggetto "puro": non sa nulla di database, JPA o Spring.
+ *   Rappresenta l'utente nel cervello della nostra app, non sul disco.
  */
 public final class User {
 
@@ -17,7 +16,8 @@ public final class User {
     private final String passwordHash;
     private final boolean mfaEnabled;
 
-    // Costruttore package-private → controllato dal Builder
+    // Usiamo un costruttore package-private. 
+    // L'idea è che solo il Builder (UserBuilder) possa creare istanze di User.
     User(UUID id, String email, String passwordHash, boolean mfaEnabled) {
         this.id = id;
         this.email = email;

@@ -12,9 +12,16 @@ import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 import java.util.List;
 
+/**
+ * Controller per la schermata di Registrazione.
+ * Qui l'utente crea il suo account. Abbiamo aggiunto un controllo in tempo reale
+ * sulla robustezza della password (così evitiamo che usino "123456") e un
+ * generatore di password sicure integrato.
+ */
 @Component
 public class RegisterController {
 
+    // Campi UI per email e password (con i rispettivi doppioni per la visibilità in chiaro)
     @FXML private TextField emailField;
     @FXML private Label messageLabel;
     @FXML private Label passwordStrengthLabel;
@@ -29,7 +36,7 @@ public class RegisterController {
 
     private final UserService userService;
     private final PasswordGenerator passwordGenerator;
-    private final PasswordHintService hintService; // Per il controllo reale della forza
+    private final PasswordHintService hintService; 
 
     private boolean isPwdVisible = false;
     private boolean isConfirmVisible = false;
@@ -42,12 +49,16 @@ public class RegisterController {
         this.hintService = hintService;
     }
 
+    /**
+     * Tenta di registrare un nuovo utente.
+     */
     @FXML
     private void handleRegister() {
         String email = emailField.getText();
         String password = isPwdVisible ? passwordTextField.getText() : passwordField.getText();
         String confirm = isConfirmVisible ? confirmPasswordTextField.getText() : confirmPasswordField.getText();
 
+        // Validazione: niente campi vuoti e le due password devono essere identiche
         if (email.isBlank() || password.isBlank() || confirm.isBlank()) {
             showError("Tutti i campi sono obbligatori");
             return;
@@ -59,10 +70,12 @@ public class RegisterController {
         }
 
         try {
+            // Proviamo a registrare. Se la password è troppo debole, UserService ci fermerà.
             userService.register(email, password);
             showSuccess("Account creato! Reindirizzamento...");
             disableForm();
 
+            // Aspettiamo un secondo e mezzo prima di tornare al login, così l'utente legge il messaggio.
             new Thread(() -> {
                 try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
                 Platform.runLater(this::handleBackToLogin);
@@ -73,6 +86,9 @@ public class RegisterController {
         }
     }
 
+    /**
+     * Mentre l'utente scrive, controlliamo quanto è sicura la password.
+     */
     @FXML
     private void handlePasswordTyping() {
         String pwd = isPwdVisible ? passwordTextField.getText() : passwordField.getText();
@@ -82,20 +98,23 @@ public class RegisterController {
             return;
         }
 
-        // Corretta la logica
+        // Chiediamo ai "Suggerimenti" (HintService) se c'è qualcosa che non va
         List<PasswordHint> hints = hintService.getHints(pwd);
 
         if (hints.isEmpty()) {
             passwordStrengthLabel.setText("SICURA (Forte)");
             passwordStrengthLabel.setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold; -fx-font-size: 13px;");
         } else {
-            // Mostriamo il primo suggerimento (es: "Mancano maiuscole")
+            // Se ci sono suggerimenti, mostriamo il primo (es: "Aggiungi un numero")
             String helpMessage = hints.get(0).getMessage();
             passwordStrengthLabel.setText("DEBOLE: " + helpMessage);
             passwordStrengthLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold; -fx-font-size: 13px;");
         }
     }
 
+    /**
+     * Genera una password robusta per conto dell'utente se è pigro.
+     */
     @FXML
     private void handleGeneratePassword() {
         String generated = passwordGenerator.generateSafe(14);
@@ -105,9 +124,12 @@ public class RegisterController {
         confirmPasswordTextField.setText(generated);
 
         showInfo("Password generata con successo");
-        handlePasswordTyping();
+        handlePasswordTyping(); // Aggiorna l'etichetta della forza
     }
 
+    /**
+     * Mostra/nasconde la password
+     */
     @FXML
     private void togglePasswordVisibility() {
         if (isPwdVisible) {
@@ -124,6 +146,9 @@ public class RegisterController {
         isPwdVisible = !isPwdVisible;
     }
 
+    /**
+     * Mostra/nasconde la password di conferma
+     */
     @FXML
     private void toggleConfirmVisibility() {
         if (isConfirmVisible) {

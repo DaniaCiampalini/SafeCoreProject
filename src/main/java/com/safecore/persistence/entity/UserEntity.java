@@ -3,12 +3,17 @@ package com.safecore.persistence.entity;
 import jakarta.persistence.*;
 import java.util.UUID;
 
+/**
+ * Questa invece è l'Entity per il database.
+ * A differenza del Domain Model, qui usiamo Hibernate/JPA per mappare
+ * i campi direttamente sulla tabella "users".
+ */
 @Entity
 @Table(name = "users")
 public class UserEntity {
 
     @Id
-    @GeneratedValue // Spring Boot e H2 gestiranno automaticamente l'UUID
+    @GeneratedValue // Lasciamo che sia il DB a generare l'UUID
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
@@ -16,12 +21,12 @@ public class UserEntity {
     private String email;
 
     @Column(nullable = false)
-    private String passwordHash;
+    private String passwordHash; // Ovviamente salviamo l'hash, mai la password vera!
 
     @Column(nullable = false)
     private boolean mfaEnabled;
 
-    public UserEntity() { }
+    public UserEntity() { } // JPA vuole sempre un costruttore vuoto
 
     // Costruttore di utilità per il Service
     public UserEntity(String email, String passwordHash) {

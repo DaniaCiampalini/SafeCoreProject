@@ -38,8 +38,9 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Component
-public class DashboardController {
+public class DashboardController implements VaultObserver {
 
+    // Tutte queste sono le "collegamenti" con il file FXML (la grafica)
     @FXML private Label userLabel, securityStatusLabel, toastLabel;
     @FXML private TextField searchField;
     @FXML private TableView<PasswordEntryEntity> passwordTable;
@@ -48,7 +49,7 @@ public class DashboardController {
     @FXML private TableColumn<PasswordEntryEntity, Void> actionsColumn;
     @FXML private VBox passwordCard, vaultCard, backupCard, auditCard, safeSendCard, aliasCard;
 
-    // Nuovi elementi per l'Overlay
+    // Componenti per l'interfaccia degli Overlay (i pannelli che appaiono sopra)
     @FXML private Region overlay;
     @FXML private VBox addEntryCard, generatePasswordCard, safeSendOverlayCard, aliasOverlayCard;
     @FXML private TextField newServiceField, newUsernameField, generatedPasswordField, aliasServiceField, safeSendIdField;
@@ -59,6 +60,7 @@ public class DashboardController {
     @FXML private Label healthScoreLabel, auditDetailLabel;
     @FXML private ListView<String> aliasListView;
 
+    // Qui iniettiamo tutti i servizi che ci servono per far funzionare la logica
     private final PasswordGenerator passwordGenerator;
     private final VaultService vaultService;
     private final ApplicationContext applicationContext;
@@ -67,6 +69,8 @@ public class DashboardController {
     private final SafeSendService safeSendService;
     private final EmailAliasService emailAliasService;
     private final AutoFillService autoFillService;
+    
+    // Lista "viva" che tiene i dati della tabella e si aggiorna da sola
     private ObservableList<PasswordEntryEntity> masterData = FXCollections.observableArrayList();
 
     public DashboardController(PasswordGenerator passwordGenerator,
@@ -89,19 +93,25 @@ public class DashboardController {
 
     @FXML
     private void initialize() {
+        // Appena la dashboard si apre, mettiamo l'email dell'utente in alto
         userLabel.setText(SessionContext.getCurrentUserEmail());
 
-        // Configurazione colonne
+        // Diciamo alla tabella quali campi dell'oggetto PasswordEntryEntity mostrare
         serviceColumn.setCellValueFactory(new PropertyValueFactory<>("serviceName"));
         usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
 
+        // Setup vari: pulsanti, filtri di ricerca e scadenze
         setupActionsColumn();
         setupSearchFilter();
         setupExpiryOptions();
 
-        vaultService.cleanupExpiredEntries(); // Pulisce le scadenze all'avvio
+        // Pulizia automatica delle password scadute e registrazione come "osservatore"
+        // Così se il Vault cambia, questa classe viene avvisata e aggiorna la tabella.
+        vaultService.cleanupExpiredEntries(); 
+        vaultService.addObserver(this);
         refreshVault();
 
+        // Un tocco di classe: animazioni quando passi il mouse sulle card
         applyHoverAnimation(passwordCard);
         applyHoverAnimation(vaultCard);
         applyHoverAnimation(backupCard);
@@ -348,9 +358,11 @@ public class DashboardController {
 
         // 2. Chiudi overlay
         handleCloseOverlay();
+    }
 
-        // 3. Refresh istantaneo della tabella
-        refreshVault();
+    @Override
+    public void onVaultChanged() {
+        javafx.application.Platform.runLater(this::refreshVault);
     }
 
     @FXML

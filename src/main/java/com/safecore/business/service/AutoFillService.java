@@ -10,16 +10,26 @@ public class AutoFillService {
     private final Robot robot;
 
     public AutoFillService() {
-        try {
-            this.robot = new Robot();
-            this.robot.setAutoDelay(20);
-        } catch (AWTException e) {
-            throw new RuntimeException("Impossibile inizializzare il servizio di AutoFill", e);
+        // Se siamo in un ambiente senza interfaccia grafica (es. durante i test su un server)
+        // il Robot non può essere inizializzato.
+        if (GraphicsEnvironment.isHeadless()) {
+            this.robot = null;
+        } else {
+            try {
+                // Il Robot è una classe di Java che "prende il controllo" di mouse e tastiera.
+                this.robot = new Robot();
+                // Mettiamo un piccolo delay tra un tasto e l'altro per non sembrare troppo "macchine"
+                // e per dare tempo al sistema di elaborare gli input.
+                this.robot.setAutoDelay(20);
+            } catch (AWTException e) {
+                throw new RuntimeException("Impossibile inizializzare il servizio di AutoFill", e);
+            }
         }
     }
 
     public void typeText(String text) {
-        // Breve pausa per permettere all'utente di cambiare finestra se necessario
+        if (robot == null) return;
+        // Aspettiamo mezzo secondo per sicurezza.
         robot.delay(500);
         
         for (char c : text.toCharArray()) {
@@ -27,21 +37,27 @@ public class AutoFillService {
         }
     }
 
+    /**
+     * Simula la digitazione di username e password.
+     * È la magia che permette di fare login automatico nei siti!
+     */
     public void typeCredentials(String username, String password) {
-        // Pausa iniziale di 2 secondi per dare tempo all'utente di cliccare sul campo del browser
+        // Pausa di 2 secondi: dà il tempo all'utente di cliccare sul campo di input del browser.
         robot.delay(2000);
         
+        // Scrive l'username
         typeText(username);
         
-        // Premi TAB per passare al campo password
+        // Preme TAB per spostarsi sul campo password (funziona nel 99% dei siti)
         robot.keyPress(KeyEvent.VK_TAB);
         robot.keyRelease(KeyEvent.VK_TAB);
         
         robot.delay(100);
         
+        // Scrive la password
         typeText(password);
         
-        // Opzionale: Premi INVIO per loggare
+        // Preme INVIO per confermare il login
         robot.keyPress(KeyEvent.VK_ENTER);
         robot.keyRelease(KeyEvent.VK_ENTER);
     }

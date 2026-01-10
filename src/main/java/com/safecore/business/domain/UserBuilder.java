@@ -3,11 +3,10 @@ package com.safecore.business.domain;
 import java.util.UUID;
 
 /**
- * Builder Pattern per User.
- * Motivazione:
- * - Evita costruttori con molti parametri
- * - Rende esplicite le scelte di configurazione
- * - Facilita test unitari
+ * Questo è il Builder per l'oggetto User.
+ * Ci permette di "comporre" un utente un pezzo alla volta.
+ * È molto più pulito che avere un costruttore gigantesco dove rischi di invertire
+ * l'ordine delle stringhe (tipo scambiare email con l'hash della password).
  */
 public class UserBuilder {
 
@@ -37,12 +36,11 @@ public class UserBuilder {
     }
 
     /**
-     * Costruisce un User valido.
-     * Qui potresti aggiungere controlli di business.
+     * Il momento della verità: crea l'oggetto User finale.
      */
     public User build() {
         if (email == null || passwordHash == null) {
-            throw new IllegalStateException("Email e password sono obbligatorie");
+            throw new IllegalStateException("Alt! Senza email e password non posso creare un utente.");
         }
         return new User(id, email, passwordHash, mfaEnabled);
     }

@@ -9,6 +9,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Questo servizio fa le "pulci" al tuo vault.
+ * Analizza tutte le password salvate e ti dice quanto sei messo bene (o male) a sicurezza.
+ * Controlla se hai password deboli, se le stai riusando su più siti o se sono troppo vecchie.
+ */
 @Service
 public class SecurityAuditService {
 
@@ -20,38 +25,42 @@ public class SecurityAuditService {
         this.strengthEvaluator = strengthEvaluator;
     }
 
+    /**
+     * Esegue un controllo completo e restituisce un punteggio da 0 a 100.
+     */
     public AuditResult runAudit(List<PasswordEntryEntity> entries) {
-        int totalScore = 100;
-        int issuesCount = 0;
+        int totalScore = 100; // Partiamo dal top
         Map<String, Integer> passwordUsage = new HashMap<>();
         int weakPasswords = 0;
         int oldPasswords = 0;
         int reusedPasswords = 0;
 
         for (PasswordEntryEntity entry : entries) {
+            // Decifriamo momentaneamente la password per analizzarla
             String decrypted = vaultService.decryptPassword(entry.getEncryptedPassword());
             
-            // Check Strength
+            // 1. È debole? (Mancano numeri, simboli, ecc.)
             if (strengthEvaluator.evaluate(decrypted) == PasswordStrengthEvaluator.Strength.WEAK) {
                 weakPasswords++;
             }
 
-            // Check Age (more than 1 year)
+            // 2. È vecchia? (Creata più di un anno fa)
             if (entry.getCreatedAt().isBefore(LocalDateTime.now().minusYears(1))) {
                 oldPasswords++;
             }
 
-            // Check Reuse
+            // 3. Contiamo quante volte appare ogni password per scovare i duplicati
             passwordUsage.put(decrypted, passwordUsage.getOrDefault(decrypted, 0) + 1);
         }
 
+        // Calcoliamo quanti doppioni ci sono
         for (int count : passwordUsage.values()) {
             if (count > 1) {
                 reusedPasswords += count;
             }
         }
 
-        // Penalty calculation (simple logic)
+        // Togliamo punti per ogni falla trovata
         totalScore -= (weakPasswords * 10);
         totalScore -= (oldPasswords * 5);
         totalScore -= (reusedPasswords * 15);
@@ -61,5 +70,8 @@ public class SecurityAuditService {
         return new AuditResult(totalScore, weakPasswords, oldPasswords, reusedPasswords);
     }
 
+    /**
+     * Un semplice contenitore per i risultati dell'audit.
+     */
     public static record AuditResult(int score, int weakCount, int oldCount, int reusedCount) {}
 }

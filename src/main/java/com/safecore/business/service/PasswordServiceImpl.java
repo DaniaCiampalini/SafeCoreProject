@@ -12,18 +12,25 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+/**
+ * Implementazione concreta della gestione password.
+ * È qui che succede la magia della cifratura prima di salvare sul database.
+ * Usiamo il concetto di "Zero Knowledge": il server (o il DB) vede solo byte cifrati.
+ */
 @Service
 public class PasswordServiceImpl implements PasswordService {
 
     private final PasswordEntryRepository passwordRepository;
-    private final EncryptionStrategy encryption; // Iniezione tramite interfaccia
+    private final EncryptionStrategy encryption; 
 
-    // Spring inietterà automaticamente AESEncryptionStrategy (perché è un @Component)
     public PasswordServiceImpl(PasswordEntryRepository passwordRepository, EncryptionStrategy encryption) {
         this.passwordRepository = passwordRepository;
         this.encryption = encryption;
     }
 
+    /**
+     * Prende una password in chiaro, la trasforma in un ammasso di byte illeggibili e la salva.
+     */
     @Override
     @Transactional
     public void addCredential(String service, String username, String plainPassword) {
@@ -31,25 +38,29 @@ public class PasswordServiceImpl implements PasswordService {
             throw new IllegalArgumentException("La password non può essere vuota");
         }
 
-        // 1. Cifratura tramite Strategy iniettata
+        // Cifriamo usando la strategia configurata (es. AES)
         byte[] encryptedData = encryption.encrypt(plainPassword);
 
-        // 2. Creazione Entity
         PasswordEntryEntity entity = new PasswordEntryEntity();
         entity.setServiceName(service);
         entity.setUsername(username);
         entity.setEncryptedPassword(encryptedData);
         entity.setCreatedAt(LocalDateTime.now());
 
-        // 3. Salvataggio
         passwordRepository.save(entity);
     }
 
+    /**
+     * Decifra i byte salvati per far rivedere la password all'utente.
+     */
     @Override
     public String getDecryptedPassword(PasswordEntry domainEntry) {
         return encryption.decrypt(domainEntry.getEncryptedPassword());
     }
 
+    /**
+     * Recupera tutto dal DB e lo trasforma in oggetti di dominio (puliti e pronti per l'uso).
+     */
     @Override
     @Transactional(readOnly = true)
     public List<PasswordEntry> getAllEntries() {
@@ -64,6 +75,9 @@ public class PasswordServiceImpl implements PasswordService {
         passwordRepository.deleteById(id);
     }
 
+    /**
+     * Helper per convertire l'Entity (roba da DB) in Domain Object (roba da logica).
+     */
     private PasswordEntry mapToDomain(PasswordEntryEntity entity) {
         return new PasswordEntry.Builder()
                 .id(entity.getId())

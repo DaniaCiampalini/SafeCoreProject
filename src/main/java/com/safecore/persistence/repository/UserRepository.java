@@ -10,15 +10,29 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 import java.util.UUID;
 
+/**
+ * Questo è il magazzino degli utenti.
+ * Grazie a Spring Data JPA, non dobbiamo scrivere il codice per salvare o cercare
+ * gli utenti sul database: ci basta definire i metodi con i nomi giusti e 
+ * Spring capisce da solo cosa vogliamo fare.
+ */
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
-    // Spring capisce dal nome cosa deve cercare! Nessuna query manuale.
+    /**
+     * Cerca un utente tramite la sua email.
+     */
     Optional<UserEntity> findByEmail(String email);
 
+    /**
+     * Controlla se un'email è già registrata.
+     */
     boolean existsByEmail(String email);
 
-    // Per l'update della password usiamo una piccola query JPQL
+    /**
+     * Aggiorna la password di un utente. 
+     * Qui usiamo una query JPQL perché è un aggiornamento diretto.
+     */
     @Modifying
     @Query("UPDATE UserEntity u SET u.passwordHash = :pwd WHERE u.email = :email")
     void updatePassword(@Param("email") String email, @Param("pwd") String hashedPassword);

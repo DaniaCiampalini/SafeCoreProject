@@ -14,7 +14,9 @@ public class AppLauncher extends Application {
 
     @Override
     public void init() {
-        // Avviamo Spring Boot in modalità NON-headless per permettere l'uso di java.awt.Robot
+        // Qui facciamo il boot di Spring. 
+        // Importante: mettiamo headless(false) perché altrimenti il Robot di Java
+        // (che usiamo per l'autofill) si arrabbia e non funziona.
         springContext = new SpringApplicationBuilder(SafeCoreApplication.class)
                 .headless(false)
                 .run();
@@ -22,15 +24,26 @@ public class AppLauncher extends Application {
 
     @Override
     public void start(Stage primaryStage) {
+        // Questo è il "paracadute" per le eccezioni che scappano via nel thread della UI.
+        // Invece di far crashare tutto male, passiamo l'errore al GlobalExceptionHandler
+        // che mostrerà un bel popup all'utente.
+        Thread.setDefaultUncaughtExceptionHandler((t, e) -> {
+            if (springContext != null) {
+                springContext.getBean(GlobalExceptionHandler.class).handle(e);
+            } else {
+                e.printStackTrace();
+            }
+        });
+
         try {
-            // 1. Inizializziamo il navigatore con il contesto Spring
+            // Passiamo il contesto di Spring al navigatore, così quando carica i controller
+            // può iniettare tutte le dipendenze (i Service, ecc.) in automatico.
             SceneNavigator.setContext(springContext);
 
-            // 2. Usiamo il navigatore per caricare la prima scena
-            // Nota: il path deve essere ESATTAMENTE quello dove si trova il file
+            // Carichiamo la prima schermata: il login.
             SceneNavigator.switchTo(primaryStage, "/com/safecore/ui/view/login.fxml", "SafeCore – Secure Vault");
 
-            // Assicuriamoci che la finestra sia centrata e visibile
+            // Centriamo la finestra, che fa sempre la sua figura.
             primaryStage.centerOnScreen();
 
             System.out.println("=== SafeCore: Interfaccia UI Avviata ===");
@@ -44,6 +57,8 @@ public class AppLauncher extends Application {
 
     @Override
     public void stop() {
+        // Quando chiudiamo l'app, ricordiamoci di spegnere anche Spring
+        // altrimenti restano i processi appesi.
         if (springContext != null) {
             springContext.close();
         }

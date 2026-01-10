@@ -6,6 +6,7 @@ import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.PasswordEntryRepository;
 import com.safecore.persistence.repository.UserRepository;
+import com.safecore.security.EncryptionFactory;
 import com.safecore.security.EncryptionStrategy;
 import com.safecore.ui.session.SessionContext;
 import org.springframework.stereotype.Service;
@@ -14,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
@@ -25,17 +27,34 @@ public class VaultService {
     private final UserRepository userRepository;
     private final EncryptionStrategy encryptionStrategy;
     private final ObjectMapper objectMapper;
+    private final List<VaultObserver> observers = new ArrayList<>();
 
     public VaultService(PasswordEntryRepository passwordEntryRepository,
                         UserRepository userRepository,
-                        EncryptionStrategy encryptionStrategy) {
+                        EncryptionFactory encryptionFactory) {
         this.passwordEntryRepository = passwordEntryRepository;
         this.userRepository = userRepository;
-        this.encryptionStrategy = encryptionStrategy;
+        
+        // Qui usiamo il Factory Pattern: chiediamo alla factory la strategia di default (AES)
+        // Se domani vogliamo cambiare algoritmo, ci basta toccare la factory.
+        this.encryptionStrategy = encryptionFactory.getDefaultStrategy();
 
-        // Inizializziamo Jackson per la gestione JSON
+        // Jackson ci serve per convertire gli oggetti in JSON (comodo per l'export)
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
+    }
+
+    // Metodi per l'Observer Pattern: chi vuole essere avvisato dei cambiamenti si registra qui
+    public void addObserver(VaultObserver observer) {
+        observers.add(observer);
+    }
+
+    public void removeObserver(VaultObserver observer) {
+        observers.remove(observer);
+    }
+
+    private void notifyObservers() {
+        observers.forEach(VaultObserver::onVaultChanged);
     }
 
     /**
@@ -48,11 +67,13 @@ public class VaultService {
 
     @Transactional
     public void addEntry(String serviceName, String username, String plainPassword, java.time.LocalDateTime expiresAt) {
+        // Recuperiamo l'utente che sta facendo l'operazione
         String currentUserEmail = SessionContext.getCurrentUserEmail();
         UserEntity user = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato in sessione"));
 
-        // Cifratura tramite la strategia configurata (es. AES)
+        // Momento cruciale: cifriamo la password prima di toccare il DB.
+        // Zero-Knowledge: noi non salviamo MAI la password in chiaro.
         byte[] encryptedData = encryptionStrategy.encrypt(plainPassword);
 
         PasswordEntryEntity entity = new PasswordEntryEntity();
@@ -63,6 +84,10 @@ public class VaultService {
         entity.setExpiresAt(expiresAt);
 
         passwordEntryRepository.save(entity);
+        
+        // Avvisiamo tutti quelli che stanno guardando il vault (es. la Dashboard)
+        // che i dati sono cambiati, così si aggiornano da soli.
+        notifyObservers();
     }
 
     /**
@@ -71,6 +96,7 @@ public class VaultService {
     @Transactional
     public void cleanupExpiredEntries() {
         passwordEntryRepository.deleteByExpiresAtBefore(java.time.LocalDateTime.now());
+        notifyObservers();
     }
 
     /**
@@ -96,6 +122,7 @@ public class VaultService {
     @Transactional
     public void deleteEntry(UUID id) {
         passwordEntryRepository.deleteById(id);
+        notifyObservers();
     }
 
     /**

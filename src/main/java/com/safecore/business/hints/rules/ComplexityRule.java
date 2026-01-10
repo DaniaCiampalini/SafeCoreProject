@@ -5,6 +5,10 @@ import com.safecore.business.hints.PasswordHint;
 import org.springframework.stereotype.Component;
 import java.util.Optional;
 
+/**
+ * Regola: la password deve essere un mix di caratteri diversi.
+ * Usare solo lettere minuscole è come chiudere la porta di casa lasciando la chiave nella serratura.
+ */
 @Component
 public class ComplexityRule implements PasswordRule {
     @Override
@@ -17,7 +21,7 @@ public class ComplexityRule implements PasswordRule {
 
         if (!(hasUpper && hasLower && hasDigit)) {
             return Optional.of(new PasswordHint(
-                    "Usa maiuscole, minuscole e numeri per una password più sicura",
+                    "Mixala un po': aggiungi maiuscole e numeri!",
                     HintLevel.INFO
             ));
         }

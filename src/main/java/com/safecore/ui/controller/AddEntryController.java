@@ -7,6 +7,11 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
+/**
+ * Controller per la piccola finestra popup che serve ad aggiungere una nuova password.
+ * È una versione semplificata di quello che succede nella Dashboard, usata magari
+ * in contesti dove serve solo l'inserimento rapido.
+ */
 @Component
 public class AddEntryController {
 
@@ -21,18 +26,24 @@ public class AddEntryController {
         this.vaultService = vaultService;
     }
 
+    /**
+     * Salva i dati inseriti nel vault.
+     */
     @FXML
     private void handleSave() {
         String service = serviceField.getText();
         String username = usernameField.getText();
         String password = passwordField.getText();
 
+        // Controlliamo che l'utente non stia salvando roba vuota
         if (service == null || service.isBlank() || username == null || username.isBlank() || password == null || password.isBlank()) {
-            // Qui si potrebbe aggiungere un alert di errore
             return;
         }
 
-        // VaultService si occupa di: cifratura on-the-fly e associazione utente tramite SessionContext
+        // Passiamo tutto al VaultService. Sarà lui a:
+        // 1. Cifrare la password con AES
+        // 2. Capire a quale utente appartiene (tramite la sessione)
+        // 3. Salvare tutto sul DB
         vaultService.addEntry(service, username, password);
         
         saved = true;
