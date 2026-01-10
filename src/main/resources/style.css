@@ -120,6 +120,7 @@
     -fx-alignment: center-left;
     -fx-text-fill: #1f2937;
     -fx-border-color: transparent transparent #f3f4f6 transparent;
+    -fx-padding: 0 10;
 }
 
 .table-view .table-row-cell:selected {
