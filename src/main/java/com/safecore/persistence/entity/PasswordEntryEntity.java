@@ -25,6 +25,9 @@ public class PasswordEntryEntity {
     @Column(nullable = false)
     private LocalDateTime createdAt;
 
+    @Column
+    private LocalDateTime expiresAt; // Per la funzionalità di auto-distruzione
+
     // Ogni entry appartiene a un utente
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -45,6 +48,8 @@ public class PasswordEntryEntity {
     public void setEncryptedPassword(byte[] encryptedPassword) { this.encryptedPassword = encryptedPassword; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+    public LocalDateTime getExpiresAt() { return expiresAt; }
+    public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
     public UserEntity getUser() { return user; }
     public void setUser(UserEntity user) { this.user = user; }
 }

@@ -43,6 +43,11 @@ public class VaultService {
      */
     @Transactional
     public void addEntry(String serviceName, String username, String plainPassword) {
+        addEntry(serviceName, username, plainPassword, null);
+    }
+
+    @Transactional
+    public void addEntry(String serviceName, String username, String plainPassword, java.time.LocalDateTime expiresAt) {
         String currentUserEmail = SessionContext.getCurrentUserEmail();
         UserEntity user = userRepository.findByEmail(currentUserEmail)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato in sessione"));
@@ -55,8 +60,17 @@ public class VaultService {
         entity.setUsername(username);
         entity.setEncryptedPassword(encryptedData);
         entity.setUser(user);
+        entity.setExpiresAt(expiresAt);
 
         passwordEntryRepository.save(entity);
+    }
+
+    /**
+     * Rimuove le password scadute.
+     */
+    @Transactional
+    public void cleanupExpiredEntries() {
+        passwordEntryRepository.deleteByExpiresAtBefore(java.time.LocalDateTime.now());
     }
 
     /**

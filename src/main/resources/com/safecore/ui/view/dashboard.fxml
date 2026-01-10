@@ -41,6 +41,16 @@
                         <Region VBox.vgrow="ALWAYS"/>
                         <Button text="Esegui Backup" onAction="#handleBackup" styleClass="button-secondary" maxWidth="Infinity"/>
                     </VBox>
+                    <VBox fx:id="auditCard" prefWidth="280" spacing="12" styleClass="card">
+                        <Label text="Security Audit" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <HBox alignment="CENTER_LEFT" spacing="10">
+                            <Label fx:id="healthScoreLabel" text="100/100" style="-fx-font-size: 24; -fx-font-weight: 800; -fx-text-fill: #15803d;"/>
+                            <Label text="Health" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        </HBox>
+                        <Label fx:id="auditDetailLabel" text="Il tuo vault è sicuro." wrapText="true" style="-fx-font-size: 11; -fx-line-spacing: 2; -fx-text-fill: #6b7280;"/>
+                        <Region VBox.vgrow="ALWAYS"/>
+                        <Button text="Analisi Approfondita" onAction="#handleFullAudit" styleClass="button-primary" maxWidth="Infinity"/>
+                    </VBox>
                 </FlowPane>
 
                 <VBox spacing="15" VBox.vgrow="ALWAYS" styleClass="card">
@@ -88,6 +98,15 @@
                 <VBox spacing="8">
                     <Label text="Password" style="-fx-font-weight: 700; -fx-text-fill: #4b5563;"/>
                     <PasswordField fx:id="newPasswordField" promptText="••••••••" />
+                </VBox>
+
+                <VBox spacing="8">
+                    <Label text="Auto-distruzione (opzionale)" style="-fx-font-weight: 700; -fx-text-fill: #4b5563;"/>
+                    <ComboBox fx:id="expiryComboBox" maxWidth="Infinity" promptText="Nessuna scadenza">
+                        <!-- Le opzioni saranno popolate dal controller -->
+                    </ComboBox>
+                    <Label text="La password verrà eliminata automaticamente dopo il tempo selezionato." 
+                           wrapText="true" style="-fx-font-size: 11; -fx-text-fill: #9ca3af;"/>
                 </VBox>
             </VBox>
         </ScrollPane>

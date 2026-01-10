@@ -1,6 +1,7 @@
 package com.safecore.ui.controller;
 
 import com.safecore.business.service.BackupService;
+import com.safecore.business.service.SecurityAuditService;
 import com.safecore.business.service.VaultService;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.security.PasswordGenerator;
@@ -22,6 +23,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import javafx.util.Duration;
+import javafx.util.StringConverter;
 import org.springframework.stereotype.Component;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Parent;
@@ -34,6 +36,8 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class DashboardController {
@@ -44,7 +48,7 @@ public class DashboardController {
     @FXML private TableColumn<PasswordEntryEntity, String> serviceColumn;
     @FXML private TableColumn<PasswordEntryEntity, String> usernameColumn;
     @FXML private TableColumn<PasswordEntryEntity, Void> actionsColumn;
-    @FXML private VBox passwordCard, vaultCard, backupCard;
+    @FXML private VBox passwordCard, vaultCard, backupCard, auditCard;
 
     // Nuovi elementi per l'Overlay
     @FXML private Region overlay;
@@ -54,21 +58,27 @@ public class DashboardController {
     @FXML private TextField newUsernameField;
     @FXML private PasswordField newPasswordField;
     @FXML private TextField generatedPasswordField;
+    @FXML private ComboBox<Integer> expiryComboBox;
+    @FXML private Label healthScoreLabel;
+    @FXML private Label auditDetailLabel;
 
     private final PasswordGenerator passwordGenerator;
     private final VaultService vaultService;
     private final ApplicationContext applicationContext;
     private final BackupService backupService;
+    private final SecurityAuditService auditService;
     private ObservableList<PasswordEntryEntity> masterData = FXCollections.observableArrayList();
 
     public DashboardController(PasswordGenerator passwordGenerator,
                                VaultService vaultService,
                                ApplicationContext applicationContext,
-                               BackupService backupService) {
+                               BackupService backupService,
+                               SecurityAuditService auditService) {
         this.passwordGenerator = passwordGenerator;
         this.vaultService = vaultService;
         this.applicationContext = applicationContext;
         this.backupService = backupService;
+        this.auditService = auditService;
     }
 
     @FXML
@@ -81,11 +91,36 @@ public class DashboardController {
 
         setupActionsColumn();
         setupSearchFilter();
+        setupExpiryOptions();
+
+        vaultService.cleanupExpiredEntries(); // Pulisce le scadenze all'avvio
         refreshVault();
 
         applyHoverAnimation(passwordCard);
         applyHoverAnimation(vaultCard);
         applyHoverAnimation(backupCard);
+        applyHoverAnimation(auditCard);
+    }
+
+    private void setupExpiryOptions() {
+        expiryComboBox.setItems(FXCollections.observableArrayList(0, 1, 12, 24, 168)); // 0 = mai, 1, 12, 24 ore, 168 = 1 settimana
+        expiryComboBox.setConverter(new StringConverter<Integer>() {
+            @Override
+            public String toString(Integer hours) {
+                if (hours == null || hours == 0) return "Nessuna scadenza";
+                if (hours == 1) return "1 ora";
+                if (hours < 24) return hours + " ore";
+                if (hours == 24) return "1 giorno";
+                if (hours == 168) return "1 settimana";
+                return hours + " ore";
+            }
+
+            @Override
+            public Integer fromString(String string) {
+                return 0;
+            }
+        });
+        expiryComboBox.setValue(0);
     }
 
     private void setupSearchFilter() {
@@ -183,6 +218,7 @@ public class DashboardController {
         newServiceField.clear();
         newUsernameField.clear();
         newPasswordField.clear();
+        expiryComboBox.setValue(0);
         
         // Rende visibile l'overlay e la card
         overlay.setVisible(true);
@@ -207,14 +243,20 @@ public class DashboardController {
         String service = newServiceField.getText();
         String user = newUsernameField.getText();
         String pass = newPasswordField.getText();
+        Integer expiryHours = expiryComboBox.getValue();
 
         if (service == null || service.isBlank() || pass == null || pass.isBlank()) {
             // Qui si potrebbe aggiungere un feedback visivo di errore
             return;
         }
 
+        LocalDateTime expiresAt = null;
+        if (expiryHours != null && expiryHours > 0) {
+            expiresAt = LocalDateTime.now().plusHours(expiryHours);
+        }
+
         // 1. Cifratura e salvataggio (gestito internamente da VaultService)
-        vaultService.addEntry(service, user, pass);
+        vaultService.addEntry(service, user, pass, expiresAt);
 
         // 2. Chiudi overlay
         handleCloseOverlay();
@@ -226,6 +268,51 @@ public class DashboardController {
     @FXML
     private void refreshVault() {
         masterData.setAll(vaultService.getEntriesForCurrentUser());
+        updateHealthScore();
+    }
+
+    private void updateHealthScore() {
+        SecurityAuditService.AuditResult result = auditService.runAudit(masterData);
+        healthScoreLabel.setText(result.score() + "/100");
+        
+        if (result.score() >= 80) {
+            healthScoreLabel.setStyle("-fx-font-size: 24; -fx-font-weight: 800; -fx-text-fill: #15803d;");
+        } else if (result.score() >= 50) {
+            healthScoreLabel.setStyle("-fx-font-size: 24; -fx-font-weight: 800; -fx-text-fill: #d97706;");
+        } else {
+            healthScoreLabel.setStyle("-fx-font-size: 24; -fx-font-weight: 800; -fx-text-fill: #dc2626;");
+        }
+
+        StringBuilder detail = new StringBuilder();
+        if (result.reusedCount() > 0) detail.append("⚠ ").append(result.reusedCount()).append(" password riutilizzate\n");
+        if (result.weakCount() > 0) detail.append("⚠ ").append(result.weakCount()).append(" password deboli\n");
+        if (result.oldCount() > 0) detail.append("⚠ ").append(result.oldCount()).append(" password vecchie");
+        
+        if (detail.length() == 0) {
+            auditDetailLabel.setText("Il tuo vault è sicuro.");
+        } else {
+            auditDetailLabel.setText(detail.toString().trim());
+        }
+    }
+
+    @FXML
+    private void handleFullAudit() {
+        SecurityAuditService.AuditResult result = auditService.runAudit(masterData);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Report Sicurezza");
+        alert.setHeaderText("Analisi Approfondita del Vault");
+        
+        String content = String.format(
+            "Punteggio Salute: %d/100\n\n" +
+            "Dettagli:\n" +
+            "- Password riutilizzate: %d\n" +
+            "- Password deboli: %d\n" +
+            "- Password più vecchie di 1 anno: %d",
+            result.score(), result.reusedCount(), result.weakCount(), result.oldCount()
+        );
+        
+        alert.setContentText(content);
+        alert.showAndWait();
     }
 
     private void copyToClipboard(String text) {

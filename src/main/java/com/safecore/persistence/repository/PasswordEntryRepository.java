@@ -20,4 +20,6 @@ public interface PasswordEntryRepository extends JpaRepository<PasswordEntryEnti
      * Alternativa: recupera tramite email dell'utente (comodo se usiamo SessionContext)
      */
     List<PasswordEntryEntity> findByUserEmail(String email);
+
+    void deleteByExpiresAtBefore(java.time.LocalDateTime now);
 }
