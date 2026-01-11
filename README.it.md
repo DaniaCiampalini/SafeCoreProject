@@ -1,4 +1,4 @@
-Italiano | [English](https://github.com/DaniaCiampalini/SafeCoreProject/edit/main/README.md)
+Italiano | [English](https://github.com/DaniaCiampalini/SafeCoreProject/blob/main/README.md)
 
 
 # SafeCore – Vault di Password Sicuro
