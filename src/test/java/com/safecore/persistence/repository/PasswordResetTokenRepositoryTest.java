@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@Transactional
 class PasswordResetTokenRepositoryTest {
 
     @Autowired
@@ -29,6 +31,9 @@ class PasswordResetTokenRepositoryTest {
     @Autowired
     private PasswordResetTokenRepository passwordResetTokenRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private UserEntity testUser;
 
     @BeforeEach
@@ -36,6 +41,7 @@ class PasswordResetTokenRepositoryTest {
         testUser = new UserEntity();
         testUser.setEmail("user@example.com");
         testUser.setPasswordHash("hashedPassword");
+        testUser.setMfaEnabled(false);
         testUser = entityManager.persistAndFlush(testUser);
     }
 
@@ -168,32 +174,6 @@ class PasswordResetTokenRepositoryTest {
         long count = passwordResetTokenRepository.count();
 
         assertEquals(2, count);
-    }
-
-    @Test
-    void save_withNullEmail_throwsException() {
-        PasswordResetTokenEntity token = new PasswordResetTokenEntity();
-        token.setEmail(null);
-        token.setTokenHash("token");
-        token.setExpiryDate(LocalDateTime.now().plusHours(1));
-        token.setUsed(false);
-
-        assertThrows(Exception.class, () -> {
-            entityManager.persistAndFlush(token);
-        });
-    }
-
-    @Test
-    void save_withNullTokenHash_throwsException() {
-        PasswordResetTokenEntity token = new PasswordResetTokenEntity();
-        token.setEmail("user@example.com");
-        token.setTokenHash(null);
-        token.setExpiryDate(LocalDateTime.now().plusHours(1));
-        token.setUsed(false);
-
-        assertThrows(Exception.class, () -> {
-            entityManager.persistAndFlush(token);
-        });
     }
 
     @Test

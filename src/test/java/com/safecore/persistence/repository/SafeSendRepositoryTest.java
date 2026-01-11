@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class SafeSendRepositoryTest {
 
     @Autowired
@@ -38,6 +40,7 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("test@example.com");
         user.setPasswordHash("hash");
+        user.setMfaEnabled(false);
         user = entityManager.persistAndFlush(user);
 
         // Entry attiva (non scaduta)
@@ -60,8 +63,9 @@ class SafeSendRepositoryTest {
     @Test
     void save_andFindById() {
         UserEntity user = new UserEntity();
-        user.setEmail("test@example.com");
+        user.setEmail("saveandfind@example.com");
         user.setPasswordHash("hash");
+        user.setMfaEnabled(false);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntry newEntry = new SafeSendEntry();
@@ -83,8 +87,9 @@ class SafeSendRepositoryTest {
     @Test
     void findAll_returnsAllEntries() {
         UserEntity user = new UserEntity();
-        user.setEmail("test@example.com");
+        user.setEmail("findall@example.com");
         user.setPasswordHash("hash");
+        user.setMfaEnabled(false);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntry entry3 = new SafeSendEntry();
@@ -151,8 +156,9 @@ class SafeSendRepositoryTest {
     @Test
     void save_withNullEncryptedContent_throwsException() {
         UserEntity user = new UserEntity();
-        user.setEmail("test@example.com");
+        user.setEmail("nullcontent@example.com");
         user.setPasswordHash("hash");
+        user.setMfaEnabled(false);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntry entry = new SafeSendEntry();
@@ -169,8 +175,9 @@ class SafeSendRepositoryTest {
     @Test
     void save_withNullExpiresAt_throwsException() {
         UserEntity user = new UserEntity();
-        user.setEmail("test@example.com");
+        user.setEmail("nullexpires@example.com");
         user.setPasswordHash("hash");
+        user.setMfaEnabled(false);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntry entry = new SafeSendEntry();

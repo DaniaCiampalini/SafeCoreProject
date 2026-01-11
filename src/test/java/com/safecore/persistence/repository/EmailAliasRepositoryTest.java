@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.List;
@@ -20,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class EmailAliasRepositoryTest {
 
     @Autowired
@@ -28,6 +30,9 @@ class EmailAliasRepositoryTest {
     @Autowired
     private EmailAliasRepository emailAliasRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private UserEntity testUser;
 
     @BeforeEach
@@ -35,6 +40,7 @@ class EmailAliasRepositoryTest {
         testUser = new UserEntity();
         testUser.setEmail("user@example.com");
         testUser.setPasswordHash("hashedPassword");
+        testUser.setMfaEnabled(false);
         testUser = entityManager.persistAndFlush(testUser);
     }
 
@@ -53,7 +59,7 @@ class EmailAliasRepositoryTest {
 
         assertTrue(found.isPresent());
         assertEquals("alias1@example.com", found.get().getAliasEmail());
-        assertEquals(testUser, found.get().getUser());
+        assertEquals(testUser.getId(), found.get().getUser().getId());
     }
 
     @Test

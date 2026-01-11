@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.util.Optional;
@@ -19,6 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 @DataJpaTest
 @ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 class UserRepositoryTest {
 
     @Autowired
@@ -34,6 +36,7 @@ class UserRepositoryTest {
         testUser = new UserEntity();
         testUser.setEmail("test@example.com");
         testUser.setPasswordHash("hashedPassword123");
+        testUser.setMfaEnabled(false);
         testUser = entityManager.persistAndFlush(testUser);
     }
 
