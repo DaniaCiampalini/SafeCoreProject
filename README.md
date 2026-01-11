@@ -1,3 +1,5 @@
+English | [Italiano](https://github.com/DaniaCiampalini/SafeCoreProject/new/main) 
+
 # SafeCore – Secure Password Vault
 
 SafeCore is an advanced Java desktop application designed for secure credential management. The project was developed following high-level Software Engineering principles, focusing on a robust, testable architecture, advanced design patterns, and the newest data security.
@@ -96,13 +98,6 @@ SafeCore maintains high code quality through comprehensive testing:
 *   **Integration Testing**: Full-flow verification (Registration → Login → Vault) using `@SpringBootTest`.
 
 To run tests:
-```bash
-mvn test
-```
-
-
-
-Per avviare i test:
 ```bash
 mvn test
 ```
