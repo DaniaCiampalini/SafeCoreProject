@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -219,9 +218,9 @@ class PasswordResetTokenRepositoryTest {
 
         // Elimina i token scaduti
         passwordResetTokenRepository.deleteAll(
-            passwordResetTokenRepository.findAll().stream()
-                .filter(t -> t.getExpiryDate().isBefore(now))
-                .toList()
+                passwordResetTokenRepository.findAll().stream()
+                        .filter(t -> t.getExpiryDate().isBefore(now))
+                        .toList()
         );
         entityManager.flush();
 

@@ -12,7 +12,7 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Questo servizio crea degli "alias" email. 
+ * Questo servizio crea degli "alias" email.
  * Serve a proteggere la tua vera email quando ti iscrivi a siti poco affidabili.
  * Invece di dare "mario.rossi@gmail.com", dai un alias tipo "amazon.ghost.shield1234@safecore.io".
  * Se quel sito inizia a mandarti spam, sai chi è stato!
@@ -23,7 +23,7 @@ public class EmailAliasService {
     private static final String[] ADJECTIVES = {"swift", "secure", "silent", "brave", "cool", "hidden", "ghost"};
     private static final String[] NOUNS = {"vault", "core", "shield", "key", "safe", "lock", "entry"};
     private static final String DOMAIN = "safecore.io";
-    
+
     private final EmailAliasRepository emailAliasRepository;
     private final UserRepository userRepository;
     private final Random random = new Random();
@@ -45,7 +45,7 @@ public class EmailAliasService {
         // Puliamo il nome del servizio (es: "FaceBook!" -> "facebook")
         String cleanService = serviceName.toLowerCase().replaceAll("[^a-z0-9]", "");
         if (cleanService.isEmpty()) cleanService = "service";
-        
+
         // Componiamo l'alias usando parole casuali
         String adjective = ADJECTIVES[random.nextInt(ADJECTIVES.length)];
         String noun = NOUNS[random.nextInt(NOUNS.length)];

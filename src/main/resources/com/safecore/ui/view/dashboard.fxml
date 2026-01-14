@@ -3,7 +3,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
+<StackPane xmlns:fx="http://javafx.com/fxml" xmlns="http://javafx.com/javafx/17"
            fx:controller="com.safecore.ui.controller.DashboardController">
 
     <!-- LIVELLO 1: DASHBOARD PRINCIPALE -->
@@ -24,53 +24,74 @@
                 <FlowPane hgap="20" vgap="20" alignment="CENTER">
                     <!-- Card Esistenti (Password Gen, Vault Status, Backup) -->
                     <VBox fx:id="passwordCard" prefWidth="280" spacing="12" styleClass="card">
-                        <Label text="Password Generator" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
-                        <Label text="Crea password ultra-sicure istantaneamente." wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        <Label text="Password Generator"
+                               style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <Label text="Crea password ultra-sicure istantaneamente." wrapText="true"
+                               style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
                         <Region VBox.vgrow="ALWAYS"/>
-                        <Button text="Genera &amp; Copia" onAction="#handleGeneratePassword" styleClass="button-primary" maxWidth="Infinity"/>
+                        <Button text="Genera &amp; Copia" onAction="#handleGeneratePassword" styleClass="button-primary"
+                                maxWidth="Infinity"/>
                     </VBox>
                     <VBox fx:id="vaultCard" prefWidth="280" spacing="12" styleClass="card">
-                        <Label text="Vault Status" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
-                        <Label text="Il tuo archivio è protetto con cifratura AES-256." wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        <Label text="Vault Status"
+                               style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <Label text="Il tuo archivio è protetto con cifratura AES-256." wrapText="true"
+                               style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
                         <Region VBox.vgrow="ALWAYS"/>
-                        <Button text="Aggiorna" onAction="#refreshVault" styleClass="button-success" maxWidth="Infinity"/>
+                        <Button text="Aggiorna" onAction="#refreshVault" styleClass="button-success"
+                                maxWidth="Infinity"/>
                     </VBox>
                     <VBox fx:id="backupCard" prefWidth="280" spacing="12" styleClass="card">
-                        <Label text="Security Backup" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
-                        <Label text="Esporta i tuoi dati in un file sicuro di backup." wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        <Label text="Security Backup"
+                               style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <Label text="Esporta i tuoi dati in un file sicuro di backup." wrapText="true"
+                               style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
                         <Region VBox.vgrow="ALWAYS"/>
-                        <Button text="Esegui Backup" onAction="#handleBackup" styleClass="button-secondary" maxWidth="Infinity"/>
+                        <Button text="Esegui Backup" onAction="#handleBackup" styleClass="button-secondary"
+                                maxWidth="Infinity"/>
                     </VBox>
                     <VBox fx:id="auditCard" prefWidth="280" spacing="12" styleClass="card">
-                        <Label text="Security Audit" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <Label text="Security Audit"
+                               style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
                         <HBox alignment="CENTER_LEFT" spacing="10">
-                            <Label fx:id="healthScoreLabel" text="100/100" style="-fx-font-size: 24; -fx-font-weight: 800; -fx-text-fill: #15803d;"/>
+                            <Label fx:id="healthScoreLabel" text="100/100"
+                                   style="-fx-font-size: 24; -fx-font-weight: 800; -fx-text-fill: #15803d;"/>
                             <Label text="Health" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
                         </HBox>
-                        <Label fx:id="auditDetailLabel" text="Il tuo vault è sicuro." wrapText="true" style="-fx-font-size: 11; -fx-line-spacing: 2; -fx-text-fill: #6b7280;"/>
+                        <Label fx:id="auditDetailLabel" text="Il tuo vault è sicuro." wrapText="true"
+                               style="-fx-font-size: 11; -fx-line-spacing: 2; -fx-text-fill: #6b7280;"/>
                         <Region VBox.vgrow="ALWAYS"/>
-                        <Button text="Analisi Approfondita" onAction="#handleFullAudit" styleClass="button-primary" maxWidth="Infinity"/>
+                        <Button text="Analisi Approfondita" onAction="#handleFullAudit" styleClass="button-primary"
+                                maxWidth="Infinity"/>
                     </VBox>
                     <VBox fx:id="safeSendCard" prefWidth="280" spacing="12" styleClass="card">
-                        <Label text="SafeSend" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
-                        <Label text="Invia testi o file cifrati con link a scadenza." wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        <Label text="SafeSend"
+                               style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <Label text="Invia testi o file cifrati con link a scadenza." wrapText="true"
+                               style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
                         <Region VBox.vgrow="ALWAYS"/>
-                        <Button text="Nuovo Link Sicuro" onAction="#handleNewSafeSend" styleClass="button-primary" maxWidth="Infinity"/>
+                        <Button text="Nuovo Link Sicuro" onAction="#handleNewSafeSend" styleClass="button-primary"
+                                maxWidth="Infinity"/>
                     </VBox>
                     <VBox fx:id="aliasCard" prefWidth="280" spacing="12" styleClass="card">
-                        <Label text="Email Alias" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
-                        <Label text="Crea email usa e getta per proteggere la tua privacy." wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        <Label text="Email Alias"
+                               style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
+                        <Label text="Crea email usa e getta per proteggere la tua privacy." wrapText="true"
+                               style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
                         <Region VBox.vgrow="ALWAYS"/>
-                        <Button text="Genera Alias" onAction="#handleGenerateAlias" styleClass="button-success" maxWidth="Infinity"/>
+                        <Button text="Genera Alias" onAction="#handleGenerateAlias" styleClass="button-success"
+                                maxWidth="Infinity"/>
                     </VBox>
                 </FlowPane>
 
                 <VBox spacing="15" VBox.vgrow="ALWAYS" styleClass="card">
                     <HBox spacing="15" alignment="CENTER_LEFT">
-                        <TextField fx:id="searchField" promptText="Cerca servizio o username..." HBox.hgrow="ALWAYS" style="-fx-background-radius: 25;"/>
+                        <TextField fx:id="searchField" promptText="Cerca servizio o username..." HBox.hgrow="ALWAYS"
+                                   style="-fx-background-radius: 25;"/>
                         <Region HBox.hgrow="NEVER" prefWidth="20"/>
                         <Button text="+" onAction="#handleAddEntry" styleClass="button-success"/>
-                        <Label fx:id="toastLabel" style="-fx-text-fill: #15803d; -fx-font-weight: 700;" visible="false"/>
+                        <Label fx:id="toastLabel" style="-fx-text-fill: #15803d; -fx-font-weight: 700;"
+                               visible="false"/>
                     </HBox>
                     <TableView fx:id="passwordTable" VBox.vgrow="ALWAYS" onMouseClicked="#handleTableClick">
                         <columns>
@@ -78,7 +99,9 @@
                             <TableColumn fx:id="usernameColumn" text="Username" minWidth="100" prefWidth="250"/>
                             <TableColumn fx:id="actionsColumn" text="Azioni" minWidth="200" prefWidth="220"/>
                         </columns>
-                        <columnResizePolicy><TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/></columnResizePolicy>
+                        <columnResizePolicy>
+                            <TableView fx:constant="CONSTRAINED_RESIZE_POLICY"/>
+                        </columnResizePolicy>
                     </TableView>
                 </VBox>
             </VBox>
@@ -92,24 +115,24 @@
     <!-- LIVELLO 3: CARD MODULO AGGIUNTA (Invisibile all'inizio) -->
     <VBox fx:id="addEntryCard" visible="false" maxWidth="450" maxHeight="500" spacing="20" styleClass="card"
           style="-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.4), 15, 0, 0, 5);">
-        
+
         <Label text="Salva Password" styleClass="title-label" style="-fx-font-size: 24;"/>
-        
+
         <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
             <VBox spacing="20">
                 <VBox spacing="8">
                     <Label text="Sito o Applicazione" style="-fx-font-weight: 700; -fx-text-fill: #4b5563;"/>
-                    <TextField fx:id="newServiceField" promptText="es. Instagram" />
+                    <TextField fx:id="newServiceField" promptText="es. Instagram"/>
                 </VBox>
 
                 <VBox spacing="8">
                     <Label text="Username o Email" style="-fx-font-weight: 700; -fx-text-fill: #4b5563;"/>
-                    <TextField fx:id="newUsernameField" promptText="es. utente123" />
+                    <TextField fx:id="newUsernameField" promptText="es. utente123"/>
                 </VBox>
 
                 <VBox spacing="8">
                     <Label text="Password" style="-fx-font-weight: 700; -fx-text-fill: #4b5563;"/>
-                    <PasswordField fx:id="newPasswordField" promptText="••••••••" />
+                    <PasswordField fx:id="newPasswordField" promptText="••••••••"/>
                 </VBox>
 
                 <VBox spacing="8">
@@ -117,7 +140,7 @@
                     <ComboBox fx:id="expiryComboBox" maxWidth="Infinity" promptText="Nessuna scadenza">
                         <!-- Le opzioni saranno popolate dal controller -->
                     </ComboBox>
-                    <Label text="La password verrà eliminata automaticamente dopo il tempo selezionato." 
+                    <Label text="La password verrà eliminata automaticamente dopo il tempo selezionato."
                            wrapText="true" style="-fx-font-size: 11; -fx-text-fill: #9ca3af;"/>
                 </VBox>
             </VBox>
@@ -159,23 +182,27 @@
             <Tab text="Crea Nuovo">
                 <VBox spacing="10" style="-fx-padding: 15 0 0 0;">
                     <Label text="Testo o Segreto da inviare:" style="-fx-font-weight: 700;"/>
-                    <TextArea fx:id="safeSendTextArea" prefHeight="100" promptText="Scrivi qui il messaggio segreto..." wrapText="true"/>
-                    
+                    <TextArea fx:id="safeSendTextArea" prefHeight="100" promptText="Scrivi qui il messaggio segreto..."
+                              wrapText="true"/>
+
                     <HBox spacing="20" alignment="CENTER_LEFT">
                         <CheckBox fx:id="oneTimeCheckBox" text="Usa e getta (un solo accesso)" selected="true"/>
                     </HBox>
                     <Region VBox.vgrow="ALWAYS"/>
-                    <Button text="Genera &amp; Copia Link" onAction="#handleConfirmSafeSend" styleClass="button-primary" maxWidth="Infinity"/>
+                    <Button text="Genera &amp; Copia Link" onAction="#handleConfirmSafeSend" styleClass="button-primary"
+                            maxWidth="Infinity"/>
                 </VBox>
             </Tab>
             <Tab text="Accedi a Link">
                 <VBox spacing="10" style="-fx-padding: 15 0 0 0;">
                     <Label text="Incolla l'ID o il Link ricevuto:" style="-fx-font-weight: 700;"/>
                     <TextField fx:id="safeSendIdField" promptText="es. 123e4567-e89b..."/>
-                    <Button text="Visualizza Segreto" onAction="#handleAccessSafeSend" styleClass="button-success" maxWidth="Infinity"/>
+                    <Button text="Visualizza Segreto" onAction="#handleAccessSafeSend" styleClass="button-success"
+                            maxWidth="Infinity"/>
                     <Separator/>
                     <Label text="Risultato:" style="-fx-font-weight: 700;"/>
-                    <TextArea fx:id="safeSendResultArea" editable="false" prefHeight="100" wrapText="true" style="-fx-background-color: #f3f4f6;"/>
+                    <TextArea fx:id="safeSendResultArea" editable="false" prefHeight="100" wrapText="true"
+                              style="-fx-background-color: #f3f4f6;"/>
                 </VBox>
             </Tab>
         </TabPane>

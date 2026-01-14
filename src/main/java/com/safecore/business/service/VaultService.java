@@ -34,7 +34,7 @@ public class VaultService {
                         EncryptionFactory encryptionFactory) {
         this.passwordEntryRepository = passwordEntryRepository;
         this.userRepository = userRepository;
-        
+
         // Qui usiamo il Factory Pattern: chiediamo alla factory la strategia di default (AES)
         // Se domani vogliamo cambiare algoritmo, ci basta toccare la factory.
         this.encryptionStrategy = encryptionFactory.getDefaultStrategy();
@@ -84,7 +84,7 @@ public class VaultService {
         entity.setExpiresAt(expiresAt);
 
         passwordEntryRepository.save(entity);
-        
+
         // Avvisiamo tutti quelli che stanno guardando il vault (es. la Dashboard)
         // che i dati sono cambiati, così si aggiornano da soli.
         notifyObservers();

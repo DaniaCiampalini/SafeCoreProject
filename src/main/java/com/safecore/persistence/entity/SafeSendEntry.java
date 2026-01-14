@@ -1,6 +1,7 @@
 package com.safecore.persistence.entity;
 
 import jakarta.persistence.*;
+
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -33,20 +34,62 @@ public class SafeSendEntry {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity creator;
 
-    public SafeSendEntry() {}
+    public SafeSendEntry() {
+    }
 
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public byte[] getEncryptedContent() { return encryptedContent; }
-    public void setEncryptedContent(byte[] encryptedContent) { this.encryptedContent = encryptedContent; }
-    public String getTokenHash() { return tokenHash; }
-    public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
-    public LocalDateTime getExpiresAt() { return expiresAt; }
-    public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
-    public boolean isOneTime() { return isOneTime; }
-    public void setOneTime(boolean oneTime) { isOneTime = oneTime; }
-    public int getAccessCount() { return accessCount; }
-    public void setAccessCount(int accessCount) { this.accessCount = accessCount; }
-    public UserEntity getCreator() { return creator; }
-    public void setCreator(UserEntity creator) { this.creator = creator; }
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public byte[] getEncryptedContent() {
+        return encryptedContent;
+    }
+
+    public void setEncryptedContent(byte[] encryptedContent) {
+        this.encryptedContent = encryptedContent;
+    }
+
+    public String getTokenHash() {
+        return tokenHash;
+    }
+
+    public void setTokenHash(String tokenHash) {
+        this.tokenHash = tokenHash;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public boolean isOneTime() {
+        return isOneTime;
+    }
+
+    public void setOneTime(boolean oneTime) {
+        isOneTime = oneTime;
+    }
+
+    public int getAccessCount() {
+        return accessCount;
+    }
+
+    public void setAccessCount(int accessCount) {
+        this.accessCount = accessCount;
+    }
+
+    public UserEntity getCreator() {
+        return creator;
+    }
+
+    public void setCreator(UserEntity creator) {
+        this.creator = creator;
+    }
 }

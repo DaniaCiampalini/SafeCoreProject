@@ -1,8 +1,8 @@
 package com.safecore.security;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,7 +34,7 @@ class PasswordHasherPerformanceTest {
         // BCrypt con cost factor 12 dovrebbe impiegare tra 50ms e 500ms
         // Questo test verifica che non sia eccessivamente lento
         assertTrue(durationMs < 1000,
-            "Hash operation took too long: " + durationMs + "ms (expected < 1000ms)");
+                "Hash operation took too long: " + durationMs + "ms (expected < 1000ms)");
 
         // Verifica anche che l'hash sia valido
         assertNotNull(hash);
@@ -55,7 +55,7 @@ class PasswordHasherPerformanceTest {
 
         // La verifica dovrebbe essere molto più veloce dell'hashing
         assertTrue(durationMs < 500,
-            "Verify operation took too long: " + durationMs + "ms (expected < 500ms)");
+                "Verify operation took too long: " + durationMs + "ms (expected < 500ms)");
 
         assertTrue(result);
     }
@@ -82,13 +82,13 @@ class PasswordHasherPerformanceTest {
 
         // La deviazione standard dovrebbe essere ragionevole (< 50% della media)
         assertTrue(stdDev < average * 0.5,
-            "Hash operations have inconsistent performance. Average: " + average +
-            "ms, StdDev: " + stdDev + "ms");
+                "Hash operations have inconsistent performance. Average: " + average +
+                        "ms, StdDev: " + stdDev + "ms");
 
         // Tutte le operazioni dovrebbero completare entro un limite ragionevole
         for (long duration : durations) {
             assertTrue(duration < 1000,
-                "Hash operation took too long: " + duration + "ms");
+                    "Hash operation took too long: " + duration + "ms");
         }
     }
 
@@ -125,7 +125,7 @@ class PasswordHasherPerformanceTest {
         double ratio = (double) difference / Math.max(correctTime, wrongTime);
 
         assertTrue(ratio < 0.5,
-            "Verify times differ too much. Correct: " + correctTime + "ms, Wrong: " + wrongTime + "ms");
+                "Verify times differ too much. Correct: " + correctTime + "ms, Wrong: " + wrongTime + "ms");
     }
 
     @Test
@@ -145,7 +145,7 @@ class PasswordHasherPerformanceTest {
         double ratio = (double) concurrentTime / (singleThreadTime * threadCount);
 
         assertTrue(ratio < 2.0,
-            "Concurrent operations degraded performance too much. Ratio: " + ratio);
+                "Concurrent operations degraded performance too much. Ratio: " + ratio);
     }
 
     @Test
@@ -158,8 +158,8 @@ class PasswordHasherPerformanceTest {
         // BCrypt con cost factor 12 non dovrebbe essere troppo veloce (< 10ms)
         // altrimenti il cost factor potrebbe essere troppo basso
         assertTrue(duration > 10,
-            "Hash operation is too fast: " + duration + "ms. " +
-            "This might indicate the cost factor is too low for security.");
+                "Hash operation is too fast: " + duration + "ms. " +
+                        "This might indicate the cost factor is too low for security.");
     }
 
     // Helper methods

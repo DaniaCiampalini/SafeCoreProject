@@ -1,6 +1,7 @@
 package com.safecore.persistence.entity;
 
 import jakarta.persistence.*;
+
 import java.util.UUID;
 
 /**
@@ -26,7 +27,8 @@ public class UserEntity {
     @Column(nullable = false)
     private boolean mfaEnabled;
 
-    public UserEntity() { } // JPA vuole sempre un costruttore vuoto
+    public UserEntity() {
+    } // JPA vuole sempre un costruttore vuoto
 
     // Costruttore di utilità per il Service
     public UserEntity(String email, String passwordHash) {
@@ -36,12 +38,35 @@ public class UserEntity {
     }
 
     // Getter e Setter
-    public UUID getId() { return id; }
-    public void setId(UUID id) { this.id = id; }
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-    public String getPasswordHash() { return passwordHash; }
-    public void setPasswordHash(String ph) { this.passwordHash = ph; }
-    public boolean isMfaEnabled() { return mfaEnabled; }
-    public void setMfaEnabled(boolean mfa) { this.mfaEnabled = mfa; }
+    public UUID getId() {
+        return id;
+    }
+
+    public void setId(UUID id) {
+        this.id = id;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPasswordHash() {
+        return passwordHash;
+    }
+
+    public void setPasswordHash(String ph) {
+        this.passwordHash = ph;
+    }
+
+    public boolean isMfaEnabled() {
+        return mfaEnabled;
+    }
+
+    public void setMfaEnabled(boolean mfa) {
+        this.mfaEnabled = mfa;
+    }
 }

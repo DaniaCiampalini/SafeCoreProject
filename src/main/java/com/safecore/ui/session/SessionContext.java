@@ -3,7 +3,7 @@ package com.safecore.ui.session;
 import java.time.LocalDateTime;
 
 /**
- * Questa classe è come il "passaporto" dell'utente. 
+ * Questa classe è come il "passaporto" dell'utente.
  * È un Singleton (centralizzato) che si ricorda chi è loggato in questo momento.
  * In questo modo, qualsiasi parte dell'app (Service, Controller, ecc.) può sapere
  * chi sta facendo cosa senza dover passare l'utente avanti e indietro come un pallone.
@@ -46,7 +46,7 @@ public final class SessionContext {
     }
 
     /**
-     * Recupera l'email di chi è loggato. 
+     * Recupera l'email di chi è loggato.
      * Se nessuno è loggato, lancia un errore: è un controllo di sicurezza in più.
      */
     public static String getCurrentUserEmail() {

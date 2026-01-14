@@ -2,13 +2,11 @@ package com.safecore.ui.controller;
 
 import com.safecore.business.exception.InvalidTokenException;
 import com.safecore.business.exception.UserNotFoundException;
-import com.safecore.business.service.PasswordResetCompletedEvent;
-import com.safecore.business.service.PasswordResetEventPublisher;
-import com.safecore.business.service.PasswordResetObserver;
-import com.safecore.business.service.PasswordResetRequestResult;
-import com.safecore.business.service.PasswordResetService;
-import com.safecore.security.PasswordGenerator; // Import corretto
+import com.safecore.business.service.*;
+import com.safecore.security.PasswordGenerator;
 import com.safecore.ui.navigation.SceneNavigator;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
@@ -16,9 +14,6 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
-
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 
 import java.time.format.DateTimeFormatter;
 
@@ -31,16 +26,18 @@ import java.time.format.DateTimeFormatter;
 @Component
 public class PasswordResetController implements PasswordResetObserver {
 
-    @FXML private TextField emailField;
-    @FXML private TextField tokenField;
-    @FXML private PasswordField newPasswordField;
-    @FXML private Label messageLabel;
-
     private final PasswordResetService resetService;
     private final PasswordGenerator passwordGenerator;
     private final PasswordResetEventPublisher eventPublisher;
-
     private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+    @FXML
+    private TextField emailField;
+    @FXML
+    private TextField tokenField;
+    @FXML
+    private PasswordField newPasswordField;
+    @FXML
+    private Label messageLabel;
 
     public PasswordResetController(PasswordResetService resetService,
                                    PasswordGenerator passwordGenerator,
@@ -135,7 +132,10 @@ public class PasswordResetController implements PasswordResetObserver {
 
     private void redirectToLoginAfterDelay() {
         new Thread(() -> {
-            try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
+            try {
+                Thread.sleep(2000);
+            } catch (InterruptedException ignored) {
+            }
             Platform.runLater(this::handleBackToLogin);
         }).start();
     }

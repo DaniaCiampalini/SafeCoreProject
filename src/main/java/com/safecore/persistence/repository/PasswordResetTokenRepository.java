@@ -2,6 +2,7 @@ package com.safecore.persistence.repository;
 
 import com.safecore.persistence.entity.PasswordResetTokenEntity;
 import org.springframework.data.jpa.repository.JpaRepository;
+
 import java.util.Optional;
 import java.util.UUID;
 

@@ -1,7 +1,7 @@
 package com.safecore.business.service;
 
 import com.safecore.business.hints.PasswordHint;
-import com.safecore.business.hints.rules.*;
+import com.safecore.business.hints.rules.PasswordRule;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;

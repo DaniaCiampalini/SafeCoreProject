@@ -104,8 +104,8 @@ class WeakPasswordExceptionTest {
     @Test
     void exceptionWithLongMessage() {
         String longMessage = "La password non soddisfa i requisiti minimi: deve contenere almeno 12 caratteri, " +
-                            "inclusa almeno una lettera maiuscola, una lettera minuscola, un numero e " +
-                            "un carattere speciale tra !@#$%^&*";
+                "inclusa almeno una lettera maiuscola, una lettera minuscola, un numero e " +
+                "un carattere speciale tra !@#$%^&*";
         WeakPasswordException exception = new WeakPasswordException(longMessage);
 
         assertEquals(longMessage, exception.getMessage());

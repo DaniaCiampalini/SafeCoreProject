@@ -4,8 +4,10 @@ import com.safecore.business.hints.rules.ComplexityRule;
 import com.safecore.business.hints.rules.MinLengthRule;
 import com.safecore.business.service.PasswordHintService;
 import org.junit.jupiter.api.Test;
+
 import java.util.Arrays;
 import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PasswordHintServiceTest {

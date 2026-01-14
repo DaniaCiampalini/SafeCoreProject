@@ -4,7 +4,10 @@ import com.safecore.business.service.UserService;
 import com.safecore.ui.navigation.SceneNavigator;
 import com.safecore.ui.session.SessionContext;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
@@ -16,14 +19,18 @@ import org.springframework.stereotype.Component;
 @Component
 public class LoginController {
 
-    // Campi collegati al file login.fxml
-    @FXML private TextField emailField;
-    @FXML private PasswordField passwordField;
-    @FXML private TextField passwordTextField; // Campo "di riserva" per mostrare la password
-    @FXML private Button togglePasswordBtn;     // Il tasto con l'occhio
-    @FXML private Label messageLabel;           // Dove scriviamo "Credenziali errate"
-
     private final UserService userService;
+    // Campi collegati al file login.fxml
+    @FXML
+    private TextField emailField;
+    @FXML
+    private PasswordField passwordField;
+    @FXML
+    private TextField passwordTextField; // Campo "di riserva" per mostrare la password
+    @FXML
+    private Button togglePasswordBtn;     // Il tasto con l'occhio
+    @FXML
+    private Label messageLabel;           // Dove scriviamo "Credenziali errate"
     private boolean isPasswordVisible = false;
 
     public LoginController(UserService userService) {

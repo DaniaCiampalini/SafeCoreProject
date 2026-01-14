@@ -38,7 +38,7 @@ public class SecurityAuditService {
         for (PasswordEntryEntity entry : entries) {
             // Decifriamo momentaneamente la password per analizzarla
             String decrypted = vaultService.decryptPassword(entry.getEncryptedPassword());
-            
+
             // 1. È debole? (Mancano numeri, simboli, ecc.)
             if (strengthEvaluator.evaluate(decrypted) == PasswordStrengthEvaluator.Strength.WEAK) {
                 weakPasswords++;
@@ -73,5 +73,6 @@ public class SecurityAuditService {
     /**
      * Un semplice contenitore per i risultati dell'audit.
      */
-    public static record AuditResult(int score, int weakCount, int oldCount, int reusedCount) {}
+    public static record AuditResult(int score, int weakCount, int oldCount, int reusedCount) {
+    }
 }

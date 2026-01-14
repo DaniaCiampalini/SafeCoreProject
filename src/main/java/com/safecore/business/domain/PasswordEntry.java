@@ -1,7 +1,6 @@
 package com.safecore.business.domain;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -9,7 +8,7 @@ import java.util.UUID;
  * Questa classe rappresenta una "voce" nel tuo vault delle password.
  * È un oggetto di dominio puro: niente JPA, niente Spring, solo logica.
  * È IMMUTABILE: una volta creato, non puoi più cambiare i suoi campi.
- * Se vuoi "modificare" una password, ne crei una nuova istanza. 
+ * Se vuoi "modificare" una password, ne crei una nuova istanza.
  * Questo approccio evita un sacco di bug dovuti a stati dell'oggetto che cambiano sotto il naso.
  */
 public final class PasswordEntry {
@@ -24,15 +23,29 @@ public final class PasswordEntry {
         this.serviceName = builder.serviceName;
         this.username = builder.username;
         // Facciamo una copia dei byte per essere sicuri che nessuno li modifichi da fuori
-        this.encryptedPassword = builder.encryptedPassword != null ? builder.encryptedPassword.clone() : null; 
+        this.encryptedPassword = builder.encryptedPassword != null ? builder.encryptedPassword.clone() : null;
         this.createdAt = builder.createdAt;
     }
 
-    public UUID getId() { return id; }
-    public String getServiceName() { return serviceName; }
-    public String getUsername() { return username; }
-    public byte[] getEncryptedPassword() { return encryptedPassword != null ? encryptedPassword.clone() : null; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
+    public UUID getId() {
+        return id;
+    }
+
+    public String getServiceName() {
+        return serviceName;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public byte[] getEncryptedPassword() {
+        return encryptedPassword != null ? encryptedPassword.clone() : null;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
 
     @Override
     public boolean equals(Object o) {
@@ -43,7 +56,9 @@ public final class PasswordEntry {
     }
 
     @Override
-    public int hashCode() { return Objects.hash(id); }
+    public int hashCode() {
+        return Objects.hash(id);
+    }
 
     /**
      * Usiamo il Builder Pattern perché costruire un oggetto con tanti parametri
@@ -56,11 +71,30 @@ public final class PasswordEntry {
         private byte[] encryptedPassword;
         private LocalDateTime createdAt;
 
-        public Builder id(UUID id) { this.id = id; return this; }
-        public Builder serviceName(String sn) { this.serviceName = sn; return this; }
-        public Builder username(String un) { this.username = un; return this; }
-        public Builder encryptedPassword(byte[] ep) { this.encryptedPassword = ep; return this; }
-        public Builder createdAt(LocalDateTime ca) { this.createdAt = ca; return this; }
+        public Builder id(UUID id) {
+            this.id = id;
+            return this;
+        }
+
+        public Builder serviceName(String sn) {
+            this.serviceName = sn;
+            return this;
+        }
+
+        public Builder username(String un) {
+            this.username = un;
+            return this;
+        }
+
+        public Builder encryptedPassword(byte[] ep) {
+            this.encryptedPassword = ep;
+            return this;
+        }
+
+        public Builder createdAt(LocalDateTime ca) {
+            this.createdAt = ca;
+            return this;
+        }
 
         /**
          * Crea l'oggetto finale. Qui controlliamo che i dati fondamentali ci siano tutti.

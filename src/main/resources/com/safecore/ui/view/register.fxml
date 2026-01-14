@@ -4,8 +4,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="25" alignment="CENTER" prefWidth="450" prefHeight="650"
-      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
+<VBox xmlns:fx="http://javafx.com/fxml" spacing="25" alignment="CENTER" prefWidth="450"
+      prefHeight="650" xmlns="http://javafx.com/javafx/17"
       fx:controller="com.safecore.ui.controller.RegisterController"
       style="-fx-background-color: #ffffff; -fx-padding: 45;">
 
@@ -17,14 +17,16 @@
     <VBox spacing="15">
         <VBox spacing="8">
             <Label text="Email" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
-            <TextField fx:id="emailField" promptText="esempio@mail.com" />
+            <TextField fx:id="emailField" promptText="esempio@mail.com"/>
         </VBox>
 
         <VBox spacing="8">
             <Label text="Password" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
-            <HBox alignment="CENTER_LEFT" style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
+            <HBox alignment="CENTER_LEFT"
+                  style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
                 <StackPane HBox.hgrow="ALWAYS">
-                    <PasswordField fx:id="passwordField" promptText="Minimo 8 caratteri" onKeyReleased="#handlePasswordTyping"
+                    <PasswordField fx:id="passwordField" promptText="Minimo 8 caratteri"
+                                   onKeyReleased="#handlePasswordTyping"
                                    style="-fx-background-color: transparent; -fx-padding: 12;"/>
                     <TextField fx:id="passwordTextField" visible="false" onKeyReleased="#handlePasswordTyping"
                                style="-fx-background-color: transparent; -fx-padding: 12;"/>
@@ -37,7 +39,8 @@
 
         <VBox spacing="8">
             <Label text="Conferma Password" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
-            <HBox alignment="CENTER_LEFT" style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
+            <HBox alignment="CENTER_LEFT"
+                  style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
                 <StackPane HBox.hgrow="ALWAYS">
                     <PasswordField fx:id="confirmPasswordField" promptText="Ripeti password"
                                    style="-fx-background-color: transparent; -fx-padding: 12;"/>
@@ -51,8 +54,10 @@
     </VBox>
 
     <VBox spacing="12" alignment="CENTER">
-        <Button text="Registrati ora" onAction="#handleRegister" maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 16;"/>
-        <Button text="Genera Password Suggerita" onAction="#handleGeneratePassword" maxWidth="Infinity" styleClass="button-secondary" />
+        <Button text="Registrati ora" onAction="#handleRegister" maxWidth="Infinity" styleClass="button-primary"
+                style="-fx-font-size: 16;"/>
+        <Button text="Genera Password Suggerita" onAction="#handleGeneratePassword" maxWidth="Infinity"
+                styleClass="button-secondary"/>
     </VBox>
 
     <Label fx:id="messageLabel" wrapText="true" alignment="CENTER" style="-fx-font-size: 12px;"/>

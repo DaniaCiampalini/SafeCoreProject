@@ -8,6 +8,7 @@ import javafx.scene.Scene;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.springframework.context.ApplicationContext;
+
 import java.net.URL;
 
 /**

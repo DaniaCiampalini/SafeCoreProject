@@ -3,6 +3,7 @@ package com.safecore.business.hints.rules;
 import com.safecore.business.hints.HintLevel;
 import com.safecore.business.hints.PasswordHint;
 import org.springframework.stereotype.Component;
+
 import java.util.Optional;
 
 /**

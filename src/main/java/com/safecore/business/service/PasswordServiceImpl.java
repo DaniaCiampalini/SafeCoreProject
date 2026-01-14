@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 public class PasswordServiceImpl implements PasswordService {
 
     private final PasswordEntryRepository passwordRepository;
-    private final EncryptionStrategy encryption; 
+    private final EncryptionStrategy encryption;
 
     public PasswordServiceImpl(PasswordEntryRepository passwordRepository, EncryptionStrategy encryption) {
         this.passwordRepository = passwordRepository;

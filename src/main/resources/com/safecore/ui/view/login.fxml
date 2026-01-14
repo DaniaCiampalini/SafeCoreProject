@@ -3,8 +3,8 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox spacing="30" alignment="CENTER" prefWidth="450" prefHeight="600"
-      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml"
+<VBox xmlns:fx="http://javafx.com/fxml" spacing="30" alignment="CENTER" prefWidth="450"
+      prefHeight="600" xmlns="http://javafx.com/javafx/17"
       fx:controller="com.safecore.ui.controller.LoginController"
       style="-fx-background-color: #ffffff; -fx-padding: 60;">
 
@@ -16,12 +16,13 @@
     <VBox spacing="18">
         <VBox spacing="8">
             <Label text="Email" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
-            <TextField fx:id="emailField" promptText="Inserisci la tua email" />
+            <TextField fx:id="emailField" promptText="Inserisci la tua email"/>
         </VBox>
 
         <VBox spacing="8">
             <Label text="Password" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
-            <HBox alignment="CENTER_LEFT" style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
+            <HBox alignment="CENTER_LEFT"
+                  style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
                 <StackPane HBox.hgrow="ALWAYS">
                     <PasswordField fx:id="passwordField" promptText="••••••••"
                                    style="-fx-background-color: transparent; -fx-padding: 12;"/>
@@ -34,7 +35,8 @@
         </VBox>
     </VBox>
 
-    <Button text="Accedi al Vault" onAction="#handleLogin" maxWidth="Infinity" styleClass="button-primary" style="-fx-font-size: 16;"/>
+    <Button text="Accedi al Vault" onAction="#handleLogin" maxWidth="Infinity" styleClass="button-primary"
+            style="-fx-font-size: 16;"/>
 
     <VBox alignment="CENTER" spacing="12">
         <Label text="Nuovo utente?" style="-fx-text-fill: #64748b;"/>

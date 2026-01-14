@@ -13,7 +13,7 @@ import java.util.UUID;
 /**
  * Questo è il magazzino degli utenti.
  * Grazie a Spring Data JPA, non dobbiamo scrivere il codice per salvare o cercare
- * gli utenti sul database: ci basta definire i metodi con i nomi giusti e 
+ * gli utenti sul database: ci basta definire i metodi con i nomi giusti e
  * Spring capisce da solo cosa vogliamo fare.
  */
 @Repository
@@ -30,7 +30,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     boolean existsByEmail(String email);
 
     /**
-     * Aggiorna la password di un utente. 
+     * Aggiorna la password di un utente.
      * Qui usiamo una query JPQL perché è un aggiornamento diretto.
      */
     @Modifying

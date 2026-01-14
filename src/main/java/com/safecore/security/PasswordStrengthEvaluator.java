@@ -3,15 +3,12 @@ package com.safecore.security;
 import org.springframework.stereotype.Component;
 
 /**
- * Questo è il nostro "giudice" delle password. 
+ * Questo è il nostro "giudice" delle password.
  * Analizza la stringa e decide se è troppo debole per essere accettata.
  * Non guarda solo la lunghezza, ma anche la varietà di caratteri.
  */
 @Component
 public class PasswordStrengthEvaluator {
-
-    // I tre possibili giudizi
-    public enum Strength { WEAK, MEDIUM, STRONG }
 
     /**
      * Valuta la forza di una password.
@@ -41,4 +38,7 @@ public class PasswordStrengthEvaluator {
         if (score == 3) return Strength.MEDIUM;
         return Strength.STRONG;
     }
+
+    // I tre possibili giudizi
+    public enum Strength {WEAK, MEDIUM, STRONG}
 }

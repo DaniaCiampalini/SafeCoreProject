@@ -1,8 +1,8 @@
 package com.safecore.security;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,7 +34,7 @@ class AESEncryptionPerformanceTest {
 
         // AES è molto veloce, dovrebbe completare in meno di 10ms
         assertTrue(durationMicros < 10_000,
-            "Encrypt operation took too long: " + durationMicros + "μs (expected < 10000μs)");
+                "Encrypt operation took too long: " + durationMicros + "μs (expected < 10000μs)");
 
         assertNotNull(encrypted);
         assertNotEquals(plainText, new String(encrypted));
@@ -54,7 +54,7 @@ class AESEncryptionPerformanceTest {
 
         // La decifratura dovrebbe essere veloce come la cifratura
         assertTrue(durationMicros < 10_000,
-            "Decrypt operation took too long: " + durationMicros + "μs (expected < 10000μs)");
+                "Decrypt operation took too long: " + durationMicros + "μs (expected < 10000μs)");
 
         assertEquals(plainText, decrypted);
     }
@@ -73,7 +73,7 @@ class AESEncryptionPerformanceTest {
 
         // L'intero round-trip dovrebbe essere veloce
         assertTrue(durationMicros < 20_000,
-            "Round-trip operation took too long: " + durationMicros + "μs (expected < 20000μs)");
+                "Round-trip operation took too long: " + durationMicros + "μs (expected < 20000μs)");
 
         assertEquals(plainText, decrypted);
     }
@@ -100,13 +100,13 @@ class AESEncryptionPerformanceTest {
 
         // La deviazione standard dovrebbe essere piccola (< 50% della media)
         assertTrue(stdDev < average * 0.5,
-            "Encrypt operations have inconsistent performance. Average: " + average +
-            "μs, StdDev: " + stdDev + "μs");
+                "Encrypt operations have inconsistent performance. Average: " + average +
+                        "μs, StdDev: " + stdDev + "μs");
 
         // Tutte le operazioni dovrebbero completare entro un limite ragionevole
         for (long duration : durations) {
             assertTrue(duration < 10_000,
-                "Encrypt operation took too long: " + duration + "μs");
+                    "Encrypt operation took too long: " + duration + "μs");
         }
     }
 
@@ -116,7 +116,7 @@ class AESEncryptionPerformanceTest {
         String shortText = "Hi";
         String mediumText = "This is a medium length text for testing encryption performance";
         String longText = "This is a very long text that contains many characters to test " +
-                         "encryption performance with larger inputs. ".repeat(10);
+                "encryption performance with larger inputs. ".repeat(10);
 
         long shortTime = measureEncryptTime(shortText);
         long mediumTime = measureEncryptTime(mediumText);
@@ -129,7 +129,7 @@ class AESEncryptionPerformanceTest {
 
         // Il testo più lungo potrebbe richiedere più tempo, ma non proporzionalmente
         assertTrue(longTime < shortTime * 100,
-            "Long text encryption is disproportionately slow");
+                "Long text encryption is disproportionately slow");
     }
 
     @Test
@@ -138,7 +138,7 @@ class AESEncryptionPerformanceTest {
         String shortText = "Hi";
         String mediumText = "This is a medium length text for testing encryption performance";
         String longText = "This is a very long text that contains many characters to test " +
-                         "encryption performance with larger inputs. ".repeat(10);
+                "encryption performance with larger inputs. ".repeat(10);
 
         byte[] shortEncrypted = encryptionStrategy.encrypt(shortText);
         byte[] mediumEncrypted = encryptionStrategy.encrypt(mediumText);
@@ -171,7 +171,7 @@ class AESEncryptionPerformanceTest {
         double ratio = (double) concurrentTime / (singleThreadTime * threadCount);
 
         assertTrue(ratio < 3.0,
-            "Concurrent operations degraded performance too much. Ratio: " + ratio);
+                "Concurrent operations degraded performance too much. Ratio: " + ratio);
     }
 
     @Test
@@ -193,7 +193,7 @@ class AESEncryptionPerformanceTest {
 
         // Ogni operazione dovrebbe essere molto veloce (< 1ms)
         assertTrue(avgTimeMicros < 1_000,
-            "Average encrypt time is too slow for real-time: " + avgTimeMicros + "μs");
+                "Average encrypt time is too slow for real-time: " + avgTimeMicros + "μs");
     }
 
     @Test
@@ -216,7 +216,7 @@ class AESEncryptionPerformanceTest {
 
         // Ogni operazione dovrebbe essere molto veloce (< 1ms)
         assertTrue(avgTimeMicros < 1_000,
-            "Average decrypt time is too slow for real-time: " + avgTimeMicros + "μs");
+                "Average decrypt time is too slow for real-time: " + avgTimeMicros + "μs");
     }
 
     @Test
@@ -260,7 +260,7 @@ class AESEncryptionPerformanceTest {
 
         // 1000 operazioni dovrebbero completare in meno di 5 secondi
         assertTrue(totalTimeMs < 5_000,
-            "1000 encryption/decryption operations took too long: " + totalTimeMs + "ms");
+                "1000 encryption/decryption operations took too long: " + totalTimeMs + "ms");
     }
 
     // Helper methods

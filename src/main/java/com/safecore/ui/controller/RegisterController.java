@@ -1,15 +1,19 @@
 package com.safecore.ui.controller;
 
-import com.safecore.business.service.UserService;
-import com.safecore.business.service.PasswordHintService; // Servizio esistente
 import com.safecore.business.hints.PasswordHint;
+import com.safecore.business.service.PasswordHintService;
+import com.safecore.business.service.UserService;
 import com.safecore.security.PasswordGenerator;
 import com.safecore.ui.navigation.SceneNavigator;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.PasswordField;
+import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 
 /**
@@ -21,23 +25,28 @@ import java.util.List;
 @Component
 public class RegisterController {
 
-    // Campi UI per email e password (con i rispettivi doppioni per la visibilità in chiaro)
-    @FXML private TextField emailField;
-    @FXML private Label messageLabel;
-    @FXML private Label passwordStrengthLabel;
-
-    @FXML private PasswordField passwordField;
-    @FXML private PasswordField confirmPasswordField;
-    @FXML private TextField passwordTextField;
-    @FXML private TextField confirmPasswordTextField;
-
-    @FXML private Button togglePwdBtn;
-    @FXML private Button toggleConfirmPwdBtn;
-
     private final UserService userService;
     private final PasswordGenerator passwordGenerator;
-    private final PasswordHintService hintService; 
-
+    private final PasswordHintService hintService;
+    // Campi UI per email e password (con i rispettivi doppioni per la visibilità in chiaro)
+    @FXML
+    private TextField emailField;
+    @FXML
+    private Label messageLabel;
+    @FXML
+    private Label passwordStrengthLabel;
+    @FXML
+    private PasswordField passwordField;
+    @FXML
+    private PasswordField confirmPasswordField;
+    @FXML
+    private TextField passwordTextField;
+    @FXML
+    private TextField confirmPasswordTextField;
+    @FXML
+    private Button togglePwdBtn;
+    @FXML
+    private Button toggleConfirmPwdBtn;
     private boolean isPwdVisible = false;
     private boolean isConfirmVisible = false;
 
@@ -77,7 +86,10 @@ public class RegisterController {
 
             // Aspettiamo un secondo e mezzo prima di tornare al login, così l'utente legge il messaggio.
             new Thread(() -> {
-                try { Thread.sleep(1500); } catch (InterruptedException ignored) {}
+                try {
+                    Thread.sleep(1500);
+                } catch (InterruptedException ignored) {
+                }
                 Platform.runLater(this::handleBackToLogin);
             }).start();
 
@@ -175,10 +187,12 @@ public class RegisterController {
         messageLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold;");
         messageLabel.setText(msg);
     }
+
     private void showSuccess(String msg) {
         messageLabel.setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold;");
         messageLabel.setText(msg);
     }
+
     private void showInfo(String msg) {
         messageLabel.setStyle("-fx-text-fill: #2563eb; -fx-font-weight: bold;");
         messageLabel.setText(msg);

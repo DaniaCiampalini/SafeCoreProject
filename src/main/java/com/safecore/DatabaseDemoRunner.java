@@ -1,9 +1,12 @@
 package com.safecore;
 
 import com.safecore.business.domain.PasswordEntry;
-import com.safecore.business.service.*;
+import com.safecore.business.service.PasswordResetService;
+import com.safecore.business.service.PasswordService;
+import com.safecore.business.service.UserService;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
+
 import java.util.List;
 
 @Component

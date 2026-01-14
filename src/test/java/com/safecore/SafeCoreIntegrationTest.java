@@ -50,7 +50,7 @@ class SafeCoreIntegrationTest {
             List<PasswordEntryEntity> entries = vaultService.getEntriesForCurrentUser();
             assertFalse(entries.isEmpty());
             assertEquals("TestService", entries.get(0).getServiceName());
-            
+
             String decrypted = vaultService.decryptPassword(entries.get(0).getEncryptedPassword());
             assertEquals("secret123", decrypted);
         } finally {

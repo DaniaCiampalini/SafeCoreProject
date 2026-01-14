@@ -1,6 +1,7 @@
 package com.safecore.security;
 
 import org.springframework.stereotype.Component;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import java.nio.charset.StandardCharsets;
@@ -22,7 +23,7 @@ public class AESEncryptionStrategy implements EncryptionStrategy {
         if (plainText == null) throw new IllegalArgumentException("Plaintext cannot be null");
         try {
             Cipher cipher = Cipher.getInstance(ALGORITHM);
-            
+
             // Generiamo un IV (Initialization Vector) casuale di 16 byte.
             // L'IV serve a far sì che cifrando la stessa password due volte, il risultato sia diverso.
             byte[] iv = new byte[16];

@@ -2,8 +2,8 @@ package com.safecore.business.service;
 
 import com.safecore.business.domain.User;
 import com.safecore.business.domain.UserBuilder;
-import com.safecore.business.exception.UserAlreadyExistsException; // Da creare
-import com.safecore.business.exception.WeakPasswordException;       // Da creare
+import com.safecore.business.exception.UserAlreadyExistsException;
+import com.safecore.business.exception.WeakPasswordException;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.UserRepository;
 import com.safecore.security.PasswordHasher;
@@ -17,8 +17,8 @@ import java.util.Optional;
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
-    private final PasswordHasher passwordHasher; 
-    private final PasswordStrengthEvaluator strengthEvaluator; 
+    private final PasswordHasher passwordHasher;
+    private final PasswordStrengthEvaluator strengthEvaluator;
 
     // Qui le dipendenze vengono iniettate da Spring in automatico.
     // Usiamo le interfacce (es. PasswordHasher) così se cambiamo implementazione

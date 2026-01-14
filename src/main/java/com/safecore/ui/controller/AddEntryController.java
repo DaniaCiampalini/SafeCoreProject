@@ -15,11 +15,13 @@ import org.springframework.stereotype.Component;
 @Component
 public class AddEntryController {
 
-    @FXML private TextField serviceField;
-    @FXML private TextField usernameField;
-    @FXML private PasswordField passwordField;
-
     private final VaultService vaultService;
+    @FXML
+    private TextField serviceField;
+    @FXML
+    private TextField usernameField;
+    @FXML
+    private PasswordField passwordField;
     private boolean saved = false;
 
     public AddEntryController(VaultService vaultService) {
@@ -45,7 +47,7 @@ public class AddEntryController {
         // 2. Capire a quale utente appartiene (tramite la sessione)
         // 3. Salvare tutto sul DB
         vaultService.addEntry(service, username, password);
-        
+
         saved = true;
         closeStage();
     }

@@ -1,12 +1,13 @@
 package com.safecore.business.service;
 
 import org.springframework.stereotype.Service;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
 /**
  * Servizio legacy di auto-compilazione desktop basato su Robot.
- * 
+ * <p>
  * Non viene più utilizzato nell'applicazione principale per evitare
  * integrazioni a livello di OS e comportamenti non deterministici.
  */
@@ -38,7 +39,7 @@ public class AutoFillService {
         if (robot == null) return;
         // Aspettiamo mezzo secondo per sicurezza.
         robot.delay(500);
-        
+
         for (char c : text.toCharArray()) {
             typeChar(c);
         }
@@ -51,19 +52,19 @@ public class AutoFillService {
     public void typeCredentials(String username, String password) {
         // Pausa di 2 secondi: dà il tempo all'utente di cliccare sul campo di input del browser.
         robot.delay(2000);
-        
+
         // Scrive l'username
         typeText(username);
-        
+
         // Preme TAB per spostarsi sul campo password (funziona nel 99% dei siti)
         robot.keyPress(KeyEvent.VK_TAB);
         robot.keyRelease(KeyEvent.VK_TAB);
-        
+
         robot.delay(100);
-        
+
         // Scrive la password
         typeText(password);
-        
+
         // Preme INVIO per confermare il login
         robot.keyPress(KeyEvent.VK_ENTER);
         robot.keyRelease(KeyEvent.VK_ENTER);

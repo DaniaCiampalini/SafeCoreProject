@@ -14,24 +14,6 @@ import org.springframework.stereotype.Component;
 public class GlobalExceptionHandler {
 
     /**
-     * Gestisce le eccezioni generiche, mostrandole in un popup di errore.
-     */
-    public void handle(Throwable e) {
-        // Stampiamo comunque l'errore in console, che per il debug serve sempre.
-        e.printStackTrace();
-        
-        // Usiamo Platform.runLater perché gli Alert di JavaFX devono girare sul thread della UI.
-        Platform.runLater(() -> {
-            Alert alert = new Alert(Alert.AlertType.ERROR);
-            alert.setTitle("Ops! Qualcosa è andato storto");
-            alert.setHeaderText("Errore di Sistema");
-            alert.setContentText("Messaggio: " + e.getMessage());
-            alert.getButtonTypes().setAll(ButtonType.OK);
-            alert.showAndWait();
-        });
-    }
-
-    /**
      * Metodo statico comodo per mostrare errori veloci ovunque nel codice.
      */
     public static void showError(String title, String message) {
@@ -40,6 +22,24 @@ public class GlobalExceptionHandler {
             alert.setTitle(title);
             alert.setHeaderText(null);
             alert.setContentText(message);
+            alert.showAndWait();
+        });
+    }
+
+    /**
+     * Gestisce le eccezioni generiche, mostrandole in un popup di errore.
+     */
+    public void handle(Throwable e) {
+        // Stampiamo comunque l'errore in console, che per il debug serve sempre.
+        e.printStackTrace();
+
+        // Usiamo Platform.runLater perché gli Alert di JavaFX devono girare sul thread della UI.
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Ops! Qualcosa è andato storto");
+            alert.setHeaderText("Errore di Sistema");
+            alert.setContentText("Messaggio: " + e.getMessage());
+            alert.getButtonTypes().setAll(ButtonType.OK);
             alert.showAndWait();
         });
     }

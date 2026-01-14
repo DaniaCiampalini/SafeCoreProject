@@ -2,12 +2,13 @@ package com.safecore.security;
 
 import com.safecore.business.hints.rules.PasswordRule;
 import org.springframework.stereotype.Component;
+
 import java.security.SecureRandom;
 import java.util.List;
 
 /**
- * Questo è il nostro "chef" delle password. 
- * Non si limita a buttare caratteri a caso, ma segue una ricetta precisa per 
+ * Questo è il nostro "chef" delle password.
+ * Non si limita a buttare caratteri a caso, ma segue una ricetta precisa per
  * assicurarsi che la password sia digeribile (sicura) per i nostri standard.
  */
 @Component
@@ -68,7 +69,9 @@ public class PasswordGenerator {
         return shuffle(sb.toString());
     }
 
-    private char randomChar(String s) { return s.charAt(random.nextInt(s.length())); }
+    private char randomChar(String s) {
+        return s.charAt(random.nextInt(s.length()));
+    }
 
     /**
      * Algoritmo di Fisher-Yates per mescolare la stringa in modo equo.

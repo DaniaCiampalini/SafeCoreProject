@@ -1,7 +1,7 @@
 package com.safecore.business.hints;
 
 /**
- * Un suggerimento di sicurezza. 
+ * Un suggerimento di sicurezza.
  * Non è un errore cattivo che blocca tutto, ma un consiglio amichevole
  * per aiutare l'utente a creare una password degna di questo nome.
  */
