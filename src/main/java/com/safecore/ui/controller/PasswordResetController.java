@@ -1,5 +1,11 @@
 package com.safecore.ui.controller;
 
+import com.safecore.business.exception.InvalidTokenException;
+import com.safecore.business.exception.UserNotFoundException;
+import com.safecore.business.service.PasswordResetCompletedEvent;
+import com.safecore.business.service.PasswordResetEventPublisher;
+import com.safecore.business.service.PasswordResetObserver;
+import com.safecore.business.service.PasswordResetRequestResult;
 import com.safecore.business.service.PasswordResetService;
 import com.safecore.security.PasswordGenerator; // Import corretto
 import com.safecore.ui.navigation.SceneNavigator;
@@ -11,6 +17,11 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+
+import java.time.format.DateTimeFormatter;
+
 /**
  * Controller per il recupero password.
  * Se un utente dimentica la password, può richiedere un "token" di reset.
@@ -18,7 +29,7 @@ import org.springframework.stereotype.Component;
  * di essere inviato per email.
  */
 @Component
-public class PasswordResetController {
+public class PasswordResetController implements PasswordResetObserver {
 
     @FXML private TextField emailField;
     @FXML private TextField tokenField;
@@ -26,11 +37,27 @@ public class PasswordResetController {
     @FXML private Label messageLabel;
 
     private final PasswordResetService resetService;
-    private final PasswordGenerator passwordGenerator; 
+    private final PasswordGenerator passwordGenerator;
+    private final PasswordResetEventPublisher eventPublisher;
 
-    public PasswordResetController(PasswordResetService resetService, PasswordGenerator passwordGenerator) {
+    private final DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HH:mm");
+
+    public PasswordResetController(PasswordResetService resetService,
+                                   PasswordGenerator passwordGenerator,
+                                   PasswordResetEventPublisher eventPublisher) {
         this.resetService = resetService;
         this.passwordGenerator = passwordGenerator;
+        this.eventPublisher = eventPublisher;
+    }
+
+    @PostConstruct
+    void registerObserver() {
+        eventPublisher.register(this);
+    }
+
+    @PreDestroy
+    void unregisterObserver() {
+        eventPublisher.unregister(this);
     }
 
     /**
@@ -45,8 +72,8 @@ public class PasswordResetController {
         }
         try {
             // Simuliamo l'invio: il service genera il token e noi lo mostriamo
-            String token = resetService.requestReset(email);
-            showInfo("Token di Reset (simulato): " + token);
+            PasswordResetRequestResult result = resetService.requestReset(email);
+            showInfo("Token generato (valido fino alle " + result.getExpiresAt().format(timeFormatter) + "): " + result.getToken());
         } catch (Exception e) {
             showError(e.getMessage());
         }
@@ -69,11 +96,12 @@ public class PasswordResetController {
         try {
             // Se il token è valido, la password viene aggiornata
             resetService.resetPassword(email, token, newPassword);
-            showSuccess("Password resettata con successo!");
-            disableResetForm();
-            redirectToLoginAfterDelay();
+        } catch (InvalidTokenException ex) {
+            showError("Token non valido o scaduto. Richiedi un nuovo token e riprova.");
+        } catch (UserNotFoundException ex) {
+            showError("Nessun account trovato per questa email.");
         } catch (Exception e) {
-            showError(e.getMessage());
+            showError("Errore durante il reset: " + e.getMessage());
         }
     }
 
@@ -106,6 +134,15 @@ public class PasswordResetController {
             try { Thread.sleep(2000); } catch (InterruptedException ignored) {}
             Platform.runLater(this::handleBackToLogin);
         }).start();
+    }
+
+    @Override
+    public void onPasswordResetCompleted(PasswordResetCompletedEvent event) {
+        Platform.runLater(() -> {
+            showSuccess("Password aggiornata per " + event.getEmail() + ". Effettua di nuovo il login.");
+            disableResetForm();
+            redirectToLoginAfterDelay();
+        });
     }
 
     private void showError(String message) {

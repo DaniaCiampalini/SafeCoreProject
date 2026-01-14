@@ -6,9 +6,9 @@ package com.safecore.business.service;
 public interface PasswordResetService {
 
     /**
-     * Genera un token per permettere il reset.
+     * Genera un token per permettere il reset restituendo anche la scadenza.
      */
-    String requestReset(String email);
+    PasswordResetRequestResult requestReset(String email);
 
     /**
      * Cambia effettivamente la password se il token è corretto.

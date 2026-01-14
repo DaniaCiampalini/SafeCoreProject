@@ -19,33 +19,37 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private final UserRepository userRepository;
     private final PasswordResetTokenRepository tokenRepository;
     private final PasswordHasher passwordHasher; // Iniettato!
+    private final PasswordResetEventPublisher eventPublisher;
 
     public PasswordResetServiceImpl(UserRepository userRepository,
                                     PasswordResetTokenRepository tokenRepository,
-                                    PasswordHasher passwordHasher) {
+                                    PasswordHasher passwordHasher,
+                                    PasswordResetEventPublisher eventPublisher) {
         this.userRepository = userRepository;
         this.tokenRepository = tokenRepository;
         this.passwordHasher = passwordHasher;
+        this.eventPublisher = eventPublisher;
     }
 
     @Override
     @Transactional
-    public String requestReset(String email) {
+    public PasswordResetRequestResult requestReset(String email) {
         if (!userRepository.existsByEmail(email)) {
             throw new UserNotFoundException(email);
         }
 
         String token = generateToken();
         String tokenHash = passwordHasher.hash(token); // Uso dell'istanza iniettata
+        LocalDateTime expiresAt = LocalDateTime.now().plusMinutes(15);
 
         PasswordResetTokenEntity entity = new PasswordResetTokenEntity();
         entity.setEmail(email);
         entity.setTokenHash(tokenHash);
-        entity.setExpiryDate(LocalDateTime.now().plusMinutes(15));
+        entity.setExpiryDate(expiresAt);
         entity.setUsed(false);
 
         tokenRepository.save(entity);
-        return token;
+        return new PasswordResetRequestResult(token, expiresAt);
     }
 
     @Override
@@ -67,6 +71,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
         stored.setUsed(true);
         tokenRepository.save(stored);
+
+        eventPublisher.publish(new PasswordResetCompletedEvent(email, LocalDateTime.now()));
     }
 
     private String generateToken() {

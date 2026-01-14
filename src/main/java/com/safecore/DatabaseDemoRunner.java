@@ -50,7 +50,7 @@ public class DatabaseDemoRunner implements CommandLineRunner {
 
             // FASE 3: RESET PASSWORD
             System.out.println("\n3. Test Flusso Reset Password...");
-            String token = resetService.requestReset(EMAIL);
+            String token = resetService.requestReset(EMAIL).getToken();
             String nuovaPass = "NuovaPasswordSicura2026!";
 
             resetService.resetPassword(EMAIL, token, nuovaPass);
