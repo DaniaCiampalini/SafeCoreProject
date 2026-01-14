@@ -16,6 +16,10 @@ public class SafeSendEntry {
     @Column(nullable = false, columnDefinition = "VARBINARY(2048)")
     private byte[] encryptedContent;
 
+    // Hash del token pubblico usato nel link (il token in chiaro non viene mai salvato)
+    @Column
+    private String tokenHash;
+
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
@@ -35,6 +39,8 @@ public class SafeSendEntry {
     public void setId(UUID id) { this.id = id; }
     public byte[] getEncryptedContent() { return encryptedContent; }
     public void setEncryptedContent(byte[] encryptedContent) { this.encryptedContent = encryptedContent; }
+    public String getTokenHash() { return tokenHash; }
+    public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
     public boolean isOneTime() { return isOneTime; }

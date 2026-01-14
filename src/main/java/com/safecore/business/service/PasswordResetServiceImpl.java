@@ -8,6 +8,8 @@ import com.safecore.persistence.repository.UserRepository;
 import com.safecore.security.PasswordHasher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
@@ -72,7 +74,19 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         stored.setUsed(true);
         tokenRepository.save(stored);
 
-        eventPublisher.publish(new PasswordResetCompletedEvent(email, LocalDateTime.now()));
+        // Pubblica l'evento solo dopo il commit della transazione per evitare inconsistenze
+        PasswordResetCompletedEvent event = new PasswordResetCompletedEvent(email, LocalDateTime.now());
+        if (TransactionSynchronizationManager.isActualTransactionActive()) {
+            TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+                @Override
+                public void afterCommit() {
+                    eventPublisher.publish(event);
+                }
+            });
+        } else {
+            // Se non c'è transazione attiva, pubblica immediatamente
+            eventPublisher.publish(event);
+        }
     }
 
     private String generateToken() {

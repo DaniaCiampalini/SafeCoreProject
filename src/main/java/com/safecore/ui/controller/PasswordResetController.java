@@ -96,6 +96,10 @@ public class PasswordResetController implements PasswordResetObserver {
         try {
             // Se il token è valido, la password viene aggiornata
             resetService.resetPassword(email, token, newPassword);
+            // Feedback immediato: il redirect arriverà quando l'operazione sarà confermata a DB
+            showInfo("Password resettata correttamente. Verrai reindirizzato al login a breve.");
+            // Evita richieste duplicate finché non arriva la conferma definitiva dall'evento
+            disableResetForm();
         } catch (InvalidTokenException ex) {
             showError("Token non valido o scaduto. Richiedi un nuovo token e riprova.");
         } catch (UserNotFoundException ex) {

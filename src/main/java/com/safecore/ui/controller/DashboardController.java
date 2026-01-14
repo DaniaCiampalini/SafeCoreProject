@@ -77,7 +77,6 @@ public class DashboardController implements VaultObserver {
     private final SecurityAuditService auditService;
     private final SafeSendService safeSendService;
     private final EmailAliasService emailAliasService;
-    private final AutoFillService autoFillService;
     
     // Lista "viva" che tiene i dati della tabella e si aggiorna da sola
     private ObservableList<PasswordEntryEntity> masterData = FXCollections.observableArrayList();
@@ -88,8 +87,7 @@ public class DashboardController implements VaultObserver {
                                BackupService backupService,
                                SecurityAuditService auditService,
                                SafeSendService safeSendService,
-                               EmailAliasService emailAliasService,
-                               AutoFillService autoFillService) {
+                               EmailAliasService emailAliasService) {
         this.passwordGenerator = passwordGenerator;
         this.vaultService = vaultService;
         this.applicationContext = applicationContext;
@@ -97,7 +95,6 @@ public class DashboardController implements VaultObserver {
         this.auditService = auditService;
         this.safeSendService = safeSendService;
         this.emailAliasService = emailAliasService;
-        this.autoFillService = autoFillService;
     }
 
     @FXML
@@ -158,15 +155,12 @@ public class DashboardController implements VaultObserver {
     private void setupActionsColumn() {
         actionsColumn.setCellFactory(param -> new TableCell<>() {
             private final Button showBtn = new Button("👁");
-            private final Button autoFillBtn = new Button("⚡");
             private final Button copyBtn = new Button("Copia");
             private final Button deleteBtn = new Button("Elimina");
-            private final HBox container = new HBox(8, showBtn, autoFillBtn, copyBtn, deleteBtn);
+            private final HBox container = new HBox(8, showBtn, copyBtn, deleteBtn);
 
             {
                 showBtn.setStyle("-fx-cursor: hand; -fx-background-color: transparent; -fx-font-size: 16px;");
-                autoFillBtn.setTooltip(new Tooltip("Auto-Digitazione (2s per cambiare finestra)"));
-                autoFillBtn.setStyle("-fx-cursor: hand; -fx-background-color: #fef3c7; -fx-text-fill: #d97706;");
                 copyBtn.setStyle("-fx-cursor: hand; -fx-background-color: #f3f4f6;");
                 deleteBtn.setStyle("-fx-cursor: hand; -fx-background-color: #fee2e2; -fx-text-fill: #ef4444;");
 
@@ -174,15 +168,6 @@ public class DashboardController implements VaultObserver {
                     PasswordEntryEntity entry = getTableRow().getItem();
                     if (entry != null) {
                         showPasswordDetails(entry);
-                    }
-                });
-
-                autoFillBtn.setOnAction(e -> {
-                    PasswordEntryEntity entry = getTableRow().getItem();
-                    if (entry != null) {
-                        showToast("Passa al sito... digitazione tra 2 secondi!");
-                        String pass = vaultService.decryptPassword(entry.getEncryptedPassword());
-                        new Thread(() -> autoFillService.typeCredentials(entry.getUsername(), pass)).start();
                     }
                 });
 
@@ -274,6 +259,7 @@ public class DashboardController implements VaultObserver {
         safeSendIdField.clear();
         safeSendResultArea.clear();
         oneTimeCheckBox.setSelected(true);
+        oneTimeCheckBox.setDisable(true); // i link SafeSend sono sempre usa-e-getta
         overlay.setVisible(true);
         safeSendOverlayCard.setVisible(true);
     }
@@ -283,7 +269,7 @@ public class DashboardController implements VaultObserver {
         String content = safeSendTextArea.getText();
         if (content == null || content.isEmpty()) return;
         
-        String link = safeSendService.createSafeLink(content, 24, oneTimeCheckBox.isSelected());
+        String link = safeSendService.createSafeLink(content, 24);
         copyToClipboard(link);
         showToast("Link SafeSend copiato negli appunti!");
         safeSendTextArea.clear();
@@ -295,10 +281,19 @@ public class DashboardController implements VaultObserver {
         if (input == null || input.isEmpty()) return;
 
         try {
-            // Estrai l'UUID se è un URL completo o usa l'ID così com'è
-            String idStr = input.contains("/") ? input.substring(input.lastIndexOf("/") + 1) : input;
-            UUID id = UUID.fromString(idStr);
-            String decrypted = safeSendService.accessSafeLink(id);
+            String raw = input.trim();
+
+            // Supporta sia ID nudo che URL completo nel formato .../send/{id}?t={token}
+            String afterSlash = raw.contains("/") ? raw.substring(raw.lastIndexOf("/") + 1) : raw;
+            String[] parts = afterSlash.split("\\?t=");
+            if (parts.length != 2) {
+                throw new IllegalArgumentException("Formato link non valido. Atteso .../send/{id}?t={token}");
+            }
+
+            UUID id = UUID.fromString(parts[0]);
+            String token = parts[1];
+
+            String decrypted = safeSendService.accessSafeLink(id, token);
             safeSendResultArea.setText(decrypted);
             showToast("Messaggio decifrato!");
         } catch (Exception e) {

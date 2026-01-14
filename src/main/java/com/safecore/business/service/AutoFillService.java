@@ -4,6 +4,13 @@ import org.springframework.stereotype.Service;
 import java.awt.*;
 import java.awt.event.KeyEvent;
 
+/**
+ * Servizio legacy di auto-compilazione desktop basato su Robot.
+ * 
+ * Non viene più utilizzato nell'applicazione principale per evitare
+ * integrazioni a livello di OS e comportamenti non deterministici.
+ */
+@Deprecated
 @Service
 public class AutoFillService {
 
