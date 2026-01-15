@@ -1,7 +1,6 @@
 package com.safecore.persistence.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -10,22 +9,24 @@ import java.util.UUID;
 public class SafeSendEntry {
 
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy = GenerationType.UUID) // Specifica esplicitamente UUID
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    @Column(nullable = false, columnDefinition = "VARBINARY(2048)")
+    // Usiamo @Lob per supportare segreti di qualsiasi dimensione
+    @Lob
+    @Column(nullable = false, columnDefinition = "BLOB")
     private byte[] encryptedContent;
 
-    // Hash del token pubblico usato nel link (il token in chiaro non viene mai salvato)
-    @Column
+    @Column(nullable = false)
     private String tokenHash;
 
     @Column(nullable = false)
     private LocalDateTime expiresAt;
 
+    // Rinominato per uniformità con il Service e standard Java Bean
     @Column(nullable = false)
-    private boolean isOneTime;
+    private boolean oneTime = true;
 
     @Column(nullable = false)
     private int accessCount = 0;
@@ -34,62 +35,28 @@ public class SafeSendEntry {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity creator;
 
-    public SafeSendEntry() {
-    }
+    public SafeSendEntry() {}
 
-    public UUID getId() {
-        return id;
-    }
+    // GETTER E SETTER
+    public UUID getId() { return id; }
+    public void setId(UUID id) { this.id = id; }
 
-    public void setId(UUID id) {
-        this.id = id;
-    }
+    public byte[] getEncryptedContent() { return encryptedContent; }
+    public void setEncryptedContent(byte[] encryptedContent) { this.encryptedContent = encryptedContent; }
 
-    public byte[] getEncryptedContent() {
-        return encryptedContent;
-    }
+    public String getTokenHash() { return tokenHash; }
+    public void setTokenHash(String tokenHash) { this.tokenHash = tokenHash; }
 
-    public void setEncryptedContent(byte[] encryptedContent) {
-        this.encryptedContent = encryptedContent;
-    }
+    public LocalDateTime getExpiresAt() { return expiresAt; }
+    public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
 
-    public String getTokenHash() {
-        return tokenHash;
-    }
+    // Corretti i nomi dei metodi booleani per il Service
+    public boolean isOneTime() { return oneTime; }
+    public void setOneTime(boolean oneTime) { this.oneTime = oneTime; }
 
-    public void setTokenHash(String tokenHash) {
-        this.tokenHash = tokenHash;
-    }
+    public int getAccessCount() { return accessCount; }
+    public void setAccessCount(int accessCount) { this.accessCount = accessCount; }
 
-    public LocalDateTime getExpiresAt() {
-        return expiresAt;
-    }
-
-    public void setExpiresAt(LocalDateTime expiresAt) {
-        this.expiresAt = expiresAt;
-    }
-
-    public boolean isOneTime() {
-        return isOneTime;
-    }
-
-    public void setOneTime(boolean oneTime) {
-        isOneTime = oneTime;
-    }
-
-    public int getAccessCount() {
-        return accessCount;
-    }
-
-    public void setAccessCount(int accessCount) {
-        this.accessCount = accessCount;
-    }
-
-    public UserEntity getCreator() {
-        return creator;
-    }
-
-    public void setCreator(UserEntity creator) {
-        this.creator = creator;
-    }
+    public UserEntity getCreator() { return creator; }
+    public void setCreator(UserEntity creator) { this.creator = creator; }
 }
