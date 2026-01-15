@@ -1,0 +1,61 @@
+@startuml SafeCore_Login_Sequence
+!theme blueprint
+
+actor User
+participant LoginController
+participant UserService
+participant PasswordHasher
+participant UserRepository
+database H2Database
+participant SessionContext
+participant SceneNavigator
+
+User -> LoginController: handleLogin()
+activate LoginController
+
+LoginController -> LoginController: isValidEmail(email)
+alt Email non valida
+    LoginController -> User: showError("Formato email non valido")
+else Email valida
+    LoginController -> UserService: login(email, password)
+    activate UserService
+
+    UserService -> UserRepository: findByEmail(email)
+    activate UserRepository
+    UserRepository -> H2Database: SELECT * FROM users WHERE email = ?
+    H2Database --> UserRepository: User data
+    UserRepository --> UserService: Optional<User>
+    deactivate UserRepository
+
+    alt User non trovato
+        UserService --> LoginController: Optional.empty()
+        LoginController -> User: showError("Credenziali non valide")
+    else User trovato
+        UserService -> PasswordHasher: verify(password, user.passwordHash)
+        activate PasswordHasher
+        PasswordHasher --> UserService: boolean
+        deactivate PasswordHasher
+
+        alt Password corretta
+            UserService --> LoginController: Optional<User>
+            LoginController -> SessionContext: login(email)
+            activate SessionContext
+            SessionContext --> LoginController: void
+            deactivate SessionContext
+
+            LoginController -> SceneNavigator: switchTo("/dashboard.fxml")
+            activate SceneNavigator
+            SceneNavigator --> User: Mostra Dashboard
+            deactivate SceneNavigator
+        else Password errata
+            UserService --> LoginController: Optional.empty()
+            LoginController -> User: showError("Credenziali non valide")
+        end
+    end
+
+    deactivate UserService
+end
+
+deactivate LoginController
+
+@enduml

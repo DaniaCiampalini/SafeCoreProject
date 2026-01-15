@@ -1,0 +1,152 @@
+@startuml SafeCore_Class_Diagram
+!theme blueprint
+
+package "UI Layer" {
+    class LoginController {
+        - userService: UserService
+        - emailField: TextField
+        - passwordField: PasswordField
+        + handleLogin(): void
+        + togglePasswordVisibility(): void
+        - isValidEmail(email: String): boolean
+    }
+
+    class DashboardController {
+        - vaultService: VaultService
+        - auditService: AuditService
+        - entries: ObservableList<VaultEntry>
+        + handleAddEntry(): void
+        + handleEditEntry(): void
+        + handleDeleteEntry(): void
+        + refreshVault(): void
+    }
+
+    class RegisterController {
+        - userService: UserService
+        + handleRegister(): void
+        - validatePassword(password: String): boolean
+    }
+}
+
+package "Business Layer" {
+    interface UserService {
+        + register(email: String, password: String): User
+        + login(email: String, password: String): Optional<User>
+    }
+
+    class UserServiceImpl {
+        - userRepository: UserRepository
+        - passwordHasher: PasswordHasher
+        + register(email: String, password: String): User
+        + login(email: String, password: String): Optional<User>
+    }
+
+    interface VaultService {
+        + save(entry: VaultEntry): void
+        + findAllByUser(userId: Long): List<VaultEntry>
+        + delete(entryId: Long): void
+    }
+
+    class VaultServiceImpl {
+        - vaultRepository: VaultRepository
+        - encryptionStrategy: EncryptionStrategy
+        + save(entry: VaultEntry): void
+        + findAllByUser(userId: Long): List<VaultEntry>
+    }
+
+    class AuditService {
+        - passwordStrengthEvaluator: PasswordStrengthEvaluator
+        + analyzeVault(userId: Long): AuditResult
+        + checkWeakPasswords(): List<VaultEntry>
+    }
+
+    class SafeSendService {
+        - linkRepository: SafeSendLinkRepository
+        - encryptionStrategy: EncryptionStrategy
+        + generateLink(data: String, expiresIn: int): String
+        + retrieveData(token: String): Optional<String>
+    }
+}
+
+package "Security Layer" {
+    interface EncryptionStrategy {
+        + encrypt(data: String): String
+        + decrypt(data: String): String
+    }
+
+    class AESEncryptionStrategy {
+        - secretKey: SecretKey
+        - ivParameterSpec: IvParameterSpec
+        + encrypt(data: String): String
+        + decrypt(data: String): String
+    }
+
+    class PasswordHasher {
+        + hash(password: String): String
+        + verify(password: String, hash: String): boolean
+    }
+
+    class PasswordStrengthEvaluator {
+        + evaluate(password: String): Strength
+        - hasUppercase(password: String): boolean
+        - hasLowercase(password: String): boolean
+        - hasDigit(password: String): boolean
+    }
+
+    enum Strength {
+        WEAK
+        MEDIUM
+        STRONG
+    }
+}
+
+package "Persistence Layer" {
+    interface UserRepository {
+        + findByEmail(email: String): Optional<User>
+        + existsByEmail(email: String): boolean
+    }
+
+    interface VaultRepository {
+        + findAllByUserId(userId: Long): List<VaultEntry>
+        + deleteById(id: Long): void
+    }
+
+    class User {
+        - id: Long
+        - email: String
+        - passwordHash: String
+        - mfaEnabled: boolean
+    }
+
+    class VaultEntry {
+        - id: Long
+        - userId: Long
+        - serviceName: String
+        - username: String
+        - encryptedPassword: String
+        - iv: String
+    }
+}
+
+' Relationships
+UserService <|.. UserServiceImpl
+VaultService <|.. VaultServiceImpl
+EncryptionStrategy <|.. AESEncryptionStrategy
+PasswordStrengthEvaluator --> Strength
+
+LoginController --> UserService
+DashboardController --> VaultService
+DashboardController --> AuditService
+RegisterController --> UserService
+
+UserServiceImpl --> UserRepository
+UserServiceImpl --> PasswordHasher
+VaultServiceImpl --> VaultRepository
+VaultServiceImpl --> EncryptionStrategy
+AuditService --> PasswordStrengthEvaluator
+SafeSendService --> EncryptionStrategy
+
+UserRepository --> User
+VaultRepository --> VaultEntry
+
+@enduml

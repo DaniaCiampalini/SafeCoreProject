@@ -1,0 +1,53 @@
+@startuml SafeCore_SaveEntry_Sequence
+!theme blueprint
+
+actor User
+participant DashboardController
+participant VaultService
+participant EncryptionFactory
+participant AESEncryptionStrategy
+participant VaultRepository
+database H2Database
+
+User -> DashboardController: handleConfirmSave()
+activate DashboardController
+
+DashboardController -> DashboardController: validateInput()
+alt Input non valido
+    DashboardController -> User: showError("Campi obbligatori mancanti")
+else Input valido
+    DashboardController -> VaultService: save(vaultEntry)
+    activate VaultService
+
+    VaultService -> EncryptionFactory: getStrategy()
+    activate EncryptionFactory
+    EncryptionFactory --> VaultService: AESEncryptionStrategy
+    deactivate EncryptionFactory
+
+    VaultService -> AESEncryptionStrategy: encrypt(password)
+    activate AESEncryptionStrategy
+    AESEncryptionStrategy -> AESEncryptionStrategy: generateIV()
+    AESEncryptionStrategy -> AESEncryptionStrategy: Cipher.doFinal()
+    AESEncryptionStrategy --> VaultService: encryptedPassword + IV
+    deactivate AESEncryptionStrategy
+
+    VaultService -> VaultEntry: setEncryptedPassword()
+    VaultService -> VaultEntry: setIv()
+
+    VaultService -> VaultRepository: save(vaultEntry)
+    activate VaultRepository
+    VaultRepository -> H2Database: INSERT INTO vault_entries (...)
+    H2Database --> VaultRepository: id generato
+    VaultRepository --> VaultService: VaultEntry salvata
+    deactivate VaultRepository
+
+    VaultService --> DashboardController: void
+    deactivate VaultService
+
+    DashboardController -> DashboardController: refreshVault()
+    DashboardController -> User: showSuccess("Entry salvata con successo")
+end
+
+deactivate DashboardController
+
+@enduml
