@@ -28,9 +28,7 @@ import org.springframework.stereotype.Component;
 import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Component
 public class DashboardController implements VaultObserver {
@@ -352,7 +350,7 @@ public class DashboardController implements VaultObserver {
     }
 
     private void updateHealthScore() {
-        AuditResult result = auditService.runAudit(masterData);
+        AuditResult result = auditService.runAudit();
 
         healthScoreLabel.setText(result.score() + "/100");
 
@@ -366,14 +364,14 @@ public class DashboardController implements VaultObserver {
 
         StringBuilder detail = new StringBuilder();
 
-        if (result.reusedPasswords() > 0)
-            detail.append("⚠ ").append(result.reusedPasswords()).append(" password riutilizzate\n");
+        if (result.reusedCount() > 0)
+            detail.append("⚠ ").append(result.reusedCount()).append(" password riutilizzate\n");
 
-        if (result.weakPasswords() > 0)
-            detail.append("⚠ ").append(result.weakPasswords()).append(" password deboli\n");
+        if (result.weakCount() > 0)
+            detail.append("⚠ ").append(result.weakCount()).append(" password deboli\n");
 
-        if (result.oldPasswords() > 0)
-            detail.append("⚠ ").append(result.oldPasswords()).append(" password vecchie");
+        if (result.oldCount() > 0)
+            detail.append("⚠ ").append(result.oldCount()).append(" password vecchie");
 
         auditDetailLabel.setText(
                 detail.isEmpty() ? "Il tuo vault è sicuro." : detail.toString().trim()
@@ -382,7 +380,7 @@ public class DashboardController implements VaultObserver {
 
     @FXML
     private void handleFullAudit() {
-        AuditResult result = auditService.runAudit(masterData);
+        AuditResult result = auditService.runAudit();
 
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Report Sicurezza");
@@ -395,9 +393,9 @@ public class DashboardController implements VaultObserver {
                         "- Password deboli: %d\n" +
                         "- Password più vecchie di 1 anno: %d",
                 result.score(),
-                result.reusedPasswords(),
-                result.weakPasswords(),
-                result.oldPasswords()
+                result.reusedCount(),
+                result.weakCount(),
+                result.oldCount()
         );
 
         alert.setContentText(content);

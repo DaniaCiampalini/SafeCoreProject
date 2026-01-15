@@ -6,9 +6,9 @@ package com.safecore.business.domain;
  */
 public record AuditResult(
         int score,
-        int weakPasswords,
-        int oldPasswords,
-        int reusedPasswords,
+        int weakCount,
+        int oldCount,
+        int reusedCount,
         int totalPasswords
 ) {
 }
