@@ -1,5 +1,6 @@
 package com.safecore.business.service;
 
+import com.safecore.business.domain.AuditResult;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.security.PasswordStrengthEvaluator;
 import org.springframework.stereotype.Service;
@@ -10,9 +11,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Questo servizio fa le "pulci" al tuo vault.
- * Analizza tutte le password salvate e ti dice quanto sei messo bene (o male) a sicurezza.
- * Controlla se hai password deboli, se le stai riusando su più siti o se sono troppo vecchie.
+ * Analizza lo stato di sicurezza del vault dell’utente corrente.
+ * Valuta password deboli, riutilizzate e obsolete e restituisce un punteggio complessivo.
  */
 @Service
 public class SecurityAuditService {
@@ -20,59 +20,62 @@ public class SecurityAuditService {
     private final VaultService vaultService;
     private final PasswordStrengthEvaluator strengthEvaluator;
 
-    public SecurityAuditService(VaultService vaultService, PasswordStrengthEvaluator strengthEvaluator) {
+    public SecurityAuditService(VaultService vaultService,
+                                PasswordStrengthEvaluator strengthEvaluator) {
         this.vaultService = vaultService;
         this.strengthEvaluator = strengthEvaluator;
     }
 
     /**
-     * Esegue un controllo completo e restituisce un punteggio da 0 a 100.
+     * Esegue un audit completo sul vault dell’utente loggato.
      */
-    public AuditResult runAudit(List<PasswordEntryEntity> entries) {
-        int totalScore = 100; // Partiamo dal top
+    public AuditResult runAudit() {
+        List<PasswordEntryEntity> entries = vaultService.getEntriesForCurrentUser();
+
         Map<String, Integer> passwordUsage = new HashMap<>();
         int weakPasswords = 0;
         int oldPasswords = 0;
         int reusedPasswords = 0;
 
         for (PasswordEntryEntity entry : entries) {
-            // Decifriamo momentaneamente la password per analizzarla
             String decrypted = vaultService.decryptPassword(entry.getEncryptedPassword());
 
-            // 1. È debole? (Mancano numeri, simboli, ecc.)
-            if (strengthEvaluator.evaluate(decrypted) == PasswordStrengthEvaluator.Strength.WEAK) {
+            if (strengthEvaluator.evaluate(decrypted)
+                    == PasswordStrengthEvaluator.Strength.WEAK) {
                 weakPasswords++;
             }
 
-            // 2. È vecchia? (Creata più di un anno fa)
-            if (entry.getCreatedAt().isBefore(LocalDateTime.now().minusYears(1))) {
+            if (entry.getCreatedAt()
+                    .isBefore(LocalDateTime.now().minusYears(1))) {
                 oldPasswords++;
             }
 
-            // 3. Contiamo quante volte appare ogni password per scovare i duplicati
-            passwordUsage.put(decrypted, passwordUsage.getOrDefault(decrypted, 0) + 1);
+            passwordUsage.merge(decrypted, 1, Integer::sum);
         }
 
-        // Calcoliamo quanti doppioni ci sono
         for (int count : passwordUsage.values()) {
-            if (count > 1) {
-                reusedPasswords += count;
-            }
+            if (count > 1) reusedPasswords += count;
         }
 
-        // Togliamo punti per ogni falla trovata
-        totalScore -= (weakPasswords * 10);
-        totalScore -= (oldPasswords * 5);
-        totalScore -= (reusedPasswords * 15);
+        int score = calculateScore(weakPasswords, oldPasswords, reusedPasswords);
 
-        if (totalScore < 0) totalScore = 0;
-
-        return new AuditResult(totalScore, weakPasswords, oldPasswords, reusedPasswords);
+        return new AuditResult(
+                score,
+                weakPasswords,
+                oldPasswords,
+                reusedPasswords,
+                entries.size()
+        );
     }
 
     /**
-     * Un semplice contenitore per i risultati dell'audit.
+     * Calcola il punteggio complessivo di sicurezza (0–100).
      */
-    public static record AuditResult(int score, int weakCount, int oldCount, int reusedCount) {
+    private int calculateScore(int weak, int old, int reused) {
+        int score = 100;
+        score -= weak * 10;
+        score -= old * 5;
+        score -= reused * 15;
+        return Math.max(score, 0);
     }
 }

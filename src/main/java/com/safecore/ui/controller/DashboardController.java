@@ -5,6 +5,7 @@ import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.security.PasswordGenerator;
 import com.safecore.ui.navigation.SceneNavigator;
 import com.safecore.ui.session.SessionContext;
+import com.safecore.business.domain.AuditResult;
 import javafx.animation.FadeTransition;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -41,7 +42,6 @@ public class DashboardController implements VaultObserver {
     private final BackupService backupService;
     private final SecurityAuditService auditService;
     private final SafeSendService safeSendService;
-    private final EmailAliasService emailAliasService;
     // Tutte queste sono le "collegamenti" con il file FXML (la grafica)
     // I campi FXML vengono iniettati automaticamente dal FXMLLoader
     @SuppressWarnings("unused")
@@ -98,15 +98,13 @@ public class DashboardController implements VaultObserver {
                                ApplicationContext applicationContext,
                                BackupService backupService,
                                SecurityAuditService auditService,
-                               SafeSendService safeSendService,
-                               EmailAliasService emailAliasService) {
+                               SafeSendService safeSendService) {
         this.passwordGenerator = passwordGenerator;
         this.vaultService = vaultService;
         this.applicationContext = applicationContext;
         this.backupService = backupService;
         this.auditService = auditService;
         this.safeSendService = safeSendService;
-        this.emailAliasService = emailAliasService;
     }
 
     @FXML
@@ -314,32 +312,6 @@ public class DashboardController implements VaultObserver {
         }
     }
 
-    @FXML
-    private void handleGenerateAlias() {
-        refreshAliasList();
-        aliasServiceField.clear();
-        overlay.setVisible(true);
-        aliasOverlayCard.setVisible(true);
-    }
-
-    @FXML
-    private void handleConfirmGenerateAlias() {
-        String service = aliasServiceField.getText();
-        if (service == null || service.trim().isEmpty()) {
-            service = "General";
-        }
-        emailAliasService.generateAlias(service);
-        refreshAliasList();
-        aliasServiceField.clear();
-        showToast("Nuovo alias generato!");
-    }
-
-    private void refreshAliasList() {
-        List<String> aliases = emailAliasService.getAliasesForCurrentUser().stream()
-                .map(a -> a.getServiceName() + ": " + a.getAliasEmail())
-                .collect(Collectors.toList());
-        aliasListView.setItems(FXCollections.observableArrayList(aliases));
-    }
 
     /**
      * Conferma il salvataggio e invoca il VaultService
@@ -380,7 +352,8 @@ public class DashboardController implements VaultObserver {
     }
 
     private void updateHealthScore() {
-        SecurityAuditService.AuditResult result = auditService.runAudit(masterData);
+        AuditResult result = auditService.runAudit(masterData);
+
         healthScoreLabel.setText(result.score() + "/100");
 
         if (result.score() >= 80) {
@@ -392,21 +365,25 @@ public class DashboardController implements VaultObserver {
         }
 
         StringBuilder detail = new StringBuilder();
-        if (result.reusedCount() > 0)
-            detail.append("⚠ ").append(result.reusedCount()).append(" password riutilizzate\n");
-        if (result.weakCount() > 0) detail.append("⚠ ").append(result.weakCount()).append(" password deboli\n");
-        if (result.oldCount() > 0) detail.append("⚠ ").append(result.oldCount()).append(" password vecchie");
 
-        if (detail.length() == 0) {
-            auditDetailLabel.setText("Il tuo vault è sicuro.");
-        } else {
-            auditDetailLabel.setText(detail.toString().trim());
-        }
+        if (result.reusedPasswords() > 0)
+            detail.append("⚠ ").append(result.reusedPasswords()).append(" password riutilizzate\n");
+
+        if (result.weakPasswords() > 0)
+            detail.append("⚠ ").append(result.weakPasswords()).append(" password deboli\n");
+
+        if (result.oldPasswords() > 0)
+            detail.append("⚠ ").append(result.oldPasswords()).append(" password vecchie");
+
+        auditDetailLabel.setText(
+                detail.isEmpty() ? "Il tuo vault è sicuro." : detail.toString().trim()
+        );
     }
 
     @FXML
     private void handleFullAudit() {
-        SecurityAuditService.AuditResult result = auditService.runAudit(masterData);
+        AuditResult result = auditService.runAudit(masterData);
+
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Report Sicurezza");
         alert.setHeaderText("Analisi Approfondita del Vault");
@@ -417,12 +394,18 @@ public class DashboardController implements VaultObserver {
                         "- Password riutilizzate: %d\n" +
                         "- Password deboli: %d\n" +
                         "- Password più vecchie di 1 anno: %d",
-                result.score(), result.reusedCount(), result.weakCount(), result.oldCount()
+                result.score(),
+                result.reusedPasswords(),
+                result.weakPasswords(),
+                result.oldPasswords()
         );
 
         alert.setContentText(content);
         alert.showAndWait();
     }
+
+
+
 
     private void copyToClipboard(String text) {
         ClipboardContent content = new ClipboardContent();
