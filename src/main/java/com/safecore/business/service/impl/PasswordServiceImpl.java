@@ -1,6 +1,7 @@
-package com.safecore.business.service;
+package com.safecore.business.service.impl;
 
 import com.safecore.business.domain.PasswordEntry;
+import com.safecore.business.service.PasswordService;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.persistence.repository.PasswordEntryRepository;
 import com.safecore.security.EncryptionStrategy;

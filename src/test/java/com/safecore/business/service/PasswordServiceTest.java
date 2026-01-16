@@ -1,5 +1,6 @@
 package com.safecore.business.service;
 
+import com.safecore.business.service.impl.PasswordServiceImpl;
 import com.safecore.persistence.repository.PasswordEntryRepository;
 import com.safecore.security.EncryptionStrategy;
 import org.junit.jupiter.api.BeforeEach;

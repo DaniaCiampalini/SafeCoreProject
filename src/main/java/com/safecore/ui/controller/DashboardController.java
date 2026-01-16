@@ -1,6 +1,7 @@
 package com.safecore.ui.controller;
 
 import com.safecore.business.service.*;
+import com.safecore.business.service.SafeSendService;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.security.PasswordGenerator;
 import com.safecore.ui.navigation.SceneNavigator;
@@ -12,6 +13,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
@@ -54,8 +56,6 @@ public class DashboardController implements VaultObserver {
 
     @FXML private TextField newServiceField, newUsernameField, generatedPasswordField, safeSendIdField;
     @FXML private PasswordField newPasswordField;
-    @FXML private TextArea safeSendTextArea, safeSendResultArea;
-    @FXML private CheckBox oneTimeCheckBox; // Reintegrato
     @FXML private ComboBox<Integer> expiryComboBox;
 
     @FXML private Label healthScoreLabel, auditDetailLabel;
@@ -166,60 +166,6 @@ public class DashboardController implements VaultObserver {
         showToast("Salvato con successo!");
     }
 
-    // --- LOGICA SAFESEND ---
-
-    @FXML
-    private void handleNewSafeSend() {
-        handleCloseOverlay(); // Chiude altri eventuali overlay
-        safeSendTextArea.clear();
-        safeSendIdField.clear();
-        safeSendResultArea.clear();
-        oneTimeCheckBox.setSelected(true);
-        oneTimeCheckBox.setDisable(true); // Sempre monouso come da tua logica
-
-        overlay.setVisible(true);
-        safeSendOverlayCard.setVisible(true);
-    }
-
-    @FXML
-    private void handleConfirmSafeSend() {
-        String content = safeSendTextArea.getText();
-        if (content == null || content.isBlank()) return;
-
-        try {
-            // Generazione link (scadenza di default 24h)
-            String link = safeSendService.createSafeLink(content, 24);
-            copyToClipboard(link);
-            showToast("Link SafeSend copiato negli appunti!");
-            safeSendTextArea.setText("LINK GENERATO:\n" + link);
-        } catch (Exception e) {
-            showToast("Errore: " + e.getMessage());
-        }
-    }
-
-    @FXML
-    private void handleAccessSafeSend() {
-        String input = safeSendIdField.getText();
-        if (input == null || input.isBlank()) return;
-
-        try {
-            String raw = input.trim();
-            String afterSlash = raw.contains("/") ? raw.substring(raw.lastIndexOf("/") + 1) : raw;
-            String[] parts = afterSlash.split("\\?t=");
-
-            if (parts.length != 2) throw new IllegalArgumentException("Formato link non valido.");
-
-            UUID id = UUID.fromString(parts[0]);
-            String token = parts[1];
-
-            String decrypted = safeSendService.accessSafeLink(id, token);
-            safeSendResultArea.setText(decrypted);
-            showToast("Messaggio decifrato!");
-        } catch (Exception e) {
-            safeSendResultArea.setText("ERRORE: " + e.getMessage());
-            showToast("Impossibile accedere.");
-        }
-    }
 
     // --- SECURITY AUDIT ---
 
@@ -366,5 +312,35 @@ public class DashboardController implements VaultObserver {
         copyToClipboard(generatedPasswordField.getText());
         handleCloseOverlay();
         showToast("Password copiata!");
+    }
+
+
+    // --- SAFESEND HANDLER ---
+
+    @FXML
+    private void handleNewSafeSend() {
+        try {
+            // Puliamo l'overlay esistente
+            safeSendOverlayCard.getChildren().clear();
+
+            // Carichiamo dinamicamente la vista separata
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/safecore/ui/view/safesend-view.fxml"));
+
+            // FONDAMENTALE: Diciamo a JavaFX di usare il Bean di Spring come controller
+            loader.setControllerFactory(applicationContext::getBean);
+
+            VBox safeSendView = loader.load();
+
+            // Aggiungiamo la vista caricata dentro l'overlay della dashboard
+            safeSendOverlayCard.getChildren().add(safeSendView);
+
+            handleCloseOverlay(); // Chiude altri prima
+            overlay.setVisible(true);
+            safeSendOverlayCard.setVisible(true);
+
+        } catch (Exception e) {
+            showToast("Errore caricamento SafeSend: " + e.getMessage());
+            e.printStackTrace();
+        }
     }
 }

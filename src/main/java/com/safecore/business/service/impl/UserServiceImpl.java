@@ -1,9 +1,10 @@
-package com.safecore.business.service;
+package com.safecore.business.service.impl;
 
 import com.safecore.business.domain.User;
 import com.safecore.business.domain.UserBuilder;
 import com.safecore.business.exception.UserAlreadyExistsException;
 import com.safecore.business.exception.WeakPasswordException;
+import com.safecore.business.service.UserService;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.UserRepository;
 import com.safecore.security.PasswordHasher;

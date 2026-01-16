@@ -1,6 +1,7 @@
 package com.safecore.business.service;
 
 import com.safecore.business.domain.User;
+import com.safecore.business.service.impl.UserServiceImpl;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.UserRepository;
 import com.safecore.security.PasswordHasher;
