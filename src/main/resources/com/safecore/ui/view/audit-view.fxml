@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.shape.Circle?>
+
+<VBox spacing="20" xmlns:fx="http://javafx.com/fxml"
+      fx:controller="com.safecore.ui.controller.AuditController"
+      style="-fx-background-color: white; -fx-background-radius: 15; -fx-border-color: #e5e7eb; -fx-border-radius: 15;">
+
+    <padding><Insets top="25" right="25" bottom="25" left="25"/></padding>
+
+    <HBox alignment="CENTER_LEFT" spacing="15">
+        <StackPane>
+            <Circle radius="35" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="2"/>
+            <Label fx:id="scoreLabel" text="85" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #15803d;"/>
+        </StackPane>
+        <VBox>
+            <Label text="Punteggio Sicurezza" style="-fx-font-size: 18; -fx-font-weight: bold;"/>
+            <Label text="Analisi basata sulla robustezza e l'età delle password" style="-fx-text-fill: #6b7280;"/>
+        </VBox>
+    </HBox>
+
+    <Separator/>
+
+    <GridPane vgap="15" hgap="20">
+        <columnConstraints>
+            <ColumnConstraints hgrow="ALWAYS" minWidth="150"/>
+            <ColumnConstraints hgrow="NEVER" minWidth="50"/>
+        </columnConstraints>
+
+        <Label text="⚠ Password Deboli:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <Label fx:id="weakCountLabel" text="0" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="⚠ Password Riutilizzate:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <Label fx:id="reusedCountLabel" text="0" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="⚠ Password Obsolete (>1 anno):" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <Label fx:id="oldCountLabel" text="0" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <Region VBox.vgrow="ALWAYS"/>
+
+    <Button text="Chiudi Analisi" onAction="#handleClose" maxWidth="Infinity"
+            style="-fx-background-color: #374151; -fx-text-fill: white; -fx-cursor: hand; -fx-padding: 10;"/>
+</VBox>

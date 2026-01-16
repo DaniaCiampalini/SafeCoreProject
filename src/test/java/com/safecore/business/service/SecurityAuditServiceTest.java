@@ -1,6 +1,7 @@
 package com.safecore.business.service;
 
 import com.safecore.business.domain.AuditResult;
+import com.safecore.business.service.impl.SecurityAuditServiceImpl;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.security.PasswordStrengthEvaluator;
 import org.junit.jupiter.api.BeforeEach;
@@ -22,7 +23,8 @@ class SecurityAuditServiceTest {
     void setUp() {
         vaultService = mock(VaultService.class);
         evaluator = mock(PasswordStrengthEvaluator.class);
-        auditService = new SecurityAuditService(vaultService, evaluator);
+        // Inizializza l'implementazione concreta
+        auditService = new SecurityAuditServiceImpl(vaultService, evaluator);
     }
 
     @Test
