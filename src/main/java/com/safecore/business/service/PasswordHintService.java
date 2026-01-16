@@ -1,21 +1,21 @@
 package com.safecore.business.service;
 
+import com.safecore.business.hints.HintLevel;
 import com.safecore.business.hints.PasswordHint;
 import com.safecore.business.hints.rules.PasswordRule;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 /**
- * Questo servizio analizza la password mentre la scrivi e ti dà dei consigli (hint)
- * su come migliorarla. È basato su un sistema a regole estensibile.
+ * Servizio che analizza la robustezza delle password tramite un sistema a regole.
+ * Utilizza il pattern Strategy (tramite la lista di PasswordRule) per validare l'input.
  */
 @Service
 public class PasswordHintService {
 
-    // Spring è magico: qui inietta automaticamente TUTTE le classi che implementano PasswordRule.
-    // Se domani aggiungiamo una nuova regola, basterà creare la classe e Spring la metterà qui.
     private final List<PasswordRule> rules;
 
     public PasswordHintService(List<PasswordRule> rules) {
@@ -23,15 +23,38 @@ public class PasswordHintService {
     }
 
     /**
-     * Controlla la password passandola sotto tutte le regole configurate.
-     * Restituisce una lista di consigli (es: "Manca una maiuscola").
+     * Analizza la password e restituisce un riassunto della sua sicurezza.
+     * Se trova dei WARNING, restituisce il primo trovato.
+     * Altrimenti restituisce un feedback positivo (INFO).
+     */
+    public PasswordHint evaluatePassword(String password) {
+        List<PasswordHint> allHints = getHints(password);
+
+        // Cerchiamo se c'è almeno un problema grave (WARNING)
+        Optional<PasswordHint> worstHint = allHints.stream()
+                .filter(h -> h.getLevel() == HintLevel.WARNING)
+                .findFirst();
+
+        // Se c'è un WARNING, lo restituiamo al controller per bloccare/avvisare
+        if (worstHint.isPresent()) {
+            return worstHint.get();
+        }
+
+        // Se non ci sono problemi o solo INFO, diamo il via libera
+        return new PasswordHint("La password rispetta i criteri di sicurezza.", HintLevel.INFO);
+    }
+
+    /**
+     * Restituisce la lista completa di tutti i suggerimenti rilevati dalle regole.
      */
     public List<PasswordHint> getHints(String password) {
         List<PasswordHint> hints = new ArrayList<>();
-        if (password == null) return hints;
+        if (password == null || password.isEmpty()) {
+            hints.add(new PasswordHint("La password non può essere vuota.", HintLevel.WARNING));
+            return hints;
+        }
 
         for (PasswordRule rule : rules) {
-            // Se la regola trova un problema, aggiungiamo il consiglio alla lista
             rule.check(password).ifPresent(hints::add);
         }
         return hints;

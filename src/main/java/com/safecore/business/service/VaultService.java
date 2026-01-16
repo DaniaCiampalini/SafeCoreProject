@@ -46,7 +46,7 @@ public class VaultService {
 
     public void addObserver(VaultObserver observer) { observers.add(observer); }
     public void removeObserver(VaultObserver observer) { observers.remove(observer); }
-    private void notifyObservers() { observers.forEach(VaultObserver::onVaultChanged); }
+    public void notifyObservers() { observers.forEach(VaultObserver::onVaultChanged); }
 
     @Transactional
     public void addEntry(String service, String username, String plain, LocalDateTime expiry) {

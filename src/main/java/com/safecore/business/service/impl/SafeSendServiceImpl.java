@@ -1,6 +1,7 @@
 package com.safecore.business.service.impl;
 
 import com.safecore.business.service.SafeSendService;
+import com.safecore.business.service.VaultService;
 import com.safecore.persistence.entity.SafeSendEntryEntity;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.SafeSendRepository;
@@ -16,9 +17,10 @@ import java.util.Base64;
 import java.util.UUID;
 
 /**
- * Questo servizio permette di condividere segreti in modo "usa e getta".
- * Funziona un po' come i messaggi che si auto-distruggono: crei un link, lo mandi
- * a qualcuno e, dopo che è stato letto o dopo un certo tempo, sparisce per sempre.
+ * Implementazione del servizio SafeSend per la condivisione sicura e temporanea di segreti.
+ * Gestisce la cifratura del contenuto, la generazione di token monouso e l'autodistruzione.
+ * * @author Dania Ciampalini
+ * @version 1.0
  */
 @Service
 public class SafeSendServiceImpl implements SafeSendService {
@@ -27,19 +29,27 @@ public class SafeSendServiceImpl implements SafeSendService {
     private final UserRepository userRepository;
     private final EncryptionStrategy encryptionStrategy;
     private final PasswordHasher passwordHasher;
+    private final VaultService vaultService;
 
     public SafeSendServiceImpl(SafeSendRepository safeSendRepository,
                                UserRepository userRepository,
                                EncryptionStrategy encryptionStrategy,
-                               PasswordHasher passwordHasher) {
+                               PasswordHasher passwordHasher,
+                               VaultService vaultService) {
         this.safeSendRepository = safeSendRepository;
         this.userRepository = userRepository;
         this.encryptionStrategy = encryptionStrategy;
         this.passwordHasher = passwordHasher;
+        this.vaultService = vaultService;
     }
 
     /**
-     * Crea un nuovo segreto condivisibile.
+     * Crea un nuovo segreto condivisibile cifrato.
+     * Al termine dell'operazione, notifica gli osservatori per aggiornare la dashboard.
+     *
+     * @param content il testo segreto da condividere
+     * @param expirationHours ore di validità del link
+     * @return URL completo contenente l'ID e il token segreto
      */
     @Override
     @Transactional
@@ -48,28 +58,35 @@ public class SafeSendServiceImpl implements SafeSendService {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
-        // Cifriamo il contenuto: anche i link temporanei sono protetti da AES
+        // Cifratura del contenuto tramite la strategia iniettata (AES)
         byte[] encrypted = encryptionStrategy.encrypt(content);
 
-        // Token usa-e-getta non reversibile, separato dall'ID interno
+        // Generazione token segreto monouso (non salvato in chiaro nel DB)
         String token = generateToken();
         String tokenHash = passwordHasher.hash(token);
 
         SafeSendEntryEntity entry = new SafeSendEntryEntity();
         entry.setEncryptedContent(encrypted);
         entry.setExpiresAt(LocalDateTime.now().plusHours(expirationHours));
-        entry.setOneTime(true); // i link SafeSend sono sempre monouso
+        entry.setOneTime(true);
         entry.setTokenHash(tokenHash);
         entry.setUser(user);
 
         SafeSendEntryEntity saved = safeSendRepository.save(entry);
 
-        // Link realistico: ID pubblico + token segreto monouso
+        // Notifica il VaultService affinché la UI reagisca al cambiamento
+        vaultService.notifyObservers();
+
+        // Ritorna il link completo: il token "t" è l'unica chiave per l'accesso
         return "https://safecore.io/send/" + saved.getId() + "?t=" + token;
     }
 
     /**
-     * Tenta di leggere un segreto partendo da ID + token monouso.
+     * Tenta l'accesso a un segreto. Se il segreto viene letto, viene eliminato istantaneamente.
+     * * @param id identificatore univoco del segreto
+     * @param token il token di accesso monouso
+     * @return il contenuto decifrato
+     * @throws RuntimeException se il link è scaduto, usato o il token è errato
      */
     @Override
     @Transactional
@@ -77,26 +94,33 @@ public class SafeSendServiceImpl implements SafeSendService {
         SafeSendEntryEntity entry = safeSendRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Il link non esiste più o è stato già usato."));
 
-        // Controlliamo se è scaduto il tempo
+        // Controllo scadenza temporale
         if (entry.getExpiresAt().isBefore(LocalDateTime.now())) {
             safeSendRepository.delete(entry);
+            vaultService.notifyObservers();
             throw new RuntimeException("Questo link è scaduto.");
         }
 
-        // Verifica del token monouso
+        // Verifica crittografica del token tramite hash
         if (entry.getTokenHash() == null || !passwordHasher.verify(token, entry.getTokenHash())) {
             throw new RuntimeException("Token non valido o link manomesso.");
         }
 
-        // Se è tutto ok, decifriamo il messaggio
+        // Decifratura del contenuto
         String decrypted = encryptionStrategy.decrypt(entry.getEncryptedContent());
 
-        // Distruggiamo sempre il segreto dopo la lettura
+        // Pattern "Burn after reading": eliminazione immediata
         safeSendRepository.delete(entry);
+
+        // Notifica per aggiornare eventuali statistiche nella dashboard
+        vaultService.notifyObservers();
 
         return decrypted;
     }
 
+    /**
+     * Genera un token crittograficamente sicuro codificato in Base64 URL-safe.
+     */
     private String generateToken() {
         byte[] bytes = new byte[24];
         new SecureRandom().nextBytes(bytes);
