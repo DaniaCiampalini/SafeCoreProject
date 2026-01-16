@@ -103,8 +103,22 @@ public class VaultService {
         List<PasswordEntryEntity> entries = getEntriesForCurrentUser();
         if (entries.isEmpty()) throw new RuntimeException("Vault vuoto.");
 
-        // Il JSON ora non conterrà l'utente grazie a @JsonIgnore nell'Entity
-        String jsonContent = objectMapper.writeValueAsString(entries);
+        // Creiamo una lista di DTO o mappe che contengono la password in chiaro
+        // in modo che il pacchetto cifrato finale contenga dati leggibili dopo la decifratura
+        List<java.util.Map<String, Object>> exportList = new ArrayList<>();
+        for (PasswordEntryEntity e : entries) {
+            exportList.add(java.util.Map.of(
+                    "service", e.getServiceName(),
+                    "username", e.getUsername(),
+                    "plainPassword", decryptPassword(e.getEncryptedPassword()), // Decifriamo QUI
+                    "expiry", e.getExpiresAt() != null ? e.getExpiresAt().toString() : ""
+            ));
+        }
+
+        String jsonContent = objectMapper.writeValueAsString(exportList);
+
+        // Cifriamo l'intero BLOB JSON.
+        // Ora il file è un unico blocco cifrato che contiene i dati in chiaro.
         byte[] encryptedPackage = encryptionStrategy.encrypt(jsonContent);
         String finalBase64 = Base64.getEncoder().encodeToString(encryptedPackage);
 
@@ -117,12 +131,20 @@ public class VaultService {
         byte[] encrypted = Base64.getDecoder().decode(base64.trim());
         String json = encryptionStrategy.decrypt(encrypted);
 
-        List<PasswordEntryEntity> imported = objectMapper.readValue(json, new TypeReference<>() {});
+        // Usiamo una lista di mappe per leggere il formato creato sopra
+        List<java.util.Map<String, Object>> imported = objectMapper.readValue(json, new TypeReference<>() {});
 
-        for (PasswordEntryEntity entry : imported) {
-            // Decifra con vecchia chiave, ricifra con nuova tramite addEntry
-            String plain = decryptPassword(entry.getEncryptedPassword());
-            addEntry(entry.getServiceName(), entry.getUsername(), plain, entry.getExpiresAt());
+        for (java.util.Map<String, Object> data : imported) {
+            String service = (String) data.get("service");
+            String user = (String) data.get("username");
+            String plain = (String) data.get("plainPassword");
+            String expiryStr = (String) data.get("expiry");
+
+            LocalDateTime expiry = (expiryStr != null && !expiryStr.isEmpty())
+                    ? LocalDateTime.parse(expiryStr) : null;
+
+            // addEntry provvederà a cifrare con la chiave attuale del sistema
+            addEntry(service, user, plain, expiry);
         }
     }
 }

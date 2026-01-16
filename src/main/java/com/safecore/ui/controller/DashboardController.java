@@ -1,18 +1,20 @@
 package com.safecore.ui.controller;
 
+import com.safecore.business.domain.AuditResult;
 import com.safecore.business.service.*;
 import com.safecore.persistence.entity.PasswordEntryEntity;
 import com.safecore.security.PasswordGenerator;
 import com.safecore.ui.navigation.SceneNavigator;
 import com.safecore.ui.session.SessionContext;
-import com.safecore.business.domain.AuditResult;
 import javafx.animation.FadeTransition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.Clipboard;
@@ -22,6 +24,7 @@ import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import org.springframework.context.ApplicationContext;
@@ -31,15 +34,21 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
+import static com.safecore.ui.GlobalExceptionHandler.showError;
+
+/**
+ * Controller principale della Dashboard.
+ * Coordina la visualizzazione delle password, i moduli SafeSend, Audit e le operazioni di Backup.
+ */
 @Component
 public class DashboardController implements VaultObserver {
 
-    // Servizi iniettati (usiamo le interfacce)
+    // Servizi iniettati tramite Spring
     private final PasswordGenerator passwordGenerator;
     private final VaultService vaultService;
     private final ApplicationContext applicationContext;
     private final BackupService backupService;
-    private final SecurityAuditService auditService; // Usiamo l'interfaccia!
+    private final SecurityAuditService auditService;
     private final SafeSendService safeSendService;
 
     // --- CAMPI FXML ---
@@ -50,18 +59,19 @@ public class DashboardController implements VaultObserver {
     @FXML private TableColumn<PasswordEntryEntity, String> usernameColumn;
     @FXML private TableColumn<PasswordEntryEntity, Void> actionsColumn;
 
-    // Overlay e Card
+    // Overlay e Card Modali
     @FXML private Region overlay;
     @FXML private VBox addEntryCard, generatePasswordCard, safeSendOverlayCard, auditOverlayCard;
 
-    // Input vari
+    // Campi di Input
     @FXML private TextField newServiceField, newUsernameField, generatedPasswordField;
     @FXML private PasswordField newPasswordField;
     @FXML private ComboBox<Integer> expiryComboBox;
 
-    // Widget della Dashboard (Health Bar)
+    // Widget Status
     @FXML private Label healthScoreLabel, auditDetailLabel;
 
+    // Dati sorgente della tabella
     private final ObservableList<PasswordEntryEntity> masterData = FXCollections.observableArrayList();
 
     public DashboardController(PasswordGenerator passwordGenerator,
@@ -82,7 +92,7 @@ public class DashboardController implements VaultObserver {
     private void initialize() {
         userLabel.setText(SessionContext.getCurrentUserEmail());
 
-        // Setup colonne tabella
+        // Setup della tabella
         serviceColumn.setCellValueFactory(new PropertyValueFactory<>("serviceName"));
         usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
 
@@ -90,30 +100,32 @@ public class DashboardController implements VaultObserver {
         setupSearchFilter();
         setupExpiryOptions();
 
-        // Ci mettiamo in ascolto dei cambiamenti nel vault
+        // Registrazione come osservatore per aggiornamenti automatici
         vaultService.addObserver(this);
+
+        // Pulizia iniziale e caricamento
         vaultService.cleanupExpiredEntries();
         refreshVault();
     }
 
-    // --- LOGICA CORE DEL VAULT ---
+    // --- GESTIONE DATI VAULT ---
 
     @FXML
-    private void refreshVault() {
+    public void refreshVault() {
         masterData.setAll(vaultService.getEntriesForCurrentUser());
-        updateHealthScore(); // Aggiorna i numeretti della salute in tempo reale
+        updateHealthScore();
     }
 
     private void updateHealthScore() {
-        // Calcola al volo lo stato di salute per la card della dashboard
         AuditResult result = auditService.runAudit();
         healthScoreLabel.setText(result.score() + "/100");
 
+        // Colorazione dinamica in base al punteggio
         if (result.score() >= 80) healthScoreLabel.setStyle("-fx-text-fill: #15803d; -fx-font-weight: 800; -fx-font-size: 24;");
         else if (result.score() >= 50) healthScoreLabel.setStyle("-fx-text-fill: #d97706; -fx-font-weight: 800; -fx-font-size: 24;");
         else healthScoreLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: 800; -fx-font-size: 24;");
 
-        auditDetailLabel.setText("SafeCore ha rilevato " + (result.weakCount() + result.reusedCount()) + " criticità.");
+        auditDetailLabel.setText("Rilevate " + (result.weakCount() + result.reusedCount()) + " vulnerabilità.");
     }
 
     @FXML
@@ -124,7 +136,7 @@ public class DashboardController implements VaultObserver {
         Integer hours = expiryComboBox.getValue();
 
         if (service == null || service.isBlank() || pass == null || pass.isBlank()) {
-            showToast("Mancano dati!");
+            showToast("Dati incompleti!");
             return;
         }
 
@@ -132,15 +144,56 @@ public class DashboardController implements VaultObserver {
         vaultService.addEntry(service, user, pass, expiry);
 
         handleCloseOverlay();
-        showToast("Password salvata!");
-        refreshVault();
+        showToast("Salvato con successo!");
+        // Il refresh avviene tramite onVaultChanged()
     }
 
-    // --- GESTIONE OVERLAY  ---
+    // --- OPERAZIONI DI BACKUP (ESPORTA & IMPORTA) ---
+
+    @FXML
+    private void handleBackup(ActionEvent event) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Esporta Vault Cifrato");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("SafeCore Backup (*.safe)", "*.safe"));
+        fc.setInitialFileName("safecore_backup_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".safe");
+
+        Window window = ((Node) event.getSource()).getScene().getWindow();
+        File file = fc.showSaveDialog(window);
+
+        if (file != null) {
+            try {
+                backupService.exportBackup(file);
+                showSuccessAlert("Esportazione Completata", "File salvato correttamente in: " + file.getName());
+            } catch (Exception e) {
+                showError("Errore Backup", "Impossibile esportare i dati: " + e.getMessage());
+            }
+        }
+    }
+
+    @FXML
+    private void handleImport(ActionEvent event) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Importa Vault");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("SafeCore Backup (*.safe)", "*.safe"));
+
+        Window window = ((Node) event.getSource()).getScene().getWindow();
+        File file = fc.showOpenDialog(window);
+
+        if (file != null) {
+            try {
+                backupService.importBackup(file);
+                showSuccessAlert("Importazione Completata", "Le password sono state aggiunte al tuo Vault.");
+                // refreshVault() viene chiamato automaticamente dall'observer
+            } catch (Exception e) {
+                showError("Errore Importazione", "Il file potrebbe essere corrotto o la chiave errata.");
+            }
+        }
+    }
+
+    // --- GESTIONE INTERFACCIA E OVERLAY ---
 
     @FXML
     private void handleCloseOverlay() {
-        // Chiude tutto ciò che è aperto
         overlay.setVisible(false);
         addEntryCard.setVisible(false);
         generatePasswordCard.setVisible(false);
@@ -166,8 +219,6 @@ public class DashboardController implements VaultObserver {
         generatePasswordCard.setVisible(true);
     }
 
-    // --- CARICAMENTO DINAMICO MODULI ---
-
     @FXML
     private void handleNewSafeSend() {
         loadDynamicModule("/com/safecore/ui/view/safesend-view.fxml", safeSendOverlayCard);
@@ -178,14 +229,11 @@ public class DashboardController implements VaultObserver {
         loadDynamicModule("/com/safecore/ui/view/audit-view.fxml", auditOverlayCard);
     }
 
-    /**
-     * Metodo helper per caricare le viste esterne senza ripetere codice
-     */
     private void loadDynamicModule(String fxmlPath, VBox container) {
         try {
             container.getChildren().clear();
             FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
-            loader.setControllerFactory(applicationContext::getBean); //per far funzionare Spring!
+            loader.setControllerFactory(applicationContext::getBean);
 
             VBox view = loader.load();
             container.getChildren().add(view);
@@ -194,38 +242,17 @@ public class DashboardController implements VaultObserver {
             overlay.setVisible(true);
             container.setVisible(true);
         } catch (Exception e) {
-            showToast("Errore caricamento modulo!");
+            showToast("Errore modulo!");
             e.printStackTrace();
         }
     }
 
-    // --- UTILS (BACKUP, LOGOUT, CLIPBOARD) ---
-
-    @FXML
-    private void handleBackup() {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Backup del Vault");
-        fc.setInitialFileName("vault_backup_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".safecore");
-
-        // Usiamo il nodo 'overlay' o 'userLabel' per ottenere la finestra
-        File file = fc.showSaveDialog(userLabel.getScene().getWindow());
-
-        if (file != null) {
-            try {
-                // Chiamiamo il backupService che si occupa del file system
-                backupService.exportBackup(file);
-                showToast("Backup completato!");
-            } catch (Exception e) {
-                showToast("Errore durante il backup!");
-                e.printStackTrace();
-            }
-        }
-    }
+    // --- UTILS ---
 
     @FXML
     private void handleLogout() {
         SessionContext.logout();
-        SceneNavigator.switchTo((Stage) userLabel.getScene().getWindow(), "/com/safecore/ui/view/login.fxml", "Login");
+        SceneNavigator.switchTo((Stage) userLabel.getScene().getWindow(), "/com/safecore/ui/view/login.fxml", "SafeCore - Login");
     }
 
     @FXML
@@ -251,20 +278,30 @@ public class DashboardController implements VaultObserver {
         ft.play();
     }
 
-    // Obbligatorio per VaultObserver
+    private void showSuccessAlert(String title, String content) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(content);
+        alert.showAndWait();
+    }
+
     @Override
     public void onVaultChanged() {
+        // Forza l'aggiornamento della UI sul thread corretto
         Platform.runLater(this::refreshVault);
     }
 
-    // Setup filtri e combo
+    // --- SETUP UI ---
+
     private void setupSearchFilter() {
         FilteredList<PasswordEntryEntity> filteredData = new FilteredList<>(masterData, p -> true);
         searchField.textProperty().addListener((obs, old, newVal) -> {
             filteredData.setPredicate(entry -> {
                 if (newVal == null || newVal.isBlank()) return true;
                 String lower = newVal.toLowerCase();
-                return entry.getServiceName().toLowerCase().contains(lower) || entry.getUsername().toLowerCase().contains(lower);
+                return entry.getServiceName().toLowerCase().contains(lower) ||
+                        entry.getUsername().toLowerCase().contains(lower);
             });
         });
         passwordTable.setItems(filteredData);
@@ -274,8 +311,11 @@ public class DashboardController implements VaultObserver {
         actionsColumn.setCellFactory(param -> new TableCell<>() {
             private final Button copyBtn = new Button("Copia");
             private final Button delBtn = new Button("Elimina");
-            private final HBox box = new HBox(8, copyBtn, delBtn);
+            private final HBox box = new HBox(10, copyBtn, delBtn);
             {
+                copyBtn.setStyle("-fx-background-color: #2563eb; -fx-text-fill: white; -fx-cursor: hand;");
+                delBtn.setStyle("-fx-background-color: #ef4444; -fx-text-fill: white; -fx-cursor: hand;");
+
                 copyBtn.setOnAction(e -> {
                     PasswordEntryEntity ent = getTableRow().getItem();
                     if (ent != null) {
@@ -287,7 +327,6 @@ public class DashboardController implements VaultObserver {
                     PasswordEntryEntity ent = getTableRow().getItem();
                     if (ent != null) {
                         vaultService.deleteEntry(ent.getId());
-                        refreshVault();
                     }
                 });
             }
@@ -303,8 +342,9 @@ public class DashboardController implements VaultObserver {
         expiryComboBox.setValue(0);
         expiryComboBox.setConverter(new StringConverter<>() {
             @Override public String toString(Integer h) {
-                if (h == 0) return "Mai";
+                if (h == 0) return "Nessuna Scadenza";
                 if (h == 1) return "1 Ora";
+                if (h == 24) return "1 Giorno";
                 return (h / 24) + " Giorni";
             }
             @Override public Integer fromString(String s) { return 0; }
