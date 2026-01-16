@@ -1,7 +1,7 @@
 package com.safecore.business.service;
 
 import com.safecore.business.service.impl.SafeSendServiceImpl;
-import com.safecore.persistence.entity.SafeSendEntry;
+import com.safecore.persistence.entity.SafeSendEntryEntity;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.SafeSendRepository;
 import com.safecore.persistence.repository.UserRepository;
@@ -58,19 +58,19 @@ class SafeSendServiceTest {
         String content = "Secret message";
         UserEntity user = new UserEntity();
         user.setEmail("test@example.com");
-        SafeSendEntry savedEntry = new SafeSendEntry();
+        SafeSendEntryEntity savedEntry = new SafeSendEntryEntity();
         savedEntry.setId(UUID.randomUUID());
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
         when(encryptionStrategy.encrypt(content)).thenReturn("encrypted".getBytes());
         when(passwordHasher.hash(anyString())).thenReturn("hashed-token");
-        when(safeSendRepository.save(any(SafeSendEntry.class))).thenReturn(savedEntry);
+        when(safeSendRepository.save(any(SafeSendEntryEntity.class))).thenReturn(savedEntry);
 
         String link = service.createSafeLink(content, 24);
 
         assertNotNull(link);
         assertTrue(link.contains("?t="));
-        verify(safeSendRepository).save(any(SafeSendEntry.class));
+        verify(safeSendRepository).save(any(SafeSendEntryEntity.class));
     }
 
     @Test
@@ -81,14 +81,14 @@ class SafeSendServiceTest {
         when(encryptionStrategy.encrypt(anyString())).thenReturn("enc".getBytes());
         when(passwordHasher.hash(anyString())).thenReturn("hash");
 
-        SafeSendEntry saved = new SafeSendEntry();
+        SafeSendEntryEntity saved = new SafeSendEntryEntity();
         saved.setId(UUID.randomUUID());
         when(safeSendRepository.save(any())).thenReturn(saved);
 
         service.createSafeLink("content", 1);
 
         // Verifica che il flag monouso sia impostato a true
-        verify(safeSendRepository).save(argThat(SafeSendEntry::isOneTime));
+        verify(safeSendRepository).save(argThat(SafeSendEntryEntity::isOneTime));
     }
 
     @Test
@@ -97,7 +97,7 @@ class SafeSendServiceTest {
         UserEntity user = new UserEntity();
         user.setEmail("test@example.com");
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
-        when(safeSendRepository.save(any())).thenReturn(new SafeSendEntry());
+        when(safeSendRepository.save(any())).thenReturn(new SafeSendEntryEntity());
 
         LocalDateTime before = LocalDateTime.now().plusHours(hours).minusSeconds(5);
         service.createSafeLink("content", hours);
@@ -113,7 +113,7 @@ class SafeSendServiceTest {
     @Test
     void accessSafeLink_withValidToken_decryptsAndDeletesEntry() {
         UUID id = UUID.randomUUID();
-        SafeSendEntry entry = createValidEntry(id, "enc".getBytes(), "hash");
+        SafeSendEntryEntity entry = createValidEntry(id, "enc".getBytes(), "hash");
 
         when(safeSendRepository.findById(id)).thenReturn(Optional.of(entry));
         when(passwordHasher.verify("token", "hash")).thenReturn(true);
@@ -128,7 +128,7 @@ class SafeSendServiceTest {
     @Test
     void accessSafeLink_deletesEntryAfterAccess_ensuresOneTimeUse() {
         UUID id = UUID.randomUUID();
-        SafeSendEntry entry = createValidEntry(id, "enc".getBytes(), "hash");
+        SafeSendEntryEntity entry = createValidEntry(id, "enc".getBytes(), "hash");
 
         when(safeSendRepository.findById(id)).thenReturn(Optional.of(entry));
         when(passwordHasher.verify(anyString(), anyString())).thenReturn(true);
@@ -143,7 +143,7 @@ class SafeSendServiceTest {
     @Test
     void accessSafeLink_withExpiredLink_throwsExceptionAndDeletes() {
         UUID id = UUID.randomUUID();
-        SafeSendEntry entry = new SafeSendEntry();
+        SafeSendEntryEntity entry = new SafeSendEntryEntity();
         entry.setExpiresAt(LocalDateTime.now().minusMinutes(1));
 
         when(safeSendRepository.findById(id)).thenReturn(Optional.of(entry));
@@ -155,7 +155,7 @@ class SafeSendServiceTest {
     @Test
     void accessSafeLink_withInvalidToken_throwsException() {
         UUID id = UUID.randomUUID();
-        SafeSendEntry entry = createValidEntry(id, "enc".getBytes(), "hash");
+        SafeSendEntryEntity entry = createValidEntry(id, "enc".getBytes(), "hash");
 
         when(safeSendRepository.findById(id)).thenReturn(Optional.of(entry));
         when(passwordHasher.verify("wrong", "hash")).thenReturn(false);
@@ -165,8 +165,8 @@ class SafeSendServiceTest {
     }
 
     // Helper per creare entry valide rapidamente
-    private SafeSendEntry createValidEntry(UUID id, byte[] content, String hash) {
-        SafeSendEntry entry = new SafeSendEntry();
+    private SafeSendEntryEntity createValidEntry(UUID id, byte[] content, String hash) {
+        SafeSendEntryEntity entry = new SafeSendEntryEntity();
         entry.setId(id);
         entry.setEncryptedContent(content);
         entry.setTokenHash(hash);

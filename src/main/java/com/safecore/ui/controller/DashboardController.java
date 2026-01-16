@@ -206,14 +206,18 @@ public class DashboardController implements VaultObserver {
         FileChooser fc = new FileChooser();
         fc.setTitle("Backup del Vault");
         fc.setInitialFileName("vault_backup_" + LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd")) + ".safecore");
-        File file = fc.showSaveDialog(overlay.getScene().getWindow());
+
+        // Usiamo il nodo 'overlay' o 'userLabel' per ottenere la finestra
+        File file = fc.showSaveDialog(userLabel.getScene().getWindow());
 
         if (file != null) {
             try {
-                vaultService.exportVaultAsEncryptedJson(file);
+                // Chiamiamo il backupService che si occupa del file system
+                backupService.exportBackup(file);
                 showToast("Backup completato!");
             } catch (Exception e) {
-                showToast("Errore backup!");
+                showToast("Errore durante il backup!");
+                e.printStackTrace();
             }
         }
     }

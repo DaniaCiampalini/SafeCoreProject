@@ -1,7 +1,7 @@
 package com.safecore.business.service.impl;
 
 import com.safecore.business.service.SafeSendService;
-import com.safecore.persistence.entity.SafeSendEntry;
+import com.safecore.persistence.entity.SafeSendEntryEntity;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.SafeSendRepository;
 import com.safecore.persistence.repository.UserRepository;
@@ -55,14 +55,14 @@ public class SafeSendServiceImpl implements SafeSendService {
         String token = generateToken();
         String tokenHash = passwordHasher.hash(token);
 
-        SafeSendEntry entry = new SafeSendEntry();
+        SafeSendEntryEntity entry = new SafeSendEntryEntity();
         entry.setEncryptedContent(encrypted);
         entry.setExpiresAt(LocalDateTime.now().plusHours(expirationHours));
         entry.setOneTime(true); // i link SafeSend sono sempre monouso
         entry.setTokenHash(tokenHash);
-        entry.setCreator(user);
+        entry.setUser(user);
 
-        SafeSendEntry saved = safeSendRepository.save(entry);
+        SafeSendEntryEntity saved = safeSendRepository.save(entry);
 
         // Link realistico: ID pubblico + token segreto monouso
         return "https://safecore.io/send/" + saved.getId() + "?t=" + token;
@@ -74,7 +74,7 @@ public class SafeSendServiceImpl implements SafeSendService {
     @Override
     @Transactional
     public String accessSafeLink(UUID id, String token) {
-        SafeSendEntry entry = safeSendRepository.findById(id)
+        SafeSendEntryEntity entry = safeSendRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Il link non esiste più o è stato già usato."));
 
         // Controlliamo se è scaduto il tempo

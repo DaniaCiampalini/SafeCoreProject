@@ -1,5 +1,6 @@
 package com.safecore.business.service;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.safecore.persistence.entity.PasswordEntryEntity;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.File;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.List;
@@ -38,50 +40,26 @@ public class VaultService {
         // Qui usiamo il Factory Pattern: chiediamo alla factory la strategia di default (AES)
         // Se domani vogliamo cambiare algoritmo, ci basta toccare la factory.
         this.encryptionStrategy = encryptionFactory.getDefaultStrategy();
-
-        // Jackson ci serve per convertire gli oggetti in JSON (comodo per l'export)
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
     }
 
-    // Metodi per l'Observer Pattern: chi vuole essere avvisato dei cambiamenti si registra qui
-    public void addObserver(VaultObserver observer) {
-        observers.add(observer);
-    }
-
-    public void removeObserver(VaultObserver observer) {
-        observers.remove(observer);
-    }
-
-    private void notifyObservers() {
-        observers.forEach(VaultObserver::onVaultChanged);
-    }
-
-    /**
-     * Salva una nuova password nel Vault cifrandola.
-     */
-    @Transactional
-    public void addEntry(String serviceName, String username, String plainPassword) {
-        addEntry(serviceName, username, plainPassword, null);
-    }
+    public void addObserver(VaultObserver observer) { observers.add(observer); }
+    public void removeObserver(VaultObserver observer) { observers.remove(observer); }
+    private void notifyObservers() { observers.forEach(VaultObserver::onVaultChanged); }
 
     @Transactional
-    public void addEntry(String serviceName, String username, String plainPassword, java.time.LocalDateTime expiresAt) {
-        // Recuperiamo l'utente che sta facendo l'operazione
-        String currentUserEmail = SessionContext.getCurrentUserEmail();
-        UserEntity user = userRepository.findByEmail(currentUserEmail)
-                .orElseThrow(() -> new RuntimeException("Utente non trovato in sessione"));
-
-        // Momento cruciale: cifriamo la password prima di toccare il DB.
-        // Zero-Knowledge: noi non salviamo MAI la password in chiaro.
-        byte[] encryptedData = encryptionStrategy.encrypt(plainPassword);
+    public void addEntry(String service, String username, String plain, LocalDateTime expiry) {
+        String email = SessionContext.getCurrentUserEmail();
+        UserEntity user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Utente non trovato: " + email));
 
         PasswordEntryEntity entity = new PasswordEntryEntity();
-        entity.setServiceName(serviceName);
+        entity.setServiceName(service);
         entity.setUsername(username);
-        entity.setEncryptedPassword(encryptedData);
+        entity.setEncryptedPassword(encryptionStrategy.encrypt(plain));
         entity.setUser(user);
-        entity.setExpiresAt(expiresAt);
+        entity.setExpiresAt(expiry);
 
         passwordEntryRepository.save(entity);
 
@@ -90,12 +68,13 @@ public class VaultService {
         notifyObservers();
     }
 
-    /**
-     * Rimuove le password scadute.
-     */
+    public void addEntry(String service, String username, String plain) {
+        addEntry(service, username, plain, null);
+    }
+
     @Transactional
     public void cleanupExpiredEntries() {
-        passwordEntryRepository.deleteByExpiresAtBefore(java.time.LocalDateTime.now());
+        passwordEntryRepository.deleteByExpiresAtBefore(LocalDateTime.now());
         notifyObservers();
     }
 
@@ -103,17 +82,11 @@ public class VaultService {
      * Recupera tutte le password dell'utente loggato.
      */
     public List<PasswordEntryEntity> getEntriesForCurrentUser() {
-        String email = SessionContext.getCurrentUserEmail();
-        if (email == null) return List.of();
-        return passwordEntryRepository.findByUserEmail(email);
+        return passwordEntryRepository.findByUserEmail(SessionContext.getCurrentUserEmail());
     }
 
-    /**
-     * Decifra una password specifica.
-     */
-    public String decryptPassword(byte[] encryptedPassword) {
-        if (encryptedPassword == null) return "";
-        return encryptionStrategy.decrypt(encryptedPassword);
+    public String decryptPassword(byte[] encrypted) {
+        return (encrypted == null) ? "" : encryptionStrategy.decrypt(encrypted);
     }
 
     /**
@@ -125,31 +98,31 @@ public class VaultService {
         notifyObservers();
     }
 
-    /**
-     * Esporta l'intero Vault in un file JSON cifrato.
-     * Il file conterrà i dati originali (ancora cifrati individualmente)
-     * e l'intero pacchetto sarà cifrato ulteriormente per sicurezza.
-     */
+    @Transactional(readOnly = true)
     public void exportVaultAsEncryptedJson(File destinationFile) throws Exception {
-        // 1. Recupera le voci dell'utente
         List<PasswordEntryEntity> entries = getEntriesForCurrentUser();
+        if (entries.isEmpty()) throw new RuntimeException("Vault vuoto.");
 
-        if (entries.isEmpty()) {
-            throw new RuntimeException("Il vault è vuoto. Nulla da esportare.");
+        // Il JSON ora non conterrà l'utente grazie a @JsonIgnore nell'Entity
+        String jsonContent = objectMapper.writeValueAsString(entries);
+        byte[] encryptedPackage = encryptionStrategy.encrypt(jsonContent);
+        String finalBase64 = Base64.getEncoder().encodeToString(encryptedPackage);
+
+        Files.writeString(destinationFile.toPath(), finalBase64, StandardCharsets.UTF_8);
+    }
+
+    @Transactional
+    public void importVaultFromEncryptedJson(File sourceFile) throws Exception {
+        String base64 = Files.readString(sourceFile.toPath(), StandardCharsets.UTF_8);
+        byte[] encrypted = Base64.getDecoder().decode(base64.trim());
+        String json = encryptionStrategy.decrypt(encrypted);
+
+        List<PasswordEntryEntity> imported = objectMapper.readValue(json, new TypeReference<>() {});
+
+        for (PasswordEntryEntity entry : imported) {
+            // Decifra con vecchia chiave, ricifra con nuova tramite addEntry
+            String plain = decryptPassword(entry.getEncryptedPassword());
+            addEntry(entry.getServiceName(), entry.getUsername(), plain, entry.getExpiresAt());
         }
-
-        // 2. Converte la lista in una stringa JSON
-        // Nota: escludiamo i dati sensibili dell'oggetto User per non portarceli nel backup
-        String jsonContent = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(entries);
-
-        // 3. Cifra l'intero JSON
-        // Trasformiamo il JSON in byte e usiamo la strategia di cifratura esistente
-        byte[] encryptedBackupBytes = encryptionStrategy.encrypt(jsonContent);
-
-        // 4. Codifica in Base64 per rendere il file leggibile come testo ma protetto
-        String finalContent = Base64.getEncoder().encodeToString(encryptedBackupBytes);
-
-        // 5. Scrittura su disco
-        Files.writeString(destinationFile.toPath(), finalContent, StandardCharsets.UTF_8);
     }
 }

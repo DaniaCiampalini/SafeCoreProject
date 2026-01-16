@@ -7,49 +7,40 @@ import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import org.springframework.stereotype.Component;
 
-/**
- * Controller per la piccola finestra popup che serve ad aggiungere una nuova password.
- * È una versione semplificata di quello che succede nella Dashboard, usata magari
- * in contesti dove serve solo l'inserimento rapido.
- */
 @Component
 public class AddEntryController {
 
     private final VaultService vaultService;
-    @FXML
-    private TextField serviceField;
-    @FXML
-    private TextField usernameField;
-    @FXML
-    private PasswordField passwordField;
+
+    @FXML private TextField serviceField;
+    @FXML private TextField usernameField;
+    @FXML private PasswordField passwordField;
+
     private boolean saved = false;
 
     public AddEntryController(VaultService vaultService) {
         this.vaultService = vaultService;
     }
 
-    /**
-     * Salva i dati inseriti nel vault.
-     */
     @FXML
     private void handleSave() {
         String service = serviceField.getText();
         String username = usernameField.getText();
         String password = passwordField.getText();
 
-        // Controlliamo che l'utente non stia salvando roba vuota
-        if (service == null || service.isBlank() || username == null || username.isBlank() || password == null || password.isBlank()) {
+        if (isInputInvalid(service, username, password)) {
             return;
         }
 
-        // Passiamo tutto al VaultService. Sarà lui a:
-        // 1. Cifrare la password con AES
-        // 2. Capire a quale utente appartiene (tramite la sessione)
-        // 3. Salvare tutto sul DB
+        // Chiamata al metodo a 3 parametri del VaultService
         vaultService.addEntry(service, username, password);
 
         saved = true;
         closeStage();
+    }
+
+    private boolean isInputInvalid(String s, String u, String p) {
+        return s == null || s.isBlank() || u == null || u.isBlank() || p == null || p.isBlank();
     }
 
     @FXML
@@ -62,7 +53,9 @@ public class AddEntryController {
     }
 
     private void closeStage() {
-        Stage stage = (Stage) serviceField.getScene().getWindow();
-        stage.close();
+        if (serviceField.getScene() != null) {
+            Stage stage = (Stage) serviceField.getScene().getWindow();
+            stage.close();
+        }
     }
 }

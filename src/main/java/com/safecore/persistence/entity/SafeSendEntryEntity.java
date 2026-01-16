@@ -6,40 +6,44 @@ import java.util.UUID;
 
 @Entity
 @Table(name = "safe_send_entries")
-public class SafeSendEntry {
+public class SafeSendEntryEntity {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID) // Specifica esplicitamente UUID
+    @GeneratedValue
     @Column(name = "id", updatable = false, nullable = false)
     private UUID id;
 
-    // Usiamo @Lob per supportare segreti di qualsiasi dimensione
-    @Lob
-    @Column(nullable = false, columnDefinition = "BLOB")
+    // Usiamo columnDefinition per garantire un valore di default a livello DB
+    // e prevenire l'errore che hai visto se aggiungerai altri record in futuro.
+    @Column(name = "one_time", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
+    private boolean oneTime = false;
+
+    @Column(name = "encrypted_content", nullable = false, columnDefinition = "VARBINARY(MAX)")
     private byte[] encryptedContent;
 
-    @Column(nullable = false)
+    @Column(name = "token_hash", nullable = false, unique = true)
     private String tokenHash;
 
-    @Column(nullable = false)
+    @Column(name = "expires_at", nullable = false)
     private LocalDateTime expiresAt;
 
-    // Rinominato per uniformità con il Service e standard Java Bean
-    @Column(nullable = false)
-    private boolean oneTime = true;
-
-    @Column(nullable = false)
+    @Column(name = "access_count")
     private int accessCount = 0;
 
+    // Relazione opzionale: un utente può inviare file, o può essere un invio anonimo
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity creator;
+    @JoinColumn(name = "user_id")
+    private UserEntity user;
 
-    public SafeSendEntry() {}
+    public SafeSendEntryEntity() {
+    }
 
-    // GETTER E SETTER
+    // Getter e Setter
     public UUID getId() { return id; }
     public void setId(UUID id) { this.id = id; }
+
+    public boolean isOneTime() { return oneTime; }
+    public void setOneTime(boolean oneTime) { this.oneTime = oneTime; }
 
     public byte[] getEncryptedContent() { return encryptedContent; }
     public void setEncryptedContent(byte[] encryptedContent) { this.encryptedContent = encryptedContent; }
@@ -50,13 +54,9 @@ public class SafeSendEntry {
     public LocalDateTime getExpiresAt() { return expiresAt; }
     public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
 
-    // Corretti i nomi dei metodi booleani per il Service
-    public boolean isOneTime() { return oneTime; }
-    public void setOneTime(boolean oneTime) { this.oneTime = oneTime; }
-
     public int getAccessCount() { return accessCount; }
     public void setAccessCount(int accessCount) { this.accessCount = accessCount; }
 
-    public UserEntity getCreator() { return creator; }
-    public void setCreator(UserEntity creator) { this.creator = creator; }
+    public UserEntity getUser() { return user; }
+    public void setUser(UserEntity user) { this.user = user; }
 }
