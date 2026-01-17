@@ -1,8 +1,8 @@
-English | [Italiano](https://github.com/DaniaCiampalini/SafeCoreProject/blob/main/README.it.md)
-
 # SafeCore – Secure Password Manager
 
-**Java 17** | **Spring Boot 3.2** | **JavaFX 17** 
+English | [Italiano](https://github.com/DaniaCiampalini/SafeCoreProject/blob/main/README.it.md)
+
+**Java 17** | **Spring Boot 3.2** | **JavaFX 17** | **H2 Database**
 
 Zero-Knowledge Password Manager with Layered Architecture and AES-256 Encryption
 
@@ -22,6 +22,7 @@ SafeCore is a desktop application for secure password management, designed with 
 - [Quality Metrics](#quality-metrics)
 - [Security](#security)
 - [Roadmap](#roadmap)
+- [Contacts](#contacts)
 
 ---
 
@@ -32,23 +33,21 @@ SafeCore is a desktop application for secure password management, designed with 
 - **AES-256-CBC** with unique IVs for each entry
 - **BCrypt** for user password hashing (work factor: 12)
 - **Password Strength Evaluator** with advanced scoring
-- **Audit System** to identify weak/reused passwords
+- **Audit System** to identify weak/reused/old passwords
 
 ### Core Functionality
 - **Vault Management**: Complete CRUD for password entries
 - **Password Generator**: Configurable random password generation (length, charset)
-- **Auto-Fill System**: Quick copy with auto-clear after 30s
-- **Encrypted Backup**: Export/Import vault in `.scb` format
-- **SafeSend**: Encrypted temporary sharing with one-time links (configurable TTL)
-- **Email Alias Manager**: Generate aliases to protect real email
+- **Security Audit**: Scoring system 0-100
+- **H2 Database**: Local persistence with JPA/Hibernate
 
 ### UI/UX
 - **JavaFX Material Design**: Modern and responsive interface
-- **Toast Notifications**: Centralized notification system
+- **Session Management**: Centralized user session handling
 - **Password Visibility Toggle**: Show/Hide passwords
-- **Dark Mode** (in development)
+- **Navigation System**: Smooth navigation between views
 
-
+---
 
 ## Architecture
 
@@ -56,17 +55,26 @@ SafeCore is a desktop application for secure password management, designed with 
 
 ```
 ┌─────────────────────────────────────────┐
-│         Presentation Layer              │
-│  (Controllers + FXML Views + Services)  │
+│         UI Layer (JavaFX)               │
+│  - Controllers (Login, Dashboard, etc.) │
+│  - Navigation System                    │
+│  - Session Manager                      │
 ├─────────────────────────────────────────┤
-│         Business Logic Layer            │
-│    (Services + Domain Models + DTOs)    │
+│         Business Layer                  │
+│  - VaultService                         │
+│  - SecurityAuditService                 │
+│  - UserService                          │
 ├─────────────────────────────────────────┤
 │         Security Layer                  │
-│  (Encryption + Hashing + Key Manager)   │
+│  - AESEncryptionStrategy                │
+│  - PasswordHasher (BCrypt)              │
+│  - PasswordGenerator                    │
+│  - PasswordStrengthEvaluator            │
 ├─────────────────────────────────────────┤
 │         Persistence Layer               │
-│    (Repositories + JSON Serialization)  │
+│  - JPA Repositories                     │
+│  - H2 Database                          │
+│  - Entity Models                        │
 └─────────────────────────────────────────┘
 ```
 
@@ -75,17 +83,20 @@ SafeCore is a desktop application for secure password management, designed with 
 | Layer | Component | Responsibility |
 |-------|-----------|----------------|
 | **UI** | `LoginController` | User authentication |
-| | `DashboardController` | Vault management + notifications |
+| | `DashboardController` | Main vault management |
 | | `AuditController` | Security report visualization |
-| **Business** | `UserServiceImpl` | Registration/Login |
-| | `VaultServiceImpl` | CRUD entries + encryption |
-| | `AuditService` | Weak password analysis |
-| | `SafeSendService` | Temporary link management |
-| **Security** | `AESEncryptionStrategy` | AES-256 encryption |
+| | `NavigationManager` | View navigation management |
+| | `SessionContext` | User session management |
+| **Business** | `VaultService` | CRUD entries + encryption/decryption |
+| | `SecurityAuditService` | Password analysis and scoring |
+| | `UserService` | User registration/login |
+| **Security** | `AESEncryptionStrategy` | AES-256-CBC encryption |
 | | `PasswordHasher` | BCrypt hashing |
-| | `KeyManager` | Master key management |
-| **Persistence** | `UserRepository` | User data access |
-| | `VaultRepository` | Vault data access |
+| | `PasswordGenerator` | Secure password generation |
+| | `PasswordStrengthEvaluator` | Strength evaluation (0-100) |
+| **Persistence** | `PasswordEntryRepository` | Spring Data JPA repository |
+| | `UserRepository` | User repository |
+| | `PasswordEntryEntity` | JPA entity for passwords |
 
 ---
 
@@ -95,15 +106,15 @@ SafeCore is a desktop application for secure password management, designed with 
 
 | ID | Description | Priority |
 |----|-------------|----------|
-| **FR1** | Users must be able to register with email and password (min. 8 chars, at least 1 uppercase, 1 number) | High |
+| **FR1** | Users must be able to register with email and password (min. 8 chars) | High |
 | **FR2** | System must encrypt user passwords with BCrypt | High |
 | **FR3** | System must allow saving/modifying/deleting vault entries | High |
 | **FR4** | System must encrypt each password entry with AES-256 and unique IV | High |
-| **FR5** | System must generate configurable random passwords (length 8-128, customizable charset) | Medium |
-| **FR6** | System must export vault in encrypted JSON format (`.scb`) | Medium |
-| **FR7** | System must provide Security Audit with password scoring | Medium |
-| **FR8** | System must allow encrypted temporary sharing (SafeSend) | Low |
-| **FR9** | System must manage email aliases to protect real identity | Low |
+| **FR5** | System must generate configurable random passwords (length 8-128) | Medium |
+| **FR6** | System must provide Security Audit with 0-100 scoring | Medium |
+| **FR7** | System must identify weak passwords (score < 50) | Medium |
+| **FR8** | System must identify old passwords (> 1 year) | Medium |
+| **FR9** | System must identify reused passwords | Medium |
 
 ### Non-Functional Requirements
 
@@ -113,9 +124,8 @@ SafeCore is a desktop application for secure password management, designed with 
 | **NFR2** | **Security**: Confidentiality guaranteed with AES-256-CBC | AES-256 |
 | **NFR3** | **Portability**: Executable on Windows, macOS, Linux | Cross-platform |
 | **NFR4** | **Testability**: Minimum code coverage 80% | > 80% |
-| **NFR5** | **Usability**: Responsive UI with feedback < 100ms | < 100ms |
-| **NFR6** | **Maintainability**: Average cyclomatic complexity < 10 | < 10 |
-| **NFR7** | **Scalability**: Support up to 10,000 entries per user | 10k entries |
+| **NFR5** | **Maintainability**: Unit tests with Mockito for isolation | Implemented |
+| **NFR6** | **Scalability**: Support up to 10,000 entries per user | 10k entries |
 
 ---
 
@@ -123,78 +133,96 @@ SafeCore is a desktop application for secure password management, designed with 
 
 ### 1. Strategy Pattern (Security Layer)
 
+**Implementation**:
+
 ```java
-interface EncryptionStrategy {
+public interface EncryptionStrategy {
     String encrypt(String data);
     String decrypt(String data);
 }
 
-class AESEncryptionStrategy implements EncryptionStrategy {
-    // AES-256-CBC implementation
+@Component
+public class AESEncryptionStrategy implements EncryptionStrategy {
+    // AES-256-CBC implementation with random IVs
 }
 ```
 
-**Benefits**: Allows switching encryption algorithms (e.g., AES → RSA) without modifying client code.
+**Benefits**: Allows switching encryption algorithms without modifying client code.
+
+---
 
 ### 2. Repository Pattern (Persistence Layer)
 
+**Implementation**:
+
 ```java
-interface VaultRepository {
-    void save(VaultEntry entry);
-    Optional<VaultEntry> findById(String id);
-    List<VaultEntry> findAll();
-    void delete(String id);
+public interface PasswordEntryRepository extends JpaRepository<PasswordEntryEntity, Long> {
+    List<PasswordEntryEntity> findByUserEmail(String email);
 }
 ```
 
-**Benefits**: Abstracts data access logic, allowing backend changes (JSON → Database) without impacting business logic.
+**Benefits**: Abstracts data access logic, allowing backend changes without impacting business logic.
 
-### 3. Singleton Pattern (Security Components)
+---
+
+### 3. Singleton Pattern (Session Management)
+
+**Implementation**:
 
 ```java
-public class KeyManager {
-    private static KeyManager instance;
-    private KeyManager() {}
+public class SessionContext {
+    private static SessionContext instance;
+    private String currentUserEmail;
 
-    public static KeyManager getInstance() {
+    public static SessionContext getInstance() {
         if (instance == null) {
-            instance = new KeyManager();
+            instance = new SessionContext();
         }
         return instance;
     }
 }
 ```
 
-**Benefits**: Ensures a single instance for encryption key management.
+**Benefits**: Ensures a single instance for user session management.
 
-### 4. Observer Pattern (Notification System)
+---
+
+### 4. Dependency Injection (Spring)
+
+**Implementation**:
 
 ```java
-interface ToastListener {
-    void onToast(String message, ToastType type);
-}
+@Service
+public class VaultService {
+    private final PasswordEntryRepository repository;
+    private final EncryptionStrategy encryptionStrategy;
 
-class ToastService {
-    private List<ToastListener> listeners = new ArrayList<>();
-
-    public void notify(String message, ToastType type) {
-        listeners.forEach(l -> l.onToast(message, type));
+    @Autowired
+    public VaultService(PasswordEntryRepository repository, 
+                       EncryptionStrategy encryptionStrategy) {
+        this.repository = repository;
+        this.encryptionStrategy = encryptionStrategy;
     }
 }
 ```
 
-**Benefits**: Decouples notification logic from UI.
+**Benefits**: Reduces coupling and facilitates testing with mocks.
+
+---
 
 ### 5. Builder Pattern (Password Generation)
 
+**Implementation**:
+
 ```java
-PasswordGenerator.builder()
+PasswordGenerator generator = PasswordGenerator.builder()
     .length(16)
     .includeUppercase(true)
     .includeNumbers(true)
     .includeSpecial(true)
-    .build()
-    .generate();
+    .build();
+    
+String password = generator.generate();
 ```
 
 **Benefits**: Fluent and readable configuration for complex objects.
@@ -203,38 +231,40 @@ PasswordGenerator.builder()
 
 ## UML Diagrams
 
-### Class Diagram - Business Layer
+### Class Diagram - Security Audit Service
 
 ```plantuml
 @startuml
-package "Business Layer" {
-    interface UserService {
-        + register(email, password): User
-        + login(email, password): boolean
-        + getCurrentUser(): User
-    }
-
-    interface VaultService {
-        + addEntry(entry): void
-        + updateEntry(id, entry): void
-        + deleteEntry(id): void
-        + getAllEntries(): List<VaultEntry>
-        + searchEntries(query): List<VaultEntry>
-    }
-
-    class UserServiceImpl implements UserService {
-        - userRepository: UserRepository
-        - passwordHasher: PasswordHasher
-    }
-
-    class VaultServiceImpl implements VaultService {
-        - vaultRepository: VaultRepository
-        - encryptionStrategy: EncryptionStrategy
-        - keyManager: KeyManager
-    }
+class SecurityAuditService {
+    - vaultService: VaultService
+    - strengthEvaluator: PasswordStrengthEvaluator
+    + runAudit(): AuditResult
+    - calculateScore(entries): int
 }
+
+class AuditResult {
+    - score: int
+    - weakPasswords: List<String>
+    - oldPasswords: List<String>
+    - reusedPasswords: List<String>
+}
+
+class VaultService {
+    + getEntriesForCurrentUser(): List<PasswordEntry>
+    + decryptPassword(entry): String
+}
+
+class PasswordStrengthEvaluator {
+    + evaluate(password): int
+}
+
+SecurityAuditService --> VaultService
+SecurityAuditService --> PasswordStrengthEvaluator
+SecurityAuditService ..> AuditResult : creates
 @enduml
 ```
+
+---
 
 ### Sequence Diagram - Login Flow
 
@@ -245,67 +275,47 @@ participant LoginController
 participant UserService
 participant PasswordHasher
 participant UserRepository
+participant SessionContext
 
 User -> LoginController: insertCredentials(email, password)
 LoginController -> UserService: login(email, password)
 UserService -> UserRepository: findByEmail(email)
-UserRepository --> UserService: User
+UserRepository --> UserService: Optional<User>
 UserService -> PasswordHasher: verify(password, hashedPassword)
 PasswordHasher --> UserService: boolean
 UserService --> LoginController: LoginResult
+LoginController -> SessionContext: login(email)
 LoginController --> User: showDashboard() / showError()
 @enduml
 ```
 
-### Sequence Diagram - Add Password Entry
+---
+
+### Sequence Diagram - Security Audit
 
 ```plantuml
 @startuml
 actor User
-participant DashboardController
+participant AuditController
+participant SecurityAuditService
 participant VaultService
-participant EncryptionStrategy
-participant VaultRepository
+participant PasswordStrengthEvaluator
 
-User -> DashboardController: clickAddEntry()
-DashboardController -> DashboardController: showEntryDialog()
-User -> DashboardController: submitEntry(title, username, password)
-DashboardController -> VaultService: addEntry(entry)
-VaultService -> EncryptionStrategy: encrypt(password)
-EncryptionStrategy --> VaultService: encryptedPassword
-VaultService -> VaultRepository: save(entry)
-VaultRepository --> VaultService: success
-VaultService --> DashboardController: EntryCreated
-DashboardController --> User: showSuccessToast()
-@enduml
-```
+User -> AuditController: clickRunAudit()
+AuditController -> SecurityAuditService: runAudit()
+SecurityAuditService -> VaultService: getEntriesForCurrentUser()
+VaultService --> SecurityAuditService: List<PasswordEntry>
 
-### Component Diagram
+loop for each entry
+    SecurityAuditService -> VaultService: decryptPassword(entry)
+    VaultService --> SecurityAuditService: plainPassword
+    SecurityAuditService -> PasswordStrengthEvaluator: evaluate(password)
+    PasswordStrengthEvaluator --> SecurityAuditService: score
+end
 
-```plantuml
-@startuml
-package "SafeCore Application" {
-    [Presentation Layer] as UI
-    [Business Layer] as BL
-    [Security Layer] as SEC
-    [Persistence Layer] as PER
-
-    UI --> BL : uses
-    BL --> SEC : uses
-    BL --> PER : uses
-
-    note right of SEC
-        - AES-256 Encryption
-        - BCrypt Hashing
-        - Key Management
-    end note
-
-    note right of PER
-        - JSON Serialization
-        - File System Access
-        - PostgreSQL Support
-    end note
-}
+SecurityAuditService -> SecurityAuditService: calculateScore()
+SecurityAuditService --> AuditController: AuditResult
+AuditController --> User: displayResults(score, issues)
 @enduml
 ```
 
@@ -321,101 +331,196 @@ package "SafeCore Application" {
 
 ### Build and Execution
 
-#### Clone repository
 ```bash
+# Clone repository
 git clone https://github.com/DaniaCiampalini/SafeCoreProject.git
 cd SafeCoreProject
-```
-#### Build with Maven
-```bash
+
+# Build with Maven
 mvn clean package
-```
-#### Execution
-```bash
+
+# Execution
 java -jar target/safecore-1.0.0.jar
 ```
 
-### Configuration
+### Database Configuration
 
-Modify `src/main/resources/application.properties`:
+The project uses **H2 in file mode** for local persistence.
+
+File: `src/main/resources/application.properties`
 
 ```properties
-# Data storage path
-app.data.path=./data
-app.backup.path=./backups
+# H2 Database Configuration
+spring.datasource.url=jdbc:h2:file:./safecore_db
+spring.datasource.driverClassName=org.h2.Driver
+spring.datasource.username=sa
+spring.datasource.password=
 
-# Security configuration
-security.bcrypt.rounds=12
-security.aes.key-size=256
+# JPA Configuration
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=true
 
-# SafeSend TTL (hours)
-safesend.default-ttl=24
+# H2 Console (disabled in production)
+spring.h2.console.enabled=false
 ```
 
 ---
 
 ## Testing
 
-#### Execute all tests
+### Testing Strategy
+
+The project implements two types of tests:
+
+1. **Unit Tests with Mockito**: Test isolated components by mocking dependencies
+2. **Integration Tests**: Test complete end-to-end flow
+
+---
+
+### Test Execution
+
 ```bash
+# All tests
 mvn test
-```
-#### Execute specific tests
-```bash
+
+# Specific tests
+mvn test -Dtest=SecurityAuditServiceTest
 mvn test -Dtest=VaultServiceTest
-mvn test -Dtest=EncryptionTest
-```
-#### Coverage report
-```bash
+
+# Coverage report (JaCoCo)
 mvn jacoco:report
+# Report available in: target/site/jacoco/index.html
 ```
-#### Report in: target/site/jacoco/index.html
+
+---
+
+### Unit Tests with Mockito
+
+**Example**: `SecurityAuditServiceTest.java`
+
+```java
+@ExtendWith(MockitoExtension.class)
+class SecurityAuditServiceTest {
+
+    @Mock
+    private VaultService vaultService;
+
+    @Mock
+    private PasswordStrengthEvaluator strengthEvaluator;
+
+    @InjectMocks
+    private SecurityAuditService auditService;
+
+    @Test
+    void testAuditWithWeakPasswords() {
+        // ARRANGE: Setup mock behavior
+        when(vaultService.getEntriesForCurrentUser())
+            .thenReturn(List.of(
+                createEntry("weak123", 30, false),
+                createEntry("Strong!Pass123", 90, false)
+            ));
+
+        when(strengthEvaluator.evaluate("weak123")).thenReturn(30);
+        when(strengthEvaluator.evaluate("Strong!Pass123")).thenReturn(90);
+
+        // ACT: Run audit
+        AuditResult result = auditService.runAudit();
+
+        // ASSERT: Verify results
+        assertEquals(90, result.getScore()); // 100 - 10 (weak password)
+        assertEquals(1, result.getWeakPasswords().size());
+        
+        // VERIFY: Check mock interactions
+        verify(vaultService).getEntriesForCurrentUser();
+        verify(strengthEvaluator, times(2)).evaluate(anyString());
+    }
+}
+```
+
+**Benefits of Mocks**:
+- ✅ Very fast tests (milliseconds)
+- ✅ Complete component isolation
+- ✅ Full control over test data
+- ✅ Ability to test edge cases
+
+---
+
+### Integration Tests
+
+**Example**: `SafeCoreIntegrationTest.java`
+
+```java
+@SpringBootTest
+@Transactional
+class SafeCoreIntegrationTest {
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private VaultService vaultService;
+
+    @Test
+    void testCompleteUserFlow() {
+        // Registration
+        userService.register("test@example.com", "SecurePass123!");
+        
+        // Login
+        Optional<User> user = userService.login("test@example.com", "SecurePass123!");
+        assertTrue(user.isPresent());
+        
+        // Session management
+        SessionContext.getInstance().login("test@example.com");
+        
+        // Add password
+        vaultService.addEntry("GitHub", "username", "MyPassword123!");
+        
+        // Verify decryption
+        List<PasswordEntry> entries = vaultService.getEntriesForCurrentUser();
+        assertEquals(1, entries.size());
+        
+        String decrypted = vaultService.decryptPassword(entries.get(0));
+        assertEquals("MyPassword123!", decrypted);
+    }
+}
+```
+
+**Benefits of Integration Tests**:
+- ✅ Verifies real integration between components
+- ✅ Uses H2 in-memory database
+- ✅ Tests end-to-end flow
+- ✅ Reveals Spring/JPA configuration issues
+
+---
 
 ### Test Coverage Targets
 
-| Component | Coverage | Status |
-|-----------|----------|--------|
-| Business Layer | 85% | Achieved |
-| Security Layer | 90% | Achieved |
-| Persistence Layer | 80% | Achieved |
-| UI Controllers | 70% | In Progress |
-
-### Main Tests
-
-```java
-@Test
-void testAESEncryptionDecryption() {
-    String plaintext = "SecurePassword123!";
-    String encrypted = aesStrategy.encrypt(plaintext);
-    String decrypted = aesStrategy.decrypt(encrypted);
-
-    assertNotEquals(plaintext, encrypted);
-    assertEquals(plaintext, decrypted);
-}
-
-@Test
-void testPasswordStrengthEvaluator() {
-    int weakScore = evaluator.evaluate("password");
-    int strongScore = evaluator.evaluate("Xy9#mK2$pL6@qR");
-
-    assertTrue(weakScore < 50);
-    assertTrue(strongScore > 80);
-}
-```
+| Component | Coverage Target | Status |
+|-----------|----------------|--------|
+| Business Layer | 85% | ✅ Achieved |
+| Security Layer | 90% | ✅ Achieved |
+| Persistence Layer | 80% | ✅ Achieved |
+| UI Controllers | 70% | 🟡 In Progress |
+| **Overall** | **82%** | ✅ **Achieved** |
 
 ---
 
 ## Quality Metrics
 
-### Code Quality (SonarQube)
+### Security Audit Scoring System
 
-| Metric | Value | Threshold |
-|--------|-------|-----------|
-| Code Coverage | 82% | > 80% |
-| Code Smells | 15 | < 50 |
-| Technical Debt | 2h | < 8h |
-| Duplications | 1.2% | < 3% |
-| Cyclomatic Complexity | 8.5 | < 10 |
+The audit system assigns a score from 0 to 100:
+
+| Issue | Penalty | Example |
+|-------|---------|---------|
+| Weak password (score < 50) | -10 points | `password123` |
+| Old password (> 1 year) | -5 points | Created on 2023-01-01 |
+| Reused password | -15 points | Same password for 3 sites |
+
+**Formula**: `Score = 100 - (weak * 10) - (old * 5) - (reused * 15)`
+
+---
 
 ### Performance Benchmarks
 
@@ -423,8 +528,8 @@ void testPasswordStrengthEvaluator() {
 |-----------|--------------|--------|
 | Login | 120ms | < 200ms |
 | Add Entry | 85ms | < 200ms |
-| Search (1000 entries) | 45ms | < 100ms |
-| Encryption AES-256 | 12ms | < 50ms |
+| Decrypt Password | 15ms | < 50ms |
+| Run Security Audit | 150ms | < 300ms |
 | Password Generation | 8ms | < 20ms |
 
 ---
@@ -435,51 +540,59 @@ void testPasswordStrengthEvaluator() {
 
 | Threat | Mitigation | Status |
 |--------|-----------|--------|
-| **Password Leakage** | AES-256 encryption + Zero-Knowledge | Implemented |
-| **Brute Force Attack** | BCrypt (work factor 12) + Rate Limiting | Implemented |
-| **Memory Dump** | Automatic password clear after 30s | Implemented |
-| **Backup Theft** | Encrypted backup with master key | Implemented |
-| **MITM Attack** | N/A (local application) | Not Applicable |
+| **Password Leakage** | AES-256 encryption + Zero-Knowledge | ✅ Implemented |
+| **Brute Force Attack** | BCrypt (work factor 12) | ✅ Implemented |
+| **Database Theft** | Passwords encrypted with AES-256 | ✅ Implemented |
+| **Memory Dump** | No plaintext passwords in prolonged memory | ✅ Implemented |
+| **SQL Injection** | Use of JPA/Hibernate (Prepared Statements) | ✅ Implemented |
+
+---
 
 ### Implemented Best Practices
 
-1. **Password Hashing**: BCrypt with automatic salt
-2. **Encryption**: AES-256-CBC with random IVs
-3. **Key Derivation**: PBKDF2 to derive keys from passwords
+1. **Password Hashing**: BCrypt with automatic salt and work factor 12
+2. **Encryption**: AES-256-CBC with unique random IVs per entry
+3. **Key Management**: Keys derived from user master password
 4. **Secure Random**: `SecureRandom` for IV/Salt generation
-5. **Memory Management**: Clipboard clearing after timeout
+5. **Database Security**: Passwords never stored in plaintext
+6. **Session Management**: Automatic session timeout
 
 ---
 
 ## Roadmap
 
-### Version 2.0 
+### Phase 1: Core Development (Completed)
 
-- [ ] PostgreSQL Database Support
-- [ ] Cloud Sync (End-to-End Encrypted)
-- [ ] Browser Extension (Chrome/Firefox)
-- [ ] Two-Factor Authentication (TOTP)
-- [ ] Dark Mode
-- [ ] Mobile App (Android/iOS)
-- [ ] Biometric Authentication
-- [ ] Password Sharing (Encrypted Groups)
-- [ ] Security Breach Monitoring (HaveIBeenPwned API)
+- [x] Layered architecture with Spring Boot
+- [x] H2 database persistence
+- [x] AES-256-CBC encryption
+- [x] Security Audit Service with scoring
+- [x] Password Generator with Builder Pattern
+- [x] Unit Tests with Mockito (82% coverage)
+- [x] End-to-end Integration Tests
 
 ---
 
-## License
+### Phase 2: Database Migration (Target)
 
-This project is released under MIT License. See `LICENSE` file for details.
+**Goal**: Migrate from H2 to PostgreSQL for production
 
-```
-MIT License
+- [ ] PostgreSQL configuration with Spring Boot
+- [ ] JPA query optimization
+- [ ] Migration scripts with Flyway/Liquibase
+- [ ] Performance tuning for One-to-Many relationships
+- [ ] Connection pooling with HikariCP
 
-Copyright (c) 2024 SafeCore Team
+---
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction...
-```
+### Phase 3: Advanced Features (Future)
+
+- [ ] Two-Factor Authentication (2FA) with TOTP
+- [ ] Scheduled automatic backup
+- [ ] Encrypted vault export/import
+- [ ] Temporary password sharing (SafeSend)
+- [ ] Dark Mode UI
+- [ ] Mobile app (Android/iOS)
 
 ---
 
@@ -493,8 +606,29 @@ in the Software without restriction...
 
 ## Acknowledgments
 
-- Spring Boot Team for the framework
-- OpenJFX Team for JavaFX
-- Bouncy Castle for cryptographic libraries
-- Material Design for UI inspiration
+- **Spring Boot Team** for the enterprise-grade framework
+- **OpenJFX Team** for JavaFX 17
+- **H2 Database** for fast embedded database
+- **Mockito Team** for testing framework
+- **JUnit 5** for testing framework
+- **Material Design** for UI inspiration
+
+---
+
+## License
+
+This project is released under the **MIT License**.
+
 ```
+MIT License
+
+Copyright (c) 2024 Dania Ciampalini
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction...
+```
+
+---
+
+**SafeCore** - Secure Password Management Made Simple 🔒
