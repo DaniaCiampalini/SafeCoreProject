@@ -50,7 +50,6 @@ public class UserServiceImpl implements UserService {
         UserEntity entity = new UserEntity();
         entity.setEmail(email);
         entity.setPasswordHash(hashedPassword);
-        entity.setMfaEnabled(false);
 
         UserEntity saved = userRepository.save(entity);
 

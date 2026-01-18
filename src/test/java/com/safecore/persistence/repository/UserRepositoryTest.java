@@ -36,7 +36,6 @@ class UserRepositoryTest {
         testUser = new UserEntity();
         testUser.setEmail("test@example.com");
         testUser.setPasswordHash("hashedPassword123");
-        testUser.setMfaEnabled(false);
         testUser = entityManager.persistAndFlush(testUser);
     }
 

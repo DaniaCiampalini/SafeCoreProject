@@ -40,7 +40,6 @@ class PasswordResetTokenRepositoryTest {
         testUser = new UserEntity();
         testUser.setEmail("user@example.com");
         testUser.setPasswordHash("hashedPassword");
-        testUser.setMfaEnabled(false);
         testUser = entityManager.persistAndFlush(testUser);
     }
 

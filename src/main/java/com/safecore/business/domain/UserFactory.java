@@ -20,9 +20,8 @@ public final class UserFactory {
     public static User createNew(
             UUID id,
             String email,
-            String passwordHash,
-            boolean mfaEnabled
+            String passwordHash
     ) {
-        return new User(id, email, passwordHash, mfaEnabled);
+        return new User(id, email, passwordHash);
     }
 }

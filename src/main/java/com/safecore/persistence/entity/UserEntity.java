@@ -5,10 +5,13 @@ import jakarta.persistence.*;
 import java.util.UUID;
 
 /**
- * Questa invece è l'Entity per il database.
- * A differenza del Domain Model, qui usiamo Hibernate/JPA per mappare
- * i campi direttamente sulla tabella "users".
+ * Entity JPA che rappresenta un utente nel database.
+ * Mappa la tabella "users".
+ * Contiene campi per email, password hash e stato MFA.
+ * Usata da UserRepository per operazioni CRUD sugli utenti.
+ * Spring Data JPA si occupa di generare il SQL dietro le quinte.
  */
+
 @Entity
 @Table(name = "users")
 public class UserEntity {
@@ -22,10 +25,7 @@ public class UserEntity {
     private String email;
 
     @Column(nullable = false)
-    private String passwordHash; // Ovviamente salviamo l'hash, mai la password vera!
-
-    @Column(nullable = false)
-    private boolean mfaEnabled;
+    private String passwordHash;
 
     public UserEntity() {
     } // JPA vuole sempre un costruttore vuoto
@@ -34,10 +34,8 @@ public class UserEntity {
     public UserEntity(String email, String passwordHash) {
         this.email = email;
         this.passwordHash = passwordHash;
-        this.mfaEnabled = false;
     }
 
-    // Getter e Setter
     public UUID getId() {
         return id;
     }
@@ -62,11 +60,4 @@ public class UserEntity {
         this.passwordHash = ph;
     }
 
-    public boolean isMfaEnabled() {
-        return mfaEnabled;
-    }
-
-    public void setMfaEnabled(boolean mfa) {
-        this.mfaEnabled = mfa;
-    }
 }

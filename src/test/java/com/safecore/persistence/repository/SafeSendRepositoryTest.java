@@ -42,7 +42,6 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("main-test@example.com");
         user.setPasswordHash("hash");
-        user.setMfaEnabled(false);
         user = entityManager.persistAndFlush(user);
 
         // Entry attiva (non scaduta)
@@ -69,7 +68,6 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("saveandfind-" + UUID.randomUUID() + "@example.com");
         user.setPasswordHash("hash");
-        user.setMfaEnabled(false);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntryEntity newEntry = new SafeSendEntryEntity();
@@ -94,7 +92,6 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("findall-" + UUID.randomUUID() + "@example.com");
         user.setPasswordHash("hash");
-        user.setMfaEnabled(false);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntryEntity entry3 = new SafeSendEntryEntity();
