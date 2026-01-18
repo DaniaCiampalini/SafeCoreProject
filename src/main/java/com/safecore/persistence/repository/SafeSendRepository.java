@@ -9,6 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Repository per gestire le SafeSendEntry nel database.
+ * Estende JpaRepository per fornire operazioni CRUD di base.
+ * Spring si occupa di scrivere SQL dietro le quinte.
+ */
+
 @Repository
 public interface SafeSendRepository extends JpaRepository<SafeSendEntryEntity, UUID> {
 

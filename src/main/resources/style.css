@@ -7,8 +7,7 @@
     -fx-font-smoothing-type: gray;
 }
 
-/* Palette Colori - Sicurezza e Chiarezza */
-/* Blu Profondo: #1e3a8a, Blu Chiaro: #3b82f6, Grigio Soft: #f3f4f6 */
+/* Palette Colori: Blu Profondo: #1e3a8a, Blu Chiaro: #3b82f6, Grigio Soft: #f3f4f6 */
 
 .title-label {
     -fx-font-size: 28px;
@@ -94,7 +93,7 @@
     -fx-border-width: 1.5;
 }
 
-/* TableView moderna */
+/* TableView */
 .table-view {
     -fx-background-color: transparent;
     -fx-background-radius: 15;

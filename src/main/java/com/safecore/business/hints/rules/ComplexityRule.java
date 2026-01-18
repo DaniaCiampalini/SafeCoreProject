@@ -8,8 +8,10 @@ import java.util.Optional;
 
 /**
  * Regola: la password deve essere un mix di caratteri diversi.
- * Usare solo lettere minuscole è come chiudere la porta di casa lasciando la chiave nella serratura.
+ * Usare lettere maiuscole, minuscole e numeri.
+ * Se manca uno di questi, restituisce un suggerimento informativo.
  */
+
 @Component
 public class ComplexityRule implements PasswordRule {
     @Override
@@ -22,7 +24,7 @@ public class ComplexityRule implements PasswordRule {
 
         if (!(hasUpper && hasLower && hasDigit)) {
             return Optional.of(new PasswordHint(
-                    "Mixala un po': aggiungi maiuscole e numeri!",
+                    "Aggiungi maiuscole e numeri!",
                     HintLevel.INFO
             ));
         }

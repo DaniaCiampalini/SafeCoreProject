@@ -19,8 +19,8 @@ import java.time.format.DateTimeFormatter;
 
 /**
  * Controller per il recupero password.
- * Se un utente dimentica la password, può richiedere un "token" di reset.
- * In questa versione demo, il token viene mostrato direttamente a video invece
+ * Se un utente dimentica la password può richiedere un "token" di reset.
+ * In questa versione, il token viene mostrato direttamente a video invece
  * di essere inviato per email.
  */
 @Component
@@ -50,7 +50,7 @@ public class PasswordResetController implements PasswordResetObserver {
     @PostConstruct
     void registerObserver() {
         eventPublisher.register(this);
-    }
+    }  // Necessario per intercettare la conferma asincrona dal DB
 
     @PreDestroy
     void unregisterObserver() {
@@ -68,7 +68,7 @@ public class PasswordResetController implements PasswordResetObserver {
             return;
         }
         try {
-            // Simuliamo l'invio: il service genera il token e noi lo mostriamo
+            // Genera il token e mostra a video
             PasswordResetRequestResult result = resetService.requestReset(email);
             showInfo("Token generato (valido fino alle " + result.getExpiresAt().format(timeFormatter) + "): " + result.getToken());
         } catch (Exception e) {
@@ -91,24 +91,19 @@ public class PasswordResetController implements PasswordResetObserver {
         }
 
         try {
-            // Se il token è valido, la password viene aggiornata
             resetService.resetPassword(email, token, newPassword);
-            // Feedback immediato: il redirect arriverà quando l'operazione sarà confermata a DB
             showInfo("Password resettata correttamente. Verrai reindirizzato al login a breve.");
-            // Evita richieste duplicate finché non arriva la conferma definitiva dall'evento
-            disableResetForm();
+            disableResetForm();  // Preveniamo invii multipli
         } catch (InvalidTokenException ex) {
             showError("Token non valido o scaduto. Richiedi un nuovo token e riprova.");
         } catch (UserNotFoundException ex) {
-            showError("Nessun account trovato per questa email.");
+            showError("Nessun account trovato per questa email.");  // Edge case: l'utente potrebbe essere stato rimosso tra la richiesta e il reset
         } catch (Exception e) {
             showError("Errore durante il reset: " + e.getMessage());
         }
     }
 
-    /**
-     * Anche qui, aiutiamo l'utente a scegliere una password forte.
-     */
+
     @FXML
     private void handleGeneratePassword() {
         try {

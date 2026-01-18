@@ -7,9 +7,9 @@ import java.security.SecureRandom;
 import java.util.List;
 
 /**
- * Questo è il nostro "chef" delle password.
- * Non si limita a buttare caratteri a caso, ma segue una ricetta precisa per
- * assicurarsi che la password sia digeribile (sicura) per i nostri standard.
+ * Generatore di password sicure.
+ * Utilizza regole di sicurezza e un valutatore di robustezza per creare password che
+ * rispettano i criteri di sicurezza.
  */
 @Component
 public class PasswordGenerator {
@@ -20,7 +20,7 @@ public class PasswordGenerator {
     private static final String SYMBOLS = "!@#$%^&*()-_=+[]{}";
     private static final String ALL = LOWER + UPPER + DIGITS + SYMBOLS;
 
-    // SecureRandom è molto meglio di Random per la crittografia (è meno prevedibile)
+    // SecureRandom meglio di Random per la crittografia perché più imprevedibile
     private final SecureRandom random = new SecureRandom();
     private final List<PasswordRule> rules;
     private final PasswordStrengthEvaluator evaluator;
@@ -31,18 +31,17 @@ public class PasswordGenerator {
     }
 
     /**
-     * Genera una password che siamo sicuri passerà tutti i nostri test di sicurezza.
+     * Genera una password sicura che rispetta tutte le regole e ha una robustezza elevata.
      */
     public String generateSafe(int length) {
         String password;
         boolean isValid;
-        int finalLength = Math.max(length, 12); // Almeno 12 caratteri, altrimenti non è seria
+        int finalLength = Math.max(length, 16);
 
-        // Continuiamo a generare finché non ne troviamo una che ci piace davvero
+
         do {
             password = generateRaw(finalLength);
             String current = password;
-            // Controlliamo se rispetta tutte le regole (MinLength, Complexity, ecc.)
             isValid = rules.stream().allMatch(r -> r.check(current).isEmpty())
                     && evaluator.evaluate(current) == PasswordStrengthEvaluator.Strength.STRONG;
         } while (!isValid);
@@ -55,17 +54,15 @@ public class PasswordGenerator {
      */
     private String generateRaw(int length) {
         StringBuilder sb = new StringBuilder(length);
-        // Assicuriamoci di avere un po' di tutto
         sb.append(randomChar(LOWER));
         sb.append(randomChar(UPPER));
         sb.append(randomChar(DIGITS));
         sb.append(randomChar(SYMBOLS));
 
-        // Completiamo la lunghezza richiesta
         for (int i = 4; i < length; i++) {
             sb.append(randomChar(ALL));
         }
-        // Mischiamo il tutto così i caratteri garantiti non sono sempre all'inizio
+        // Mescola per evitare schemi prevedibili
         return shuffle(sb.toString());
     }
 
@@ -75,6 +72,7 @@ public class PasswordGenerator {
 
     /**
      * Algoritmo di Fisher-Yates per mescolare la stringa in modo equo.
+     * Garantisce che la password non abbia schemi prevedibili.
      */
     private String shuffle(String input) {
         char[] chars = input.toCharArray();

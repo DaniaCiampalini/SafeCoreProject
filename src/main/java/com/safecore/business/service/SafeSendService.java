@@ -2,6 +2,11 @@ package com.safecore.business.service;
 
 import java.util.UUID;
 
+/**
+ * Servizio per la funzionalità Safe Send.
+ * Permette di creare link sicuri per condividere segreti monouso.
+ */
+
 public interface SafeSendService {
     /**
      * Crea un link sicuro per condividere un segreto.

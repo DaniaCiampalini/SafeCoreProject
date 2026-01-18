@@ -14,6 +14,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+/**
+ * Implementazione del servizio per la gestione degli utenti.
+ * Qui gestiamo la registrazione e il login.
+ * Usiamo transazioni per garantire la coerenza dei dati.
+ */
+
 @Service
 public class UserServiceImpl implements UserService {
 
@@ -21,9 +27,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordHasher passwordHasher;
     private final PasswordStrengthEvaluator strengthEvaluator;
 
-    // Qui le dipendenze vengono iniettate da Spring in automatico.
-    // Usiamo le interfacce (es. PasswordHasher) così se cambiamo implementazione
-    // (magari passiamo da BCrypt ad Argon2) questo codice non cambia.
+    // Costruttore con iniezione delle dipendenze
     public UserServiceImpl(UserRepository userRepository,
                            PasswordHasher passwordHasher,
                            PasswordStrengthEvaluator strengthEvaluator) {
@@ -35,16 +39,12 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public User register(String email, String plainPassword) {
-        // Prima di tutto, controlliamo se la password è abbastanza robusta.
-        // Se non lo è, lanciamo un'eccezione e il database non viene toccato.
         validatePasswordStrength(plainPassword);
 
-        // Vediamo se l'utente esiste già
         if (userRepository.existsByEmail(email)) {
             throw new UserAlreadyExistsException(email);
         }
 
-        // MAI salvare la password in chiaro! Creiamo un hash sicuro.
         String hashedPassword = passwordHasher.hash(plainPassword);
 
         UserEntity entity = new UserEntity();
@@ -52,11 +52,8 @@ public class UserServiceImpl implements UserService {
         entity.setPasswordHash(hashedPassword);
         entity.setMfaEnabled(false);
 
-        // Salviamo l'Entity sul DB
         UserEntity saved = userRepository.save(entity);
 
-        // Restituiamo l'oggetto di dominio "User" (creato con il Builder pattern)
-        // così chi chiama il service non deve preoccuparsi dei dettagli del database.
         return new UserBuilder()
                 .id(saved.getId())
                 .email(saved.getEmail())

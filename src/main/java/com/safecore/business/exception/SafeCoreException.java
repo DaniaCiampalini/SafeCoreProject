@@ -1,9 +1,7 @@
 package com.safecore.business.exception;
 
 /**
- * La "mamma" di tutte le nostre eccezioni personalizzate.
- * Estende RuntimeException così non siamo obbligati a dichiararle sempre (le catturiamo
- * in modo centralizzato nel GlobalExceptionHandler).
+ * Eccezione base per tutte le eccezioni specifiche di SafeCore.
  */
 public abstract class SafeCoreException extends RuntimeException {
     public SafeCoreException(String message) {

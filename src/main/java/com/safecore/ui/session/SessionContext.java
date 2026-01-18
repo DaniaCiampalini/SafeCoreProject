@@ -2,15 +2,14 @@ package com.safecore.ui.session;
 
 import java.time.LocalDateTime;
 
+
 /**
- * Questa classe è come il "passaporto" dell'utente.
- * È un Singleton (centralizzato) che si ricorda chi è loggato in questo momento.
- * In questo modo, qualsiasi parte dell'app (Service, Controller, ecc.) può sapere
- * chi sta facendo cosa senza dover passare l'utente avanti e indietro come un pallone.
+ * Tiene traccia di chi è loggato nell'applicazione desktop.
+ * Usata dai controller per sapere l'utente "corrente".
  */
 public final class SessionContext {
 
-    // L'email dell'utente loggato. Usiamo volatile per la visibilità tra i thread.
+    // Variabili statiche per tenere traccia dell'utente loggato
     private static volatile String loggedUserEmail;
     private static LocalDateTime loginTime;
 
@@ -19,7 +18,7 @@ public final class SessionContext {
     }
 
     /**
-     * Chiamato dal LoginController quando l'utente azzecca la password.
+     * Imposta l'utente loggato.
      */
     public static void login(String email) {
         if (email == null || email.isBlank()) {
@@ -30,28 +29,24 @@ public final class SessionContext {
         System.out.println("Benvenuto! Sessione avviata per: " + email);
     }
 
-    /**
-     * Pulisce tutto: l'utente non è più loggato.
-     */
+
     public static void logout() {
         loggedUserEmail = null;
         loginTime = null;
     }
 
-    /**
-     * Ci dice se c'è qualcuno "al volante" dell'app.
-     */
+
     public static boolean isLoggedIn() {
         return loggedUserEmail != null;
     }
 
     /**
-     * Recupera l'email di chi è loggato.
-     * Se nessuno è loggato, lancia un errore: è un controllo di sicurezza in più.
+     * Restituisce l'email dell'utente loggato.
+     * Lancia un'eccezione se nessun utente è loggato.
      */
     public static String getCurrentUserEmail() {
         if (!isLoggedIn()) {
-            throw new IllegalStateException("Alt! Nessun utente loggato. Accesso negato.");
+            throw new IllegalStateException("Nessun utente loggato. Accesso negato.");
         }
         return loggedUserEmail;
     }

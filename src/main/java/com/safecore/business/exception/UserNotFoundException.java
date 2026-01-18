@@ -5,6 +5,6 @@ package com.safecore.business.exception;
  */
 public class UserNotFoundException extends SafeCoreException {
     public UserNotFoundException(String email) {
-        super("Spiacente, non ho trovato nessun utente con l'email: " + email);
+        super("Spiacente, non esiste nessun utente con l'email: " + email);
     }
 }

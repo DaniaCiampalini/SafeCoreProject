@@ -4,8 +4,13 @@ import com.safecore.business.domain.AuditResult;
 import com.safecore.business.service.SecurityAuditService;
 import javafx.fxml.FXML;
 import javafx.scene.control.Label;
-import javafx.scene.layout.VBox;
 import org.springframework.stereotype.Component;
+
+/**
+ * Gestisce la vista di riepilogo sullo stato di sicurezza delle password (Security Audit).
+ * Questo controller dipende strettamente dalla gerarchia FXML della Dashboard
+ * per la gestione della chiusura dell'overlay.
+ */
 
 @Component
 public class AuditController {
@@ -34,7 +39,6 @@ public class AuditController {
         reusedCountLabel.setText(String.valueOf(result.reusedCount()));
         oldCountLabel.setText(String.valueOf(result.oldCount()));
 
-        // Cambio colore dinamico basato sul punteggio
         if (result.score() >= 80) scoreLabel.setStyle("-fx-text-fill: #15803d; -fx-font-size: 24; -fx-font-weight: bold;");
         else if (result.score() >= 50) scoreLabel.setStyle("-fx-text-fill: #d97706; -fx-font-size: 24; -fx-font-weight: bold;");
         else scoreLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-size: 24; -fx-font-weight: bold;");
@@ -42,7 +46,7 @@ public class AuditController {
 
     @FXML
     private void handleClose() {
-        // Logica per chiudere l'overlay (verrà gestita tramite il DashboardController o un evento)
+        // Se si rinominano gli ID nel FXML della Dashboard, questo si rompe. TODO EventBus?
         scoreLabel.getScene().lookup("#overlay").setVisible(false);
         scoreLabel.getScene().lookup("#auditOverlayCard").setVisible(false);
     }

@@ -6,9 +6,8 @@ import javafx.scene.control.ButtonType;
 import org.springframework.stereotype.Component;
 
 /**
- * Questa classe è come il pronto soccorso dell'app.
- * Se qualcosa va storto e viene lanciata un'eccezione che nessuno ha catturato,
- * finisce qui. Invece di far sparire l'app nel nulla, mostriamo un bel messaggio di errore all'utente.
+ * Gestore globale delle eccezioni.
+ * Mostra un popup di errore ogni volta che viene chiamato il metodo handle.
  */
 @Component
 public class GlobalExceptionHandler {
@@ -26,11 +25,8 @@ public class GlobalExceptionHandler {
         });
     }
 
-    /**
-     * Gestisce le eccezioni generiche, mostrandole in un popup di errore.
-     */
+
     public void handle(Throwable e) {
-        // Stampiamo comunque l'errore in console, che per il debug serve sempre.
         e.printStackTrace();
 
         // Usiamo Platform.runLater perché gli Alert di JavaFX devono girare sul thread della UI.

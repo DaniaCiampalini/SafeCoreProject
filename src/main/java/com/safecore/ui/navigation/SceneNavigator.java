@@ -12,43 +12,38 @@ import org.springframework.context.ApplicationContext;
 import java.net.URL;
 
 /**
- * Questo è il "vigile urbano" dell'app. Gestisce il traffico tra le varie finestre (scene).
- * La cosa figa è che integra Spring con JavaFX: quando carichiamo una nuova schermata,
- * chiediamo a Spring di darci il Controller, così l'iniezione delle dipendenze (@Autowired)
- * continua a funzionare anche nella UI.
+ * Utility per la navigazione tra le schermate dell'app JavaFX.
+ * Supporta transizioni fluide e l'integrazione con Spring per i controller.
+ * Gestisce anche la sicurezza delle pagine protette.
  */
+
 public final class SceneNavigator {
 
-    // Quanto deve durare l'effetto "dissolvenza" tra una pagina e l'altra
     private static final Duration FADE_DURATION = Duration.millis(300);
     private static ApplicationContext springContext;
 
     private SceneNavigator() {
-        // Classe utility: non vogliamo che nessuno crei un oggetto SceneNavigator
+        // Classe utility: vogliamo che nessuno crei un oggetto SceneNavigator
     }
 
-    /**
-     * Ci serve per passare il contesto di Spring così possiamo pescare i Controller.
-     */
+    // Iniettiamo il contesto Spring all'avvio dell'app
     public static void setContext(ApplicationContext context) {
         springContext = context;
     }
 
     /**
      * Il metodo principale per cambiare schermata.
-     * Gestisce anche la sicurezza (se non sei loggato, ti rimanda al login).
+     * Gestisce anche la sicurezza: se la pagina è protetta e l'utente non è loggato,
+     * lo rimanda alla pagina di login.
      */
     public static void switchTo(Stage stage, String fxmlPath, String title) {
         try {
-            // 1. Controllo Accessi (Security Guard)
-            // Se provi a entrare nella dashboard senza esserti loggato, ti rispediamo indietro!
             if (isProtectedScene(fxmlPath) && !SessionContext.isLoggedIn()) {
                 System.out.println("Alt! Accesso negato: devi prima fare il login.");
                 fxmlPath = "/com/safecore/ui/view/login.fxml";
                 title = "SafeCore – Login";
             }
 
-            // 2. Caricamento FXML con Spring
             URL fxmlResource = SceneNavigator.class.getResource(fxmlPath);
             if (fxmlResource == null) {
                 throw new RuntimeException("Cavolo, non trovo il file FXML: " + fxmlPath);
@@ -56,7 +51,7 @@ public final class SceneNavigator {
 
             FXMLLoader loader = new FXMLLoader(fxmlResource);
 
-            // Questa è la parte magica: diciamo a JavaFX di usare Spring per creare i Controller.
+            // Integrazione Spring-JavaFX, i controller li prende da Spring
             if (springContext != null) {
                 loader.setControllerFactory(springContext::getBean);
             }
@@ -64,45 +59,37 @@ public final class SceneNavigator {
             Parent root = loader.load();
             Scene scene = stage.getScene();
 
-            // 3. Gestione Scena e Transizioni
             if (scene == null) {
-                // Se è la prima volta che apriamo una finestra, creiamo la scena
                 scene = new Scene(root);
                 stage.setScene(scene);
             } else {
-                // Se c'era già qualcosa, facciamo un bel passaggio fluido
                 playTransition(scene, root);
             }
 
-            // 4. Carichiamo lo stile grafico (CSS)
             applyGlobalStyles(scene);
 
             stage.setTitle(title);
             stage.show();
 
         } catch (Exception e) {
-            System.err.println("BRUTTA NOTIZIA: Errore navigazione [" + fxmlPath + "]: " + e.getMessage());
+            System.err.println("Errore navigazione [" + fxmlPath + "]: " + e.getMessage());
             e.printStackTrace();
             throw new RuntimeException("Errore critico durante il cambio scena.", e);
         }
     }
 
-    /**
-     * Fa sparire la vecchia schermata e apparire quella nuova in modo morbido.
-     */
+
     private static void playTransition(Scene scene, Parent newRoot) {
         Parent oldRoot = scene.getRoot();
 
-        // Dissolvenza in uscita (Fade Out)
         FadeTransition fadeOut = new FadeTransition(FADE_DURATION, oldRoot);
         fadeOut.setFromValue(1.0);
         fadeOut.setToValue(0.0);
 
         fadeOut.setOnFinished(e -> {
-            newRoot.setOpacity(0); // Inizia da trasparente
+            newRoot.setOpacity(0);
             scene.setRoot(newRoot);
 
-            // Dissolvenza in entrata (Fade In)
             FadeTransition fadeIn = new FadeTransition(FADE_DURATION, newRoot);
             fadeIn.setFromValue(0.0);
             fadeIn.setToValue(1.0);
@@ -113,7 +100,7 @@ public final class SceneNavigator {
     }
 
     /**
-     * Applica il file CSS a tutte le scene, così non dobbiamo farlo a mano ogni volta.
+     * Applica il file CSS a tutte le scene per unformare lo stile grafico.
      */
     private static void applyGlobalStyles(Scene scene) {
         URL cssResource = SceneNavigator.class.getResource("/style.css");

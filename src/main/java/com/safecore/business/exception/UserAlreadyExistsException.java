@@ -5,6 +5,6 @@ package com.safecore.business.exception;
  */
 public class UserAlreadyExistsException extends SafeCoreException {
     public UserAlreadyExistsException(String email) {
-        super("Ehilà! Un account con l'email " + email + " esiste già. Prova a fare il login.");
+        super("Un account con l'email " + email + " esiste già. Prova a fare il login.");
     }
 }

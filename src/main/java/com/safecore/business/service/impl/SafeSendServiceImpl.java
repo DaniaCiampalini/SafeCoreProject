@@ -19,9 +19,9 @@ import java.util.UUID;
 /**
  * Implementazione del servizio SafeSend per la condivisione sicura e temporanea di segreti.
  * Gestisce la cifratura del contenuto, la generazione di token monouso e l'autodistruzione.
- * * @author Dania Ciampalini
- * @version 1.0
+ * Utilizza transazioni per garantire la coerenza dei dati.
  */
+
 @Service
 public class SafeSendServiceImpl implements SafeSendService {
 
@@ -58,10 +58,8 @@ public class SafeSendServiceImpl implements SafeSendService {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
-        // Cifratura del contenuto tramite la strategia iniettata (AES)
         byte[] encrypted = encryptionStrategy.encrypt(content);
 
-        // Generazione token segreto monouso (non salvato in chiaro nel DB)
         String token = generateToken();
         String tokenHash = passwordHasher.hash(token);
 
@@ -74,7 +72,6 @@ public class SafeSendServiceImpl implements SafeSendService {
 
         SafeSendEntryEntity saved = safeSendRepository.save(entry);
 
-        // Notifica il VaultService affinché la UI reagisca al cambiamento
         vaultService.notifyObservers();
 
         // Ritorna il link completo: il token "t" è l'unica chiave per l'accesso
@@ -94,25 +91,21 @@ public class SafeSendServiceImpl implements SafeSendService {
         SafeSendEntryEntity entry = safeSendRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Il link non esiste più o è stato già usato."));
 
-        // Controllo scadenza temporale
         if (entry.getExpiresAt().isBefore(LocalDateTime.now())) {
             safeSendRepository.delete(entry);
             vaultService.notifyObservers();
             throw new RuntimeException("Questo link è scaduto.");
         }
 
-        // Verifica crittografica del token tramite hash
         if (entry.getTokenHash() == null || !passwordHasher.verify(token, entry.getTokenHash())) {
             throw new RuntimeException("Token non valido o link manomesso.");
         }
 
-        // Decifratura del contenuto
         String decrypted = encryptionStrategy.decrypt(entry.getEncryptedContent());
 
-        // Pattern "Burn after reading": eliminazione immediata
         safeSendRepository.delete(entry);
 
-        // Notifica per aggiornare eventuali statistiche nella dashboard
+
         vaultService.notifyObservers();
 
         return decrypted;

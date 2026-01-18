@@ -5,6 +5,15 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Entity JPA che rappresenta una voce di password nel database.
+ * Mappa la tabella "password_entries".
+ * Contiene campi per nome del servizio, username, password crittografata, data di creazione e scadenza.
+ * Ha una relazione Many-to-One con UserEntity.
+ * Usata da PasswordEntryRepository per operazioni CRUD sulle voci di password.
+ * Spring Data JPA si occupa di generare il SQL dietro le quinte.
+ */
+
 @Entity
 @Table(name = "password_entries")
 public class PasswordEntryEntity {
@@ -20,7 +29,7 @@ public class PasswordEntryEntity {
     @Column(nullable = false)
     private String username;
 
-    @Column(nullable = false, columnDefinition = "VARBINARY(1024)")
+    @Column(nullable = false, columnDefinition = "VARBINARY(1024)")  // Assumiamo una lunghezza massima di 1024 byte per la password crittografata
     private byte[] encryptedPassword;
 
     @Column(nullable = false)

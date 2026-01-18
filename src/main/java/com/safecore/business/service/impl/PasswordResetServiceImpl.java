@@ -19,6 +19,13 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.Base64;
 
+/**
+ * Implementazione del servizio per la gestione del reset della password.
+ * Si occupa di generare token di reset, validare token e aggiornare le password.
+ * Utilizza transazioni per garantire la coerenza dei dati.
+ * Pubblica eventi dopo il completamento del reset della password.
+ */
+
 @Service
 public class PasswordResetServiceImpl implements PasswordResetService {
 
@@ -78,7 +85,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         stored.setUsed(true);
         tokenRepository.save(stored);
 
-        // Pubblica l'evento solo dopo il commit della transazione per evitare inconsistenze
+
         PasswordResetCompletedEvent event = new PasswordResetCompletedEvent(email, LocalDateTime.now());
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
             TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
@@ -88,7 +95,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
                 }
             });
         } else {
-            // Se non c'è transazione attiva, pubblica immediatamente
             eventPublisher.publish(event);
         }
     }

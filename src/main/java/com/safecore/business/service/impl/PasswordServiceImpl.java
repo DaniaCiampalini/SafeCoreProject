@@ -15,9 +15,11 @@ import java.util.stream.Collectors;
 
 /**
  * Implementazione concreta della gestione password.
- * È qui che succede la magia della cifratura prima di salvare sul database.
- * Usiamo il concetto di "Zero Knowledge": il server (o il DB) vede solo byte cifrati.
+ * Si occupa di salvare, recuperare e cancellare le password cifrate.
+ * Usa una strategia di cifratura iniettata per mantenere il codice flessibile.
+ * Utilizza transazioni per garantire la coerenza dei dati.
  */
+
 @Service
 public class PasswordServiceImpl implements PasswordService {
 
@@ -29,9 +31,6 @@ public class PasswordServiceImpl implements PasswordService {
         this.encryption = encryption;
     }
 
-    /**
-     * Prende una password in chiaro, la trasforma in un ammasso di byte illeggibili e la salva.
-     */
     @Override
     @Transactional
     public void addCredential(String service, String username, String plainPassword) {
@@ -39,7 +38,6 @@ public class PasswordServiceImpl implements PasswordService {
             throw new IllegalArgumentException("La password non può essere vuota");
         }
 
-        // Cifriamo usando la strategia configurata (es. AES)
         byte[] encryptedData = encryption.encrypt(plainPassword);
 
         PasswordEntryEntity entity = new PasswordEntryEntity();
@@ -51,17 +49,12 @@ public class PasswordServiceImpl implements PasswordService {
         passwordRepository.save(entity);
     }
 
-    /**
-     * Decifra i byte salvati per far rivedere la password all'utente.
-     */
+    // Decifra i byte salvati per far rivedere la password all'utente.
     @Override
     public String getDecryptedPassword(PasswordEntry domainEntry) {
         return encryption.decrypt(domainEntry.getEncryptedPassword());
     }
 
-    /**
-     * Recupera tutto dal DB e lo trasforma in oggetti di dominio (puliti e pronti per l'uso).
-     */
     @Override
     @Transactional(readOnly = true)
     public List<PasswordEntry> getAllEntries() {
@@ -77,7 +70,8 @@ public class PasswordServiceImpl implements PasswordService {
     }
 
     /**
-     * Helper per convertire l'Entity (roba da DB) in Domain Object (roba da logica).
+     * Helper per mappare l'entità di persistenza in oggetto di dominio.
+     * Mantiene il codice pulito e separato.
      */
     private PasswordEntry mapToDomain(PasswordEntryEntity entity) {
         return new PasswordEntry.Builder()

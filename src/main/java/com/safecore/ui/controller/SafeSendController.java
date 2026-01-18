@@ -9,6 +9,12 @@ import org.springframework.stereotype.Component;
 
 import java.util.UUID;
 
+/**
+ * Controller per la funzionalità Safe Send.
+ * Permette di creare link sicuri per condividere dati sensibili
+ * e di accedere ai dati tramite link.
+ */
+
 @Component
 public class SafeSendController {
 
@@ -25,7 +31,6 @@ public class SafeSendController {
 
     @FXML
     public void initialize() {
-        // Popoliamo le opzioni di scadenza (1h, 12h, 24h, 1 settimana)
         if (safeSendExpiryCombo != null) {
             safeSendExpiryCombo.getItems().addAll(1, 12, 24, 168);
             safeSendExpiryCombo.setValue(24);

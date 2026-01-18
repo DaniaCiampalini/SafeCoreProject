@@ -16,7 +16,7 @@ public class SessionLogoutObserver implements PasswordResetObserver {
             throw new NullPointerException("Event cannot be null");
         }
 
-        // Invalida la sessione solo se l'utente corrente è quello che ha resettato la password
+        // Invalida solo se l'utente corrente è quello che ha resettato la password
         if (SessionContext.isLoggedIn()) {
             String currentUser = SessionContext.getCurrentUserEmail();
             if (currentUser.equalsIgnoreCase(event.getEmail())) {

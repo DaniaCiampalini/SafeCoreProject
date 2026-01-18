@@ -7,16 +7,17 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 /**
- * Regola: la password deve essere lunga almeno 8 caratteri.
- * Sotto questa soglia, la crittografia serve a poco perché è troppo facile da indovinare.
+ * Regola che verifica che la password abbia una lunghezza minima di 12 caratteri.
+ * Se la password è più corta, restituisce un suggerimento di avviso.
  */
+
 @Component
 public class MinLengthRule implements PasswordRule {
     @Override
     public Optional<PasswordHint> check(String password) {
-        if (password == null || password.length() < 8) {
+        if (password == null || password.length() < 12) {
             return Optional.of(new PasswordHint(
-                    "Mancano caratteri: ne servono almeno 8.",
+                    "Mancano caratteri: ne servono almeno 12.",
                     HintLevel.WARNING
             ));
         }

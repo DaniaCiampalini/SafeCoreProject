@@ -13,6 +13,7 @@ import java.util.Optional;
  * Servizio che analizza la robustezza delle password tramite un sistema a regole.
  * Utilizza il pattern Strategy (tramite la lista di PasswordRule) per validare l'input.
  */
+
 @Service
 public class PasswordHintService {
 
@@ -30,17 +31,14 @@ public class PasswordHintService {
     public PasswordHint evaluatePassword(String password) {
         List<PasswordHint> allHints = getHints(password);
 
-        // Cerchiamo se c'è almeno un problema grave (WARNING)
         Optional<PasswordHint> worstHint = allHints.stream()
                 .filter(h -> h.getLevel() == HintLevel.WARNING)
                 .findFirst();
 
-        // Se c'è un WARNING, lo restituiamo al controller per bloccare/avvisare
         if (worstHint.isPresent()) {
             return worstHint.get();
         }
 
-        // Se non ci sono problemi o solo INFO, diamo il via libera
         return new PasswordHint("La password rispetta i criteri di sicurezza.", HintLevel.INFO);
     }
 

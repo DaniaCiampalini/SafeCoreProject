@@ -22,6 +22,12 @@ import java.util.Base64;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * Servizio per gestire il vault delle password.
+ * Fornisce metodi per aggiungere, eliminare, esportare e importare voci del vault.
+ * Utilizza una strategia di crittografia per proteggere le password memorizzate.
+ */
+
 @Service
 public class VaultService {
 
@@ -37,8 +43,7 @@ public class VaultService {
         this.passwordEntryRepository = passwordEntryRepository;
         this.userRepository = userRepository;
 
-        // Qui usiamo il Factory Pattern: chiediamo alla factory la strategia di default (AES)
-        // Se domani vogliamo cambiare algoritmo, ci basta toccare la factory.
+        // Qui usiamo il Factory Pattern per ottenere la strategia di crittografia desiderata.
         this.encryptionStrategy = encryptionFactory.getDefaultStrategy();
         this.objectMapper = new ObjectMapper();
         this.objectMapper.registerModule(new JavaTimeModule());
@@ -63,8 +68,7 @@ public class VaultService {
 
         passwordEntryRepository.save(entity);
 
-        // Avvisiamo tutti quelli che stanno guardando il vault (es. la Dashboard)
-        // che i dati sono cambiati, così si aggiornano da soli.
+        // Notifichiamo gli osservatori che il vault è cambiato così possono aggiornare l'interfaccia utente.
         notifyObservers();
     }
 
@@ -89,9 +93,7 @@ public class VaultService {
         return (encrypted == null) ? "" : encryptionStrategy.decrypt(encrypted);
     }
 
-    /**
-     * Elimina una voce dal vault.
-     */
+
     @Transactional
     public void deleteEntry(UUID id) {
         passwordEntryRepository.deleteById(id);
@@ -110,15 +112,13 @@ public class VaultService {
             exportList.add(java.util.Map.of(
                     "service", e.getServiceName(),
                     "username", e.getUsername(),
-                    "plainPassword", decryptPassword(e.getEncryptedPassword()), // Decifriamo QUI
+                    "plainPassword", decryptPassword(e.getEncryptedPassword()), // Decifriamo
                     "expiry", e.getExpiresAt() != null ? e.getExpiresAt().toString() : ""
             ));
         }
 
         String jsonContent = objectMapper.writeValueAsString(exportList);
 
-        // Cifriamo l'intero BLOB JSON.
-        // Ora il file è un unico blocco cifrato che contiene i dati in chiaro.
         byte[] encryptedPackage = encryptionStrategy.encrypt(jsonContent);
         String finalBase64 = Base64.getEncoder().encodeToString(encryptedPackage);
 
@@ -143,8 +143,7 @@ public class VaultService {
             LocalDateTime expiry = (expiryStr != null && !expiryStr.isEmpty())
                     ? LocalDateTime.parse(expiryStr) : null;
 
-            // addEntry provvederà a cifrare con la chiave attuale del sistema
-            addEntry(service, user, plain, expiry);
+            addEntry(service, user, plain, expiry);  // provvederà a cifrare con la chiave attuale del sistema
         }
     }
 }

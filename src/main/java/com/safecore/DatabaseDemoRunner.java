@@ -78,3 +78,5 @@ public class DatabaseDemoRunner implements CommandLineRunner {
         }
     }
 }
+
+//TODO eliminare alla fine quando sviluppato il DB, sia questa che add_entry.fxml

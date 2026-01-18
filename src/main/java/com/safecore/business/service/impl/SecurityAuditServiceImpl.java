@@ -11,6 +11,11 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Implementazione del servizio di audit della sicurezza.
+ * Analizza le password salvate per identificare debolezze.
+ */
+
 @Service
 public class SecurityAuditServiceImpl implements SecurityAuditService {
 

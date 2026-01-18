@@ -5,6 +5,7 @@ package com.safecore.business.hints;
  * Non è un errore cattivo che blocca tutto, ma un consiglio amichevole
  * per aiutare l'utente a creare una password degna di questo nome.
  */
+
 public class PasswordHint {
 
     private final String message;

@@ -8,6 +8,15 @@ import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+/**
+ * Entity JPA che rappresenta un token di reset della password nel database.
+ * Mappa la tabella "password_reset_tokens".
+ * Contiene campi per email, hash del token, data di scadenza e stato di utilizzo.
+ * Usata da PasswordResetTokenRepository per operazioni CRUD sui token di reset della password.
+ * Spring Data JPA si occupa di generare il SQL dietro le quinte.
+ */
+
+
 @Entity
 @Table(name = "password_reset_tokens")
 public class PasswordResetTokenEntity {
@@ -18,14 +27,13 @@ public class PasswordResetTokenEntity {
 
     private String email;
     private String tokenHash;
-    private LocalDateTime expiryDate; // Assicurati che si chiami così
+    private LocalDateTime expiryDate;
     private boolean used;
 
-    // COSTRUTTORE PUBBLICO: Risolve l'errore "has protected access"
+    // Costruttore vuoto richiesto da JPA
     public PasswordResetTokenEntity() {
     }
 
-    // GETTER E SETTER: Risolvono "Cannot resolve method setExpiryDate/getExpiryDate"
     public UUID getId() {
         return id;
     }

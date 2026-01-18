@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 /**
  * Evento di dominio emesso al termine di un reset password riuscito.
+ * Contiene informazioni rilevanti come l'email dell'utente e il timestamp del completamento.
  */
 public class PasswordResetCompletedEvent {
 

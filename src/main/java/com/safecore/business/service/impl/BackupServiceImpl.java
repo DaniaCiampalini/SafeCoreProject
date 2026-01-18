@@ -9,6 +9,12 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 
+/**
+ * Implementazione del servizio di backup per l'esportazione e l'importazione dei dati del vault.
+ * Utilizza il VaultService per gestire la logica di esportazione e importazione.
+ * Gestisce eccezioni.
+ */
+
 @Service
 public class BackupServiceImpl implements BackupService {
 

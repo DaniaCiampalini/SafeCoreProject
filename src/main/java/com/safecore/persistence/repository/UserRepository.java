@@ -11,22 +11,16 @@ import java.util.Optional;
 import java.util.UUID;
 
 /**
- * Questo è il magazzino degli utenti.
- * Grazie a Spring Data JPA, non dobbiamo scrivere il codice per salvare o cercare
- * gli utenti sul database: ci basta definire i metodi con i nomi giusti e
- * Spring capisce da solo cosa vogliamo fare.
+ * Repository per gestire gli UserEntity nel database.
+ * Estende JpaRepository per fornire operazioni CRUD di base.
+ * Spring si occupa di scrivere SQL dietro le quinte.
  */
+
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
-    /**
-     * Cerca un utente tramite la sua email.
-     */
     Optional<UserEntity> findByEmail(String email);
 
-    /**
-     * Controlla se un'email è già registrata.
-     */
     boolean existsByEmail(String email);
 
     /**

@@ -10,7 +10,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Subject semplice per notificare gli observer dei reset password completati.
+ * Utilizza una CopyOnWriteArrayList per la gestione thread-safe degli observer.
  */
+
 @Component
 public class PasswordResetEventPublisher {
 
@@ -28,7 +30,6 @@ public class PasswordResetEventPublisher {
     }
 
     public void publish(PasswordResetCompletedEvent event) {
-        // Ordine deterministico: prima gli observer con nome di classe "più piccolo"
         List<PasswordResetObserver> snapshot = new ArrayList<>(observers);
         snapshot.sort(Comparator.comparing(o -> o.getClass().getName()));
 

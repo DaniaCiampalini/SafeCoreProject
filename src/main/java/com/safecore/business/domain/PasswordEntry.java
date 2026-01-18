@@ -5,24 +5,24 @@ import java.util.Objects;
 import java.util.UUID;
 
 /**
- * Questa classe rappresenta una "voce" nel tuo vault delle password.
+ * Questa classe rappresenta una voce di password nel vault.
  * È un oggetto di dominio puro: niente JPA, niente Spring, solo logica.
- * È IMMUTABILE: una volta creato, non puoi più cambiare i suoi campi.
- * Se vuoi "modificare" una password, ne crei una nuova istanza.
- * Questo approccio evita un sacco di bug dovuti a stati dell'oggetto che cambiano sotto il naso.
+ * È IMMUTABILE. Se si vuole "modificare" una password, se ne crea una nuova istanza.
+ * Usa il Builder Pattern per una costruzione più chiara.
  */
+
 public final class PasswordEntry {
     private final UUID id;
     private final String serviceName;
     private final String username;
-    private final byte[] encryptedPassword; // I byte illeggibili
+    private final byte[] encryptedPassword;
     private final LocalDateTime createdAt;
 
     private PasswordEntry(Builder builder) {
         this.id = builder.id;
         this.serviceName = builder.serviceName;
         this.username = builder.username;
-        // Facciamo una copia dei byte per essere sicuri che nessuno li modifichi da fuori
+        // Facciamo una copia dei byte per essere sicuri
         this.encryptedPassword = builder.encryptedPassword != null ? builder.encryptedPassword.clone() : null;
         this.createdAt = builder.createdAt;
     }
@@ -61,8 +61,8 @@ public final class PasswordEntry {
     }
 
     /**
-     * Usiamo il Builder Pattern perché costruire un oggetto con tanti parametri
-     * è noioso e facile sbagliare l'ordine. Con il Builder è tutto più chiaro.
+     * Usiamo il Builder Pattern perché ci sono molti campi.
+     * Permette di costruire l'oggetto passo passo in modo leggibile.
      */
     public static class Builder {
         private UUID id;
@@ -97,7 +97,8 @@ public final class PasswordEntry {
         }
 
         /**
-         * Crea l'oggetto finale. Qui controlliamo che i dati fondamentali ci siano tutti.
+         * Costruisce l'oggetto PasswordEntry finale.
+         * Verifica che i campi obbligatori siano presenti.
          */
         public PasswordEntry build() {
             Objects.requireNonNull(serviceName, "Nome servizio obbligatorio");

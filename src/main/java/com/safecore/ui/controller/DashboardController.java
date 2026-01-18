@@ -40,14 +40,14 @@ import java.util.Optional;
 import static com.safecore.ui.GlobalExceptionHandler.showError;
 
 /**
- * Controller principale della Dashboard SafeCore.
- * Gestisce l'interazione tra l'utente e i servizi core: Vault, Backup, Audit, SafeSend e Hinting.
- * Implementa il pattern Observer per reagire in tempo reale alle modifiche dei dati.
+ * Hub centrale dell'UI.
+ * Orchestra i servizi di sicurezza e gestisce lo stato della dashboard.
+ * Nota: Implementa VaultObserver per garantire che la tabella resti in sync anche
+ * se i dati cambiano (task in background o importazioni...)
  */
 @Component
 public class DashboardController implements VaultObserver {
 
-    // Servizi iniettati tramite Spring (Principio di Dependency Injection)
     private final PasswordGenerator passwordGenerator;
     private final VaultService vaultService;
     private final ApplicationContext applicationContext;
@@ -56,7 +56,6 @@ public class DashboardController implements VaultObserver {
     private final SafeSendService safeSendService;
     private final PasswordHintService passwordHintService;
 
-    // --- CAMPI FXML (Componenti UI) ---
     @FXML private Label userLabel, toastLabel;
     @FXML private TextField searchField;
     @FXML private TableView<PasswordEntryEntity> passwordTable;
@@ -73,7 +72,7 @@ public class DashboardController implements VaultObserver {
 
     @FXML private Label healthScoreLabel, auditDetailLabel;
 
-    // Lista osservabile per il data-binding con la tabella
+    // Lista master sincronizzata col DB tramite VaultService
     private final ObservableList<PasswordEntryEntity> masterData = FXCollections.observableArrayList();
 
     public DashboardController(PasswordGenerator passwordGenerator,
@@ -92,14 +91,10 @@ public class DashboardController implements VaultObserver {
         this.passwordHintService = passwordHintService;
     }
 
-    /**
-     * Inizializzazione del controller. Configura i binding della tabella e i listener.
-     */
     @FXML
     private void initialize() {
         userLabel.setText(SessionContext.getCurrentUserEmail());
 
-        // Setup colonne tabella
         serviceColumn.setCellValueFactory(new PropertyValueFactory<>("serviceName"));
         usernameColumn.setCellValueFactory(new PropertyValueFactory<>("username"));
 
@@ -107,15 +102,14 @@ public class DashboardController implements VaultObserver {
         setupSearchFilter();
         setupExpiryOptions();
 
-        // Registrazione Observer
         vaultService.addObserver(this);
 
-        // Manutenzione iniziale
+        // Pulizia scadenze all'avvio per evitare di mostrare entry già invalidate
         vaultService.cleanupExpiredEntries();
         refreshVault();
     }
 
-    // --- LOGICA BUSINESS (Vault & Health) ---
+    // --- LOGICA BUSINESS ---
 
     @FXML
     public void refreshVault() {
@@ -134,10 +128,6 @@ public class DashboardController implements VaultObserver {
         auditDetailLabel.setText("Rilevate " + (result.weakCount() + result.reusedCount()) + " criticità.");
     }
 
-    /**
-     * Gestisce il salvataggio di una nuova entry nel vault.
-     * Valuta la password tramite PasswordHintService e mostra un alert se il livello è WARNING.
-     */
     @FXML
     private void handleConfirmSave() {
         String service = newServiceField.getText();
@@ -150,11 +140,8 @@ public class DashboardController implements VaultObserver {
             return;
         }
 
-        // --- ANALISI SICUREZZA ---
         PasswordHint hint = passwordHintService.evaluatePassword(pass);
-
         if (hint.getLevel() == HintLevel.WARNING) {
-            // Caso: Password debole - Chiediamo conferma
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Sicurezza Password");
             alert.setHeaderText("Attenzione: Password Poco Sicura");
@@ -162,23 +149,19 @@ public class DashboardController implements VaultObserver {
             alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
 
             Optional<ButtonType> result = alert.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.NO) {
-                return;
-            }
+            if (result.isPresent() && result.get() == ButtonType.NO) return;
         } else {
-            // Caso: Password sicura - Feedback positivo
             showToast("✓ Password Forte!");
         }
 
-        // --- SALVATAGGIO ---
         LocalDateTime expiry = (hours != null && hours > 0) ? LocalDateTime.now().plusHours(hours) : null;
         vaultService.addEntry(service, user, pass, expiry);
 
         handleCloseOverlay();
-        // Il refresh avviene tramite onVaultChanged() dell'Observer
+        // Non serve refreshVault() qui, onVaultChanged() viene invocato automaticamente dal servizio
     }
 
-    // --- OPERAZIONI DI BACKUP (ESPORTA & IMPORTA) ---
+    // --- BACKUP ---
 
     @FXML
     private void handleBackup(ActionEvent event) {
@@ -211,6 +194,7 @@ public class DashboardController implements VaultObserver {
 
         if (file != null) {
             try {
+                // TODO: Aggiungere un check di integrità prima di sovrascrivere/integrare
                 backupService.importBackup(file);
                 showSuccessAlert("Importazione Completata", "Le password sono state integrate correttamente.");
             } catch (Exception e) {
@@ -219,7 +203,7 @@ public class DashboardController implements VaultObserver {
         }
     }
 
-    // --- GESTIONE INTERFACCIA E OVERLAY ---
+    // --- UI OVERLAYS ---
 
     @FXML
     private void handleCloseOverlay() {
@@ -243,6 +227,7 @@ public class DashboardController implements VaultObserver {
     @FXML
     private void handleGeneratePassword() {
         handleCloseOverlay();
+        // 16 caratteri è il compromesso scelto tra sicurezza e compatibilità con vecchi form
         generatedPasswordField.setText(passwordGenerator.generateSafe(16));
         overlay.setVisible(true);
         generatePasswordCard.setVisible(true);
@@ -258,6 +243,10 @@ public class DashboardController implements VaultObserver {
         loadDynamicModule("/com/safecore/ui/view/audit-view.fxml", auditOverlayCard);
     }
 
+    /**
+     * Carica moduli secondari via FXML.
+     * Necessario usare applicationContext per permettere a Spring di iniettare i bean nei controller secondari.
+     */
     private void loadDynamicModule(String fxmlPath, VBox container) {
         try {
             container.getChildren().clear();
@@ -270,7 +259,7 @@ public class DashboardController implements VaultObserver {
             container.setVisible(true);
         } catch (Exception e) {
             showToast("Errore modulo!");
-            e.printStackTrace();
+            e.printStackTrace(); // Utile per FXML errors
         }
     }
 
@@ -295,6 +284,10 @@ public class DashboardController implements VaultObserver {
         Clipboard.getSystemClipboard().setContent(content);
     }
 
+    /**
+     * Feedback temporaneo in basso a destra.
+     * HACK: Usiamo una FadeTransition rapida per evitare che i messaggi si sovrappongano se l'utente clicca più volte.
+     */
     private void showToast(String msg) {
         toastLabel.setText(msg);
         toastLabel.setVisible(true);
@@ -315,6 +308,8 @@ public class DashboardController implements VaultObserver {
 
     @Override
     public void onVaultChanged() {
+        // Obbligatorio Platform.runLater perché gli eventi del repository
+        // possono arrivare da thread non-UI.
         Platform.runLater(this::refreshVault);
     }
 
@@ -351,9 +346,7 @@ public class DashboardController implements VaultObserver {
                 });
                 delBtn.setOnAction(e -> {
                     PasswordEntryEntity ent = getTableRow().getItem();
-                    if (ent != null) {
-                        vaultService.deleteEntry(ent.getId());
-                    }
+                    if (ent != null) vaultService.deleteEntry(ent.getId());
                 });
             }
             @Override protected void updateItem(Void item, boolean empty) {

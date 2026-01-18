@@ -15,6 +15,11 @@ import java.time.LocalDate;
 
 import static com.safecore.ui.GlobalExceptionHandler.showError;
 
+/**
+ * Gestore I/O per il backup del vault.
+ * Si affida interamente a BackupService per la cifratura dei file.
+ */
+
 @Component
 public class BackupController {
 
@@ -28,14 +33,15 @@ public class BackupController {
         fileChooser.getExtensionFilters().add(
                 new FileChooser.ExtensionFilter("SafeCore Backup (*.safe)", "*.safe")
         );
-        fileChooser.setInitialFileName("safecore_backup_" + LocalDate.now() + ".safe");
+        fileChooser.setInitialFileName("safecore_backup_" + LocalDate.now() + ".safe"); // Timestamp nel nome per evitare sovrascrizioni
 
-        // CORREZIONE: Recupero corretto della Window di JavaFX
+
         Window window = ((Node) event.getSource()).getScene().getWindow();
         File file = fileChooser.showSaveDialog(window);
 
         if (file != null) {
             try {
+                // TODO: Aggiungere un dialog di conferma, l'import attuale sovrascrive/unisce senza preavviso.
                 backupService.exportBackup(file);
                 showNotification("Successo", "Backup esportato correttamente in: " + file.getName());
             } catch (Exception e) {
@@ -69,7 +75,7 @@ public class BackupController {
      * Implementazione semplice per mostrare un feedback all'utente.
      */
     private void showNotification(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);   // Standard JavaFX alert
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);

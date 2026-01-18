@@ -19,8 +19,7 @@ import java.util.List;
 /**
  * Controller per la schermata di Registrazione.
  * Qui l'utente crea il suo account. Abbiamo aggiunto un controllo in tempo reale
- * sulla robustezza della password (così evitiamo che usino "123456") e un
- * generatore di password sicure integrato.
+ * sulla robustezza della password e un generatore di password sicure.
  */
 @Component
 public class RegisterController {
@@ -28,7 +27,6 @@ public class RegisterController {
     private final UserService userService;
     private final PasswordGenerator passwordGenerator;
     private final PasswordHintService hintService;
-    // Campi UI per email e password (con i rispettivi doppioni per la visibilità in chiaro)
     @FXML
     private TextField emailField;
     @FXML
@@ -58,16 +56,14 @@ public class RegisterController {
         this.hintService = hintService;
     }
 
-    /**
-     * Tenta di registrare un nuovo utente.
-     */
+
     @FXML
     private void handleRegister() {
         String email = emailField.getText();
         String password = isPwdVisible ? passwordTextField.getText() : passwordField.getText();
         String confirm = isConfirmVisible ? confirmPasswordTextField.getText() : confirmPasswordField.getText();
 
-        // Validazione: niente campi vuoti e le due password devono essere identiche
+
         if (email.isBlank() || password.isBlank() || confirm.isBlank()) {
             showError("Tutti i campi sono obbligatori");
             return;
@@ -79,12 +75,12 @@ public class RegisterController {
         }
 
         try {
-            // Proviamo a registrare. Se la password è troppo debole, UserService ci fermerà.
+
             userService.register(email, password);
             showSuccess("Account creato! Reindirizzamento...");
             disableForm();
 
-            // Aspettiamo un secondo e mezzo prima di tornare al login, così l'utente legge il messaggio.
+            // Delay necessario, l'utente deve vedere il successo dell'operazione
             new Thread(() -> {
                 try {
                     Thread.sleep(1500);
@@ -99,7 +95,7 @@ public class RegisterController {
     }
 
     /**
-     * Mentre l'utente scrive, controlliamo quanto è sicura la password.
+     * Controlla real-time la robustezza della password che l'utente digita.
      */
     @FXML
     private void handlePasswordTyping() {
@@ -110,33 +106,29 @@ public class RegisterController {
             return;
         }
 
-        // Chiediamo ai "Suggerimenti" (HintService) se c'è qualcosa che non va
         List<PasswordHint> hints = hintService.getHints(pwd);
 
         if (hints.isEmpty()) {
             passwordStrengthLabel.setText("SICURA (Forte)");
             passwordStrengthLabel.setStyle("-fx-text-fill: #16a34a; -fx-font-weight: bold; -fx-font-size: 13px;");
         } else {
-            // Se ci sono suggerimenti, mostriamo il primo (es: "Aggiungi un numero")
             String helpMessage = hints.get(0).getMessage();
             passwordStrengthLabel.setText("DEBOLE: " + helpMessage);
             passwordStrengthLabel.setStyle("-fx-text-fill: #dc2626; -fx-font-weight: bold; -fx-font-size: 13px;");
         }
     }
 
-    /**
-     * Genera una password robusta per conto dell'utente se è pigro.
-     */
+
     @FXML
     private void handleGeneratePassword() {
-        String generated = passwordGenerator.generateSafe(14);
+        String generated = passwordGenerator.generateSafe(16);
         passwordField.setText(generated);
         passwordTextField.setText(generated);
         confirmPasswordField.setText(generated);
         confirmPasswordTextField.setText(generated);
 
         showInfo("Password generata con successo");
-        handlePasswordTyping(); // Aggiorna l'etichetta della forza
+        handlePasswordTyping();
     }
 
     /**
@@ -148,12 +140,12 @@ public class RegisterController {
             passwordField.setText(passwordTextField.getText());
             passwordField.setVisible(true);
             passwordTextField.setVisible(false);
-            togglePwdBtn.setText("👁");
+            togglePwdBtn.setText("Show");
         } else {
             passwordTextField.setText(passwordField.getText());
             passwordTextField.setVisible(true);
             passwordField.setVisible(false);
-            togglePwdBtn.setText("🙈");
+            togglePwdBtn.setText("Hide");
         }
         isPwdVisible = !isPwdVisible;
     }
@@ -167,12 +159,12 @@ public class RegisterController {
             confirmPasswordField.setText(confirmPasswordTextField.getText());
             confirmPasswordField.setVisible(true);
             confirmPasswordTextField.setVisible(false);
-            toggleConfirmPwdBtn.setText("👁");
+            toggleConfirmPwdBtn.setText("Show");
         } else {
             confirmPasswordTextField.setText(confirmPasswordField.getText());
             confirmPasswordTextField.setVisible(true);
             confirmPasswordField.setVisible(false);
-            toggleConfirmPwdBtn.setText("🙈");
+            toggleConfirmPwdBtn.setText("Hide");
         }
         isConfirmVisible = !isConfirmVisible;
     }

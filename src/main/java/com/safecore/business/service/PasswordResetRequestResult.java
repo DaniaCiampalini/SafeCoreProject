@@ -3,7 +3,7 @@ package com.safecore.business.service;
 import java.time.LocalDateTime;
 
 /**
- * Risultato della richiesta di reset: token simulato e scadenza.
+ * Risultato della richiesta di reset della password.
  */
 public class PasswordResetRequestResult {
 
