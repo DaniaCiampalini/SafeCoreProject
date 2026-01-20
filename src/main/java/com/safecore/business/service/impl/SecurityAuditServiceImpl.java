@@ -31,40 +31,36 @@ public class SecurityAuditServiceImpl implements SecurityAuditService {
     @Override
     public AuditResult runAudit() {
         List<PasswordEntryEntity> entries = vaultService.getEntriesForCurrentUser();
-        if (entries.isEmpty()) {
+
+        if (entries == null || entries.isEmpty()) {
             return new AuditResult(100, 0, 0, 0, 0);
         }
 
-        // Decifriamo una sola volta per risparmiare risorse
         List<String> decryptedPasswords = entries.stream()
                 .map(e -> vaultService.decryptPassword(e.getEncryptedPassword()))
+                .filter(p -> p != null)
                 .toList();
 
-        long weakCount = decryptedPasswords.stream()
+        int weakCount = (int) decryptedPasswords.stream()
                 .filter(p -> strengthEvaluator.evaluate(p) == PasswordStrengthEvaluator.Strength.WEAK)
                 .count();
 
-        long oldCount = entries.stream()
-                .filter(e -> e.getCreatedAt().isBefore(LocalDateTime.now().minusYears(1)))
+        // Controllo date con protezione null
+        LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
+        int oldCount = (int) entries.stream()
+                .filter(e -> e.getCreatedAt() != null && e.getCreatedAt().isBefore(oneYearAgo))
                 .count();
 
-        // Calcolo duplicati raggruppando per valore
-        long reusedCount = decryptedPasswords.stream()
+        int reusedCount = (int) decryptedPasswords.stream()
                 .collect(Collectors.groupingBy(p -> p, Collectors.counting()))
                 .values().stream()
                 .filter(count -> count > 1)
-                .mapToLong(Long::longValue)
+                .mapToLong(count -> count)
                 .sum();
 
-        int score = calculateScore((int) weakCount, (int) oldCount, (int) reusedCount);
+        int score = calculateScore(weakCount, oldCount, reusedCount);
 
-        return new AuditResult(
-                score,
-                (int) weakCount,
-                (int) oldCount,
-                (int) reusedCount,
-                entries.size()
-        );
+        return new AuditResult(score, weakCount, oldCount, reusedCount, entries.size());
     }
 
     private int calculateScore(int weak, int old, int reused) {
