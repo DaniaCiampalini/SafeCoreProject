@@ -1,6 +1,5 @@
 # README.it.md
 
-```markdown
 # SafeCore - Gestore Password Sicuro
 
 [Italiano] | [English](README.md)
@@ -76,42 +75,42 @@ Il progetto dimostra pratiche professionali di ingegneria del software tra cui:
 ┌─────────────────────────────────────────────────────────────┐
 │                    LIVELLO PRESENTAZIONE                    │
 │                      (JavaFX UI)                            │
-│  - Controllers (Login, Dashboard, Register, Audit)         │
-│  - Sistema Navigazione (SceneNavigator)                    │
-│  - Gestione Sessione (SessionContext)                      │
-│  - Gestore Eccezioni Globale                               │
+│  - Controllers (Login, Dashboard, Register, Audit)          │
+│  - Sistema Navigazione (SceneNavigator)                     │
+│  - Gestione Sessione (SessionContext)                       │
+│  - Gestore Eccezioni Globale                                │
 └─────────────────────────────────────────────────────────────┘
-↓
+                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                     LIVELLO BUSINESS                        │
 │                   (Interfacce Service)                      │
-│  - VaultService (gestione entry + cifratura)               │
-│  - UserService (registrazione + autenticazione)            │
-│  - SecurityAuditService (analisi vault)                    │
-│  - SafeSendService (condivisione sicura)                   │
-│  - BackupService (export/import)                           │
-│  - PasswordHintService (validazione robustezza)            │
+│  - VaultService (gestione entry + cifratura)                │
+│  - UserService (registrazione + autenticazione)             │
+│  - SecurityAuditService (analisi vault)                     │
+│  - SafeSendService (condivisione sicura)                    │
+│  - BackupService (export/import)                            │
+│  - PasswordHintService (validazione robustezza)             │
 └─────────────────────────────────────────────────────────────┘
-↓
+                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                     LIVELLO SICUREZZA                       │
 │                  (Cifratura & Hashing)                      │
-│  - EncryptionStrategy (interfaccia)                        │
-│  - AESEncryptionStrategy (implementazione AES-256-CBC)     │
-│  - PasswordHasher (BCrypt con salt)                        │
-│  - PasswordGenerator (generazione random sicura)           │
-│  - PasswordStrengthEvaluator (scoring robustezza)          │
-│  - KeyManager (gestione chiavi cifratura)                  │
+│  - EncryptionStrategy (interfaccia)                         │
+│  - AESEncryptionStrategy (implementazione AES-256-CBC)      │
+│  - PasswordHasher (BCrypt con salt)                         │
+│  - PasswordGenerator (generazione random sicura)            │
+│  - PasswordStrengthEvaluator (scoring robustezza)           │
+│  - KeyManager (gestione chiavi cifratura)                   │
 └─────────────────────────────────────────────────────────────┘
-↓
+                               ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                   LIVELLO PERSISTENZA                       │
 │                  (Repository JPA)                           │
-│  - UserRepository (CRUD utenti)                            │
-│  - PasswordEntryRepository (CRUD entry)                    │
-│  - PasswordResetTokenRepository (gestione token)           │
-│  - SafeSendRepository (archiviazione segreti temporanei)   │
-│  - Database H2 (storage embedded basato su file)           │
+│  - UserRepository (CRUD utenti)                             │
+│  - PasswordEntryRepository (CRUD entry)                     │
+│  - PasswordResetTokenRepository (gestione token)            │
+│  - SafeSendRepository (archiviazione segreti temporanei)    │
+│  - Database H2 (storage embedded basato su file)            │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -178,6 +177,7 @@ SafeCoreProject/
 │   │   │   │   │   ├── User.java
 │   │   │   │   │   ├── UserBuilder.java
 │   │   │   │   │   ├── PasswordEntry.java
+│   │   │   │   │   ├── UserFactory.java
 │   │   │   │   │   └── AuditResult.java
 │   │   │   │   ├── exception/                    # Eccezioni personalizzate
 │   │   │   │   │   ├── SafeCoreException.java
@@ -191,9 +191,7 @@ SafeCoreProject/
 │   │   │   │   │   └── rules/
 │   │   │   │   │       ├── PasswordRule.java
 │   │   │   │   │       ├── MinLengthRule.java
-│   │   │   │   │       ├── UppercaseRule.java
-│   │   │   │   │       ├── DigitRule.java
-│   │   │   │   │       └── SpecialCharRule.java
+│   │   │   │   │       └── ComplexitycaseRule.java
 │   │   │   │   └── service/                      # Interfacce service
 │   │   │   │       ├── UserService.java
 │   │   │   │       ├── VaultService.java
@@ -204,9 +202,14 @@ SafeCoreProject/
 │   │   │   │       ├── PasswordResetService.java
 │   │   │   │       ├── PasswordHintService.java
 │   │   │   │       ├── VaultObserver.java
+│   │   │   │       ├── SessionLougoutObserver.java
+│   │   │   │       ├── PasswordResetCompletedEvent.java
+│   │   │   │       ├── PasswordResetEventPublisher.java
+│   │   │   │       ├── PasswordResetObserver.java
+│   │   │   │       ├── PasswordResetRequestResult.java
 │   │   │   │       └── impl/                     # Implementazioni service
 │   │   │   │           ├── UserServiceImpl.java
-│   │   │   │           ├── VaultServiceImpl.java
+│   │   │   │           ├── PasswordServiceImpl.java
 │   │   │   │           ├── SecurityAuditServiceImpl.java
 │   │   │   │           ├── SafeSendServiceImpl.java
 │   │   │   │           ├── BackupServiceImpl.java
@@ -240,6 +243,7 @@ SafeCoreProject/
 │   │   │       │   ├── AuditController.java
 │   │   │       │   ├── SafeSendController.java
 │   │   │       │   ├── AddEntryController.java
+│   │   │       │   ├── PasswordResetController.java
 │   │   │       │   └── BackupController.java
 │   │   │       ├── navigation/
 │   │   │       │   └── SceneNavigator.java
@@ -247,32 +251,56 @@ SafeCoreProject/
 │   │   │           └── SessionContext.java
 │   │   └── resources/
 │   │       ├── application.properties            # Configurazione Spring
+│   │       ├── style.css
+│   │       ├── add_entry.fxml
 │   │       └── com/safecore/ui/view/            # View FXML
 │   │           ├── login.fxml
 │   │           ├── register.fxml
 │   │           ├── dashboard.fxml
-│   │           ├── audit.fxml
+│   │           ├── audit-view.fxml
+│   │           ├── reset-password.fxml
+│   │           ├── safesend-view.fxml
 │   │           └── password_reset.fxml
 │   └── test/
-│       └── java/com/safecore/                   # Suite test
-│           ├── SafeCoreIntegrationTest.java
-│           ├── business/service/
-│           │   ├── UserServiceTest.java
-│           │   ├── PasswordServiceTest.java
-│           │   ├── SecurityAuditServiceTest.java
-│           │   └── VaultServiceTest.java
-│           ├── business/exception/
-│           │   ├── UserNotFoundExceptionTest.java
-│           │   └── UserAlreadyExistsExceptionTest.java
-│           ├── security/
-│           │   ├── AESEncryptionStrategyTest.java
-│           │   ├── PasswordHasherTest.java
-│           │   └── PasswordHasherPerformanceTest.java
-│           └── persistence/repository/
-│               └── UserRepositoryTest.java
+│       ├── java/com/safecore/                   # Suite test
+│       │   ├── SafeCoreIntegrationTest.java
+│       │   ├── business/service/
+│       │   │   ├── UserServiceTest.java
+│       │   │   ├── PasswordServiceTest.java
+│       │   │   ├── SecurityAuditServiceTest.java
+│       │   │   ├── BackupIntegrationTest.java
+│       │   │   ├── PasswordResetEventPublisherTest.java
+│       │   │   ├── PasswordResetServiceTest.java
+│       │   │   ├── SafeSendServiceTest.java
+│       │   │   ├── SessionLogoutObserverTest.java
+│       │   │   └── VaultServiceTest.java
+│       │   ├── business/exception/
+│       │   │   ├── UserNotFoundExceptionTest.java
+│       │   │   ├── UserAlreadyExistsExceptionTest.java
+│       │   │   ├── InvalidTokenExceptionTest.java
+│       │   │   ├── SafeCoreExceptionTest.java
+│       │   │   └── WeakPasswordExceptionTest.java
+│       │   ├── business/hints/
+│       │   │   └── PasswordHintServiceTest.java
+│       │   ├── security/
+│       │   │   ├── AESEncryptionStrategyTest.java
+│       │   │   ├── AESEncryptionPerformanceTest.java
+│       │   │   ├── PasswordGeneratorTest.java
+│       │   │   ├── PasswordStrengthEvaluatorTest.java
+│       │   │   ├── PasswordHasherTest.java
+│       │   │   └── PasswordHasherPerformanceTest.java
+│       │   └── persistence/repository/
+│       │       ├── PasswordResetTokenRepositoryTest.java
+│       │       ├── SafeSendRepositoryTest.java
+│       │       └── UserRepositoryTest.java
+│       └── resources
+│           └── application-test.properties
 ├── docs/
 │   └── uml/
-│       └── class-diagram.puml                   # Diagrammi PlantUML
+│       ├── class-diagram.puml                   # Diagrammi PlantUML
+│       ├── sequence-login.puml
+│       ├── sequence-save-entry.puml
+│       └── use-case.puml
 ├── pom.xml                                      # Configurazione Maven
 ├── README.md                                    # Documentazione inglese
 └── README.it.md                                 # Questo file
