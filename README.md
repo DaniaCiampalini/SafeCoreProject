@@ -249,8 +249,6 @@ SafeCoreProject/
 │   │   │           └── SessionContext.java
 │   │   └── resources/
 │   │       ├── application.properties            # Spring configuration
-│   │       ├── style.css
-│   │       ├── add_entry.fxml
 │   │       └── com/safecore/ui/view/            # FXML views
 │   │           ├── login.fxml
 │   │           ├── register.fxml
@@ -681,7 +679,7 @@ The system evaluates password strength using multiple criteria:
 @Component
 public class PasswordStrengthEvaluator {
     public Strength evaluate(String password) {
-        if (password == null || password.length() < 6) return Strength.WEAK;
+        if (password == null || password.length() < 8) return Strength.WEAK;
 
         boolean hasLower = password.matches(".*[a-z].*");
         boolean hasUpper = password.matches(".*[A-Z].*");

@@ -15,7 +15,7 @@ public class PasswordStrengthEvaluator {
      * Valuta la forza di una password.
      */
     public Strength evaluate(String password) {
-        if (password == null || password.length() < 6) return Strength.WEAK;
+        if (password == null || password.length() < 8) return Strength.WEAK;
 
         boolean hasLower = password.matches(".*[a-z].*");
         boolean hasUpper = password.matches(".*[A-Z].*");
