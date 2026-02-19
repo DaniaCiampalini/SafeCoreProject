@@ -15,7 +15,7 @@ class UserNotFoundExceptionTest {
         String email = "test@example.com";
         UserNotFoundException exception = new UserNotFoundException(email);
 
-        String expectedMessage = "Spiacente, non ho trovato nessun utente con l'email: " + email;
+        String expectedMessage = "Spiacente, non esiste nessun utente con l'email: " + email;
         assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -24,7 +24,7 @@ class UserNotFoundExceptionTest {
         String email = "";
         UserNotFoundException exception = new UserNotFoundException(email);
 
-        String expectedMessage = "Spiacente, non ho trovato nessun utente con l'email: " + email;
+        String expectedMessage = "Spiacente, non esiste nessun utente con l'email: " + email;
         assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -33,7 +33,7 @@ class UserNotFoundExceptionTest {
         String email = null;
         UserNotFoundException exception = new UserNotFoundException(email);
 
-        String expectedMessage = "Spiacente, non ho trovato nessun utente con l'email: null";
+        String expectedMessage = "Spiacente, non esiste nessun utente con l'email: null";
         assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -100,7 +100,7 @@ class UserNotFoundExceptionTest {
         UserNotFoundException exception = new UserNotFoundException("test@example.com");
 
         assertTrue(exception.getMessage().contains("Spiacente"));
-        assertTrue(exception.getMessage().contains("non ho trovato"));
+        assertTrue(exception.getMessage().contains("non esiste"));
     }
 
     @Test

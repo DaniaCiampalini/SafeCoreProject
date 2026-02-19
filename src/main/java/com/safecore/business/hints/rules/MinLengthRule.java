@@ -15,9 +15,9 @@ import java.util.Optional;
 public class MinLengthRule implements PasswordRule {
     @Override
     public Optional<PasswordHint> check(String password) {
-        if (password == null || password.length() < 12) {
+        if (password == null || password.length() < 8) {
             return Optional.of(new PasswordHint(
-                    "Mancano caratteri: ne servono almeno 12.",
+                    "Mancano caratteri: ne servono almeno 8.",
                     HintLevel.WARNING
             ));
         }

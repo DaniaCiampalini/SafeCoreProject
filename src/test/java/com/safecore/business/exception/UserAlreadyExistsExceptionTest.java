@@ -15,7 +15,7 @@ class UserAlreadyExistsExceptionTest {
         String email = "test@example.com";
         UserAlreadyExistsException exception = new UserAlreadyExistsException(email);
 
-        String expectedMessage = "Ehilà! Un account con l'email " + email + " esiste già. Prova a fare il login.";
+        String expectedMessage = "Un account con l'email " + email + " esiste già. Prova a fare il login.";
         assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -24,7 +24,7 @@ class UserAlreadyExistsExceptionTest {
         String email = "";
         UserAlreadyExistsException exception = new UserAlreadyExistsException(email);
 
-        String expectedMessage = "Ehilà! Un account con l'email " + email + " esiste già. Prova a fare il login.";
+        String expectedMessage = "Un account con l'email " + email + " esiste già. Prova a fare il login.";
         assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -33,7 +33,7 @@ class UserAlreadyExistsExceptionTest {
         String email = null;
         UserAlreadyExistsException exception = new UserAlreadyExistsException(email);
 
-        String expectedMessage = "Ehilà! Un account con l'email null esiste già. Prova a fare il login.";
+        String expectedMessage = "Un account con l'email null esiste già. Prova a fare il login.";
         assertEquals(expectedMessage, exception.getMessage());
     }
 
@@ -99,7 +99,7 @@ class UserAlreadyExistsExceptionTest {
     void messageContainsItalianText() {
         UserAlreadyExistsException exception = new UserAlreadyExistsException("test@example.com");
 
-        assertTrue(exception.getMessage().contains("Ehilà"));
+        assertTrue(exception.getMessage().contains("Un account"));
         assertTrue(exception.getMessage().contains("esiste già"));
         assertTrue(exception.getMessage().contains("Prova a fare il login"));
     }
