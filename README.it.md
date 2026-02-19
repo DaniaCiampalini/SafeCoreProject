@@ -1,4 +1,3 @@
-# README.it.md
 
 # SafeCore - Gestore Password Sicuro
 
