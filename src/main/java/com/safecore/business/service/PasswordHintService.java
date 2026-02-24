@@ -25,7 +25,7 @@ public class PasswordHintService {
 
     /**
      * Analizza la password e restituisce un riassunto della sua sicurezza.
-     * Se trova dei WARNING, restituisce il primo trovato.
+     * Se trova dei WARNING, restituisce il primo trovato, altrimenti restituisce il primo INFO, se c'è.
      * Altrimenti restituisce un feedback positivo (INFO).
      */
     public PasswordHint evaluatePassword(String password) {
@@ -35,6 +35,11 @@ public class PasswordHintService {
                 .filter(h -> h.getLevel() == HintLevel.WARNING)
                 .findFirst();
 
+        if (worstHint.isPresent()) {
+            return worstHint.get();
+        } else {
+            worstHint = allHints.stream().findFirst();
+        }
         if (worstHint.isPresent()) {
             return worstHint.get();
         }
