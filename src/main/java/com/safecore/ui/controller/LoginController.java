@@ -91,7 +91,7 @@ public class LoginController {
 
     @FXML
     private void handleForgotPassword() {
-        navigateTo("/com/safecore/ui/view/password_reset.fxml", "SafeCore – Reset Password");
+        navigateTo("/com/safecore/ui/view/reset-password.fxml", "SafeCore – Reset Password");
     }
 
     /**

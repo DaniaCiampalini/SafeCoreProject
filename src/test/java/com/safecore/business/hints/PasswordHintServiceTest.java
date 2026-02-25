@@ -24,10 +24,10 @@ class PasswordHintServiceTest {
 
         boolean hasLengthHint = hints.stream()
                 .map(PasswordHint::getMessage)
-                .anyMatch(msg -> msg.toLowerCase().contains("minimo 8 caratteri")
+                .anyMatch(msg -> msg.toLowerCase().contains("minimo 12 caratteri")
                         || msg.toLowerCase().contains("mancano caratteri"));
 
-        assertTrue(hasLengthHint, "Dovrebbe suggerire la lunghezza minima");
+        assertTrue(hasLengthHint, "Dovrebbe suggerire la lunghezza minima di 12 caratteri");
     }
 
     @Test
