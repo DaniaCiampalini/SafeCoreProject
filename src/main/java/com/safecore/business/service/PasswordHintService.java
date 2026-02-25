@@ -37,14 +37,17 @@ public class PasswordHintService {
 
         if (worstHint.isPresent()) {
             return worstHint.get();
-        } else {
-            worstHint = allHints.stream().findFirst();
-        }
-        if (worstHint.isPresent()) {
-            return worstHint.get();
         }
 
-        return new PasswordHint("La password rispetta i criteri di sicurezza.", HintLevel.INFO);
+        Optional<PasswordHint> infoHint = allHints.stream()
+                .filter(h -> h.getLevel() == HintLevel.INFO)
+                .findFirst();
+
+        if (infoHint.isPresent()) {
+            return infoHint.get();
+        }
+
+        return new PasswordHint("La password rispetta i criteri di sicurezza.", HintLevel.OK);
     }
 
     /**

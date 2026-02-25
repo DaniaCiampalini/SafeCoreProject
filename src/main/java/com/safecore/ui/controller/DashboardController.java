@@ -147,6 +147,16 @@ public class DashboardController implements VaultObserver {
             Optional<ButtonType> result = alert.showAndWait();
             if (result.isPresent() && result.get() == ButtonType.NO) return;
         }
+        if (hint.getLevel() == HintLevel.INFO) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setTitle("Sicurezza Password");
+            alert.setHeaderText("Attenzione: Password Poco Sicura");
+            alert.setContentText(hint.getMessage() + "\n\nVuoi salvarla comunque?");
+            alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.NO) return;
+        }
 
         LocalDateTime expiry = (hours != null && hours > 0) ? LocalDateTime.now().plusHours(hours) : null;
         vaultService.addEntry(service, user, pass, expiry);

@@ -6,5 +6,6 @@ package com.safecore.business.hints;
 
 public enum HintLevel {
     INFO,
-    WARNING
+    WARNING,
+    OK
 }
