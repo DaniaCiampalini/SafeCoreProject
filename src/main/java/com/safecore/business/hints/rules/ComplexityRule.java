@@ -24,7 +24,7 @@ public class ComplexityRule implements PasswordRule {
 
         if (!(hasUpper && hasLower && hasDigit)) {
             return Optional.of(new PasswordHint(
-                    "Aggiungi maiuscole e numeri!",
+                    "La password deve contenere maiuscole, minuscole e numeri!",
                     HintLevel.INFO
             ));
         }

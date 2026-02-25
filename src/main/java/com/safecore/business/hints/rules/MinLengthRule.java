@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 import java.util.Optional;
 
 /**
- * Regola che verifica che la password abbia una lunghezza minima di 12 caratteri.
+ * Regola che verifica che la password abbia una lunghezza minima di 8 caratteri.
  * Se la password è più corta, restituisce un suggerimento di avviso.
  */
 

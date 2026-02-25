@@ -14,4 +14,6 @@ public interface UserService {
 
     // Restituisce l'utente se le credenziali sono corrette.
     Optional<User> login(String email, String plainPassword);
+
+    public void logout();
 }

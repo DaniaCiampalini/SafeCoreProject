@@ -3,28 +3,45 @@ package com.safecore.security;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
+import javax.crypto.SecretKeyFactory;
+import javax.crypto.spec.PBEKeySpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.security.SecureRandom;
+import java.security.spec.KeySpec;
 
 /**
  * Gestore delle chiavi di crittografia.
- * In un sistema reale, questa classe si occuperebbe di caricare le chiavi da un Vault sicuro
- * o di generarle in modo sicuro basandosi su una Master Password.
+ * In questo sistema, si utilizza il sistema PBKDF2 per derivare la chiave a partire
+ * dalla Master Password e dal valore salt memorizzato per l'utente.
  */
 
 
 @Component
 public class KeyManager {
 
-    private final SecretKey secretKey;
+    private SecretKey secretKey;
 
-    public KeyManager() {
-        byte[] keyBytes = new byte[32];
-        new SecureRandom().nextBytes(keyBytes);
-        this.secretKey = new SecretKeySpec(keyBytes, "AES");
+    public KeyManager() { }
+
+    public void initialize (String masterPassword, byte[] salt) {
+        try {
+            SecretKeyFactory factory = SecretKeyFactory.getInstance("PBKDF2WithHmacSHA256");
+            KeySpec spec = new PBEKeySpec(masterPassword.toCharArray(), salt, 65536, 256);
+
+            SecretKey tmp = factory.generateSecret(spec);
+            this.secretKey = new SecretKeySpec(tmp.getEncoded(), "AES");
+        } catch (Exception e) {
+            throw new SecurityException("Impossibile derivare la Master Key. Il vault resterà bloccato.", e);
+        }
     }
 
     public SecretKey getSecretKey() {
+        if (this.secretKey == null){
+            throw new IllegalStateException("Vault bloccato! Effettua il login per sbloccarlo");
+        }
+
         return secretKey;
     }
+
+    public void clear() { this.secretKey = null; }
 }

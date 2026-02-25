@@ -49,6 +49,7 @@ public class DashboardController implements VaultObserver {
     private final SecurityAuditService auditService;
     private final SafeSendService safeSendService;
     private final PasswordHintService passwordHintService;
+    private final UserService userService;
 
     @FXML private Label userLabel, toastLabel;
     @FXML private TextField searchField;
@@ -75,7 +76,8 @@ public class DashboardController implements VaultObserver {
                                BackupService backupService,
                                SecurityAuditService auditService,
                                SafeSendService safeSendService,
-                               PasswordHintService passwordHintService) {
+                               PasswordHintService passwordHintService,
+                               UserService userService) {
         this.passwordGenerator = passwordGenerator;
         this.vaultService = vaultService;
         this.applicationContext = applicationContext;
@@ -83,6 +85,7 @@ public class DashboardController implements VaultObserver {
         this.auditService = auditService;
         this.safeSendService = safeSendService;
         this.passwordHintService = passwordHintService;
+        this.userService = userService;
     }
 
     @FXML
@@ -139,6 +142,16 @@ public class DashboardController implements VaultObserver {
         PasswordHint hint = passwordHintService.evaluatePassword(pass);
         if (hint.getLevel() == HintLevel.WARNING) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Sicurezza Password");
+            alert.setHeaderText("Attenzione: Password Poco Sicura");
+            alert.setContentText(hint.getMessage() + "\n\nVuoi salvarla comunque?");
+            alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+
+            Optional<ButtonType> result = alert.showAndWait();
+            if (result.isPresent() && result.get() == ButtonType.NO) return;
+        }
+        if (hint.getLevel() == HintLevel.INFO) {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Sicurezza Password");
             alert.setHeaderText("Attenzione: Password Poco Sicura");
             alert.setContentText(hint.getMessage() + "\n\nVuoi salvarla comunque?");
@@ -250,6 +263,7 @@ public class DashboardController implements VaultObserver {
 
     @FXML
     private void handleLogout() {
+        userService.logout();
         SessionContext.logout();
         SceneNavigator.switchTo((Stage) userLabel.getScene().getWindow(), "/com/safecore/ui/view/login.fxml", "Login");
     }

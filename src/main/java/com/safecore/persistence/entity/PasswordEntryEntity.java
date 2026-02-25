@@ -29,7 +29,7 @@ public class PasswordEntryEntity {
     @Column(nullable = false)
     private String username;
 
-    @Column(nullable = false, columnDefinition = "VARBINARY(1024)")  // Assumiamo una lunghezza massima di 1024 byte per la password crittografata
+    @Column(nullable = false, columnDefinition = "BYTEA") // Formato standard per storage di dati binari in Postgres
     private byte[] encryptedPassword;
 
     @Column(nullable = false)

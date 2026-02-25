@@ -27,6 +27,9 @@ public class UserEntity {
     @Column(nullable = false)
     private String passwordHash;
 
+    @Column(nullable = false, unique = true)
+    private byte[] derivationSalt;
+
     public UserEntity() {
     } // JPA vuole sempre un costruttore vuoto
 
@@ -60,4 +63,7 @@ public class UserEntity {
         this.passwordHash = ph;
     }
 
+    public byte[] getDerivationSalt() { return derivationSalt; }
+
+    public void setDerivationSalt(byte[] dS) { this.derivationSalt = dS; }
 }
