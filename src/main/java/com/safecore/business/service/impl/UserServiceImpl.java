@@ -7,11 +7,13 @@ import com.safecore.business.exception.WeakPasswordException;
 import com.safecore.business.service.UserService;
 import com.safecore.persistence.entity.UserEntity;
 import com.safecore.persistence.repository.UserRepository;
+import com.safecore.security.KeyManager;
 import com.safecore.security.PasswordHasher;
 import com.safecore.security.PasswordStrengthEvaluator;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.util.Optional;
 
 /**
@@ -26,14 +28,17 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final PasswordHasher passwordHasher;
     private final PasswordStrengthEvaluator strengthEvaluator;
+    private final KeyManager keyManager;
 
     // Costruttore con iniezione delle dipendenze
     public UserServiceImpl(UserRepository userRepository,
                            PasswordHasher passwordHasher,
-                           PasswordStrengthEvaluator strengthEvaluator) {
+                           PasswordStrengthEvaluator strengthEvaluator,
+                           KeyManager keyManager) {
         this.userRepository = userRepository;
         this.passwordHasher = passwordHasher;
         this.strengthEvaluator = strengthEvaluator;
+        this.keyManager = keyManager;
     }
 
     @Override
@@ -47,9 +52,14 @@ public class UserServiceImpl implements UserService {
 
         String hashedPassword = passwordHasher.hash(plainPassword);
 
+        // Creazione del salt unico per l'utente durante la registrazione
+        byte[] salt = new byte[32];
+        new SecureRandom().nextBytes(salt);
+
         UserEntity entity = new UserEntity();
         entity.setEmail(email);
         entity.setPasswordHash(hashedPassword);
+        entity.setDerivationSalt(salt);
 
         UserEntity saved = userRepository.save(entity);
 
@@ -65,12 +75,18 @@ public class UserServiceImpl implements UserService {
     public Optional<User> login(String email, String plainPassword) {
         return userRepository.findByEmail(email)
                 .filter(u -> passwordHasher.verify(plainPassword, u.getPasswordHash()))
-                .map(u -> new UserBuilder()
-                        .id(u.getId())
-                        .email(u.getEmail())
-                        .passwordHash(u.getPasswordHash())
-                        .build());
+                .map(u -> {
+                    keyManager.initialize(plainPassword, u.getDerivationSalt());
+                    return new UserBuilder()
+                            .id(u.getId())
+                            .email(u.getEmail())
+                            .passwordHash(u.getPasswordHash())
+                            .build();
+                });
     }
+
+    @Override
+    public void logout() { keyManager.clear(); }
 
     private void validatePasswordStrength(String password) {
         if (password == null || password.length() < 8 ||
