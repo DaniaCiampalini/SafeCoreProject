@@ -26,7 +26,7 @@ public class SafeSendEntryEntity {
     @Column(name = "one_time", nullable = false, columnDefinition = "BOOLEAN DEFAULT FALSE")
     private boolean oneTime = false;
 
-    @Column(name = "encrypted_content", nullable = false, columnDefinition = "VARBINARY(MAX)")
+    @Column(name = "encrypted_content", nullable = false, columnDefinition = "BYTEA")
     private byte[] encryptedContent;
 
     @Column(name = "token_hash", nullable = false, unique = true)
