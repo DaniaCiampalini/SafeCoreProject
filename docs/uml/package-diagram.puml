@@ -1,0 +1,218 @@
+@startuml SafeCore_Package_Diagram
+!theme blueprint
+skinparam packageStyle folder
+skinparam linetype ortho
+skinparam nodesep 80
+skinparam ranksep 80
+skinparam shadowing true
+skinparam folderBackgroundColor<<main>> LightBlue
+skinparam folderBackgroundColor<<business>> LightGreen
+skinparam folderBackgroundColor<<security>> LightYellow
+skinparam folderBackgroundColor<<persistence>> LightCoral
+skinparam folderBackgroundColor<<ui>> LightSkyBlue
+skinparam folderFontSize 14
+skinparam folderFontStyle bold
+
+folder "📦 com.safecore" as root {
+
+    folder "🖥️ ui" <<ui>> {
+        folder "controller" {
+            class LoginController
+            class RegisterController
+            class DashboardController
+            class AuditController
+            class SafeSendController
+            class PasswordResetController
+            class AddEntryController
+            class BackupController
+        }
+
+        folder "navigation" {
+            class SceneNavigator
+        }
+
+        folder "session" {
+            class SessionContext
+        }
+
+        folder "view" {
+            note "📄 FXML Files:\n• login.fxml\n• register.fxml\n• dashboard.fxml\n• audit-view.fxml\n• safesend-view.fxml\n• password-reset.fxml" as ViewFiles
+        }
+
+        class GlobalExceptionHandler
+        class AppLauncher
+    }
+
+    folder "💼 business" <<business>> {
+        folder "service" {
+            interface UserService
+            interface SecurityAuditService
+            interface SafeSendService
+            interface BackupService
+            interface PasswordService
+            interface PasswordResetService
+            interface VaultObserver
+            interface SessionLogoutObserver
+            interface PasswordResetObserver
+            class "VaultService\n《concrete》" as VaultService
+            class "PasswordHintService\n《concrete》" as PasswordHintService
+            class PasswordResetEventPublisher
+            class PasswordResetCompletedEvent
+            class PasswordResetRequestResult
+
+            folder "impl" {
+                class UserServiceImpl
+                class SecurityAuditServiceImpl
+                class SafeSendServiceImpl
+                class BackupServiceImpl
+                class PasswordServiceImpl
+                class PasswordResetServiceImpl
+            }
+        }
+
+        folder "domain" {
+            class "User\n(immutable)" as User
+            class UserBuilder
+            class UserFactory
+            class "AuditResult\n《record》" as AuditResult
+            class PasswordEntry
+        }
+
+        folder "exception" {
+            class SafeCoreException
+            class UserAlreadyExistsException
+            class UserNotFoundException
+            class WeakPasswordException
+            class InvalidTokenException
+        }
+
+        folder "hints" {
+            class PasswordHint
+            enum HintLevel
+
+            folder "rules" {
+                interface PasswordRule
+                class MinLengthRule
+                class ComplexityRule
+                class SequenceRule
+            }
+        }
+    }
+
+    folder "🔐 security" <<security>> {
+        interface EncryptionStrategy
+        class AESEncryptionStrategy
+        class EncryptionFactory
+        class KeyManager
+        class PasswordHasher
+        class PasswordStrengthEvaluator
+        class PasswordGenerator
+    }
+
+    folder "💾 persistence" <<persistence>> {
+        folder "entity" {
+            class UserEntity
+            class PasswordEntryEntity
+            class SafeSendEntryEntity
+        }
+
+        folder "repository" {
+            interface "UserRepository\n《JpaRepository》" as UserRepository
+            interface "PasswordEntryRepository\n《JpaRepository》" as PasswordEntryRepository
+            interface "SafeSendRepository\n《JpaRepository》" as SafeSendRepository
+        }
+    }
+
+    class "⚙️ SafeCoreApplication\n《@SpringBootApplication》" as SafeCoreApplication
+}
+
+' ===== EXTERNAL DEPENDENCIES =====
+
+package "External Dependencies" <<Cloud>> #WhiteSmoke {
+    package "Spring Framework" <<Folder>> #PaleGreen {
+        component [Spring Boot 3.2.2] as SpringBoot
+        component [Spring Data JPA] as SpringData
+        component [Spring Context] as SpringContext
+        component [Spring Actuator] as SpringActuator
+    }
+
+    package "JavaFX 17" <<Folder>> #LightSkyBlue {
+        component [JavaFX Controls] as FXControls
+        component [JavaFX FXML] as FXFXML
+    }
+
+    package "Database" <<Folder>> #Salmon {
+        database PostgreSQL #LightPink
+        note right of PostgreSQL
+            Cloud-hosted on Neon
+            Production-grade
+            relational database
+        end note
+    }
+
+    package "Security Libraries" <<Folder>> #Gold {
+        component [JBCrypt 0.4] as JBCrypt
+        component [JCE (AES-256)] as JCE
+    }
+
+    package "Build & Test" <<Folder>> #Lavender {
+        component [Maven] as Maven
+        component [JUnit 5] as JUnit
+        component [Mockito] as Mockito
+        component [JaCoCo] as JaCoCo
+    }
+}
+
+' ===== DEPENDENCIES BETWEEN LAYERS =====
+
+' UI Layer dependencies
+ui ..> business : <<uses>>
+ui ..> security : <<uses>>
+controller ..> service : <<calls>>
+controller ..> navigation : <<navigates>>
+controller ..> session : <<manages>>
+controller ..> domain : <<displays>>
+ui ..> FXControls : <<renders with>>
+ui ..> FXFXML : <<loads views>>
+
+' Business Layer dependencies
+business ..> security : <<encrypts with>>
+business ..> persistence : <<persists to>>
+service ..> domain : <<creates>>
+service ..> exception : <<throws>>
+service ..> repository : <<accesses>>
+"impl" ..|> service : <<implements>>
+business ..> SpringContext : <<managed by>>
+
+' Security Layer dependencies
+security ..> JBCrypt : <<hashes with>>
+security ..> JCE : <<encrypts with>>
+AESEncryptionStrategy ..|> EncryptionStrategy : <<implements>>
+
+' Persistence Layer dependencies
+persistence ..> SpringData : <<powered by>>
+persistence ..> PostgreSQL : <<stores in>>
+repository ..> entity : <<queries>>
+entity --> PostgreSQL : <<persisted to>>
+
+' Application bootstrap
+SafeCoreApplication ..> SpringBoot : <<bootstraps>>
+SafeCoreApplication ..> ui : <<launches>>
+
+' Testing dependencies
+business ..> JUnit : <<tested with>>
+security ..> JUnit : <<tested with>>
+persistence ..> Mockito : <<mocked in tests>>
+SafeCoreApplication ..> JaCoCo : <<coverage>>
+
+legend right
+    |= Color |= Layer |
+    | <#LightBlue> | UI Layer |
+    | <#LightGreen> | Business Layer |
+    | <#LightYellow> | Security Layer |
+    | <#LightCoral> | Persistence Layer |
+    | <#WhiteSmoke> | External Dependencies |
+endlegend
+
+@enduml
+

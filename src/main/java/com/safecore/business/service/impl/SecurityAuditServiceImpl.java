@@ -33,38 +33,74 @@ public class SecurityAuditServiceImpl implements SecurityAuditService {
         List<PasswordEntryEntity> entries = vaultService.getEntriesForCurrentUser();
 
         if (entries == null || entries.isEmpty()) {
-            return new AuditResult(100, 0, 0, 0, 0);
+            return new AuditResult(100, 0, 0, 0, 0, List.of(), List.of(), List.of());
         }
 
-        List<String> decryptedPasswords = entries.stream()
+        // Mappa entry -> password decifrata
+        List<PasswordEntryEntity> entriesWithDecrypted = entries.stream()
+                .filter(e -> e.getEncryptedPassword() != null)
+                .toList();
+
+        // Identifica password deboli con i loro servizi
+        List<String> weakPasswordServices = entriesWithDecrypted.stream()
+                .filter(e -> {
+                    String decrypted = vaultService.decryptPassword(e.getEncryptedPassword());
+                    return decrypted != null && strengthEvaluator.evaluate(decrypted) == PasswordStrengthEvaluator.Strength.WEAK;
+                })
+                .map(PasswordEntryEntity::getServiceName)
+                .toList();
+
+        int weakCount = weakPasswordServices.size();
+
+        // Identifica password vecchie (> 1 anno)
+        LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
+        List<String> oldPasswordServices = entries.stream()
+                .filter(e -> e.getCreatedAt() != null && e.getCreatedAt().isBefore(oneYearAgo))
+                .map(PasswordEntryEntity::getServiceName)
+                .toList();
+
+        int oldCount = oldPasswordServices.size();
+
+        // Identifica password replicate con i loro servizi
+        List<String> decryptedPasswords = entriesWithDecrypted.stream()
                 .map(e -> vaultService.decryptPassword(e.getEncryptedPassword()))
                 .filter(p -> p != null)
                 .toList();
 
-        int weakCount = (int) decryptedPasswords.stream()
-                .filter(p -> strengthEvaluator.evaluate(p) == PasswordStrengthEvaluator.Strength.WEAK)
-                .count();
+        // Mappa password -> lista di servizi che la usano
+        var passwordToServices = new java.util.HashMap<String, List<String>>();
+        for (PasswordEntryEntity entry : entriesWithDecrypted) {
+            String decrypted = vaultService.decryptPassword(entry.getEncryptedPassword());
+            if (decrypted != null) {
+                passwordToServices.computeIfAbsent(decrypted, k -> new java.util.ArrayList<>())
+                        .add(entry.getServiceName());
+            }
+        }
 
-        // Controllo date con protezione null
-        LocalDateTime oneYearAgo = LocalDateTime.now().minusYears(1);
-        int oldCount = (int) entries.stream()
-                .filter(e -> e.getCreatedAt() != null && e.getCreatedAt().isBefore(oneYearAgo))
-                .count();
+        // Trova servizi con password replicate (password usata > 1 volta)
+        List<String> reusedPasswordServices = passwordToServices.entrySet().stream()
+                .filter(e -> e.getValue().size() > 1)
+                .flatMap(e -> e.getValue().stream())
+                .distinct()
+                .toList();
 
-        int reusedCount = (int) decryptedPasswords.stream()
-                .collect(Collectors.groupingBy(p -> p, Collectors.counting()))
-                .values().stream()
-                .filter(count -> count > 1)
-                .mapToLong(count -> count)
-                .sum();
+        int reusedCount = reusedPasswordServices.size();
 
-        int score = calculateScore(weakCount, oldCount, reusedCount);
+        double score = calculateScore(weakCount, oldCount, reusedCount, entries.size());
 
-        return new AuditResult(score, weakCount, oldCount, reusedCount, entries.size());
+        return new AuditResult(score, weakCount, oldCount, reusedCount, entries.size(),
+                weakPasswordServices, reusedPasswordServices, oldPasswordServices);
     }
 
-    private int calculateScore(int weak, int old, int reused) {
-        int score = 100 - (weak * 10) - (old * 5) - (reused * 15);
-        return Math.max(score, 0);
+    private double calculateScore(int weak, int old, int reused, int total) {
+        if (total == 0) return 100.0;
+
+        // Calcolo penalità percentuali basate sul totale
+        double weakPenalty = (weak * 100.0 / total) * 0.5;      // 50% del peso se tutte deboli
+        double oldPenalty = (old * 100.0 / total) * 0.25;       // 25% del peso se tutte vecchie
+        double reusedPenalty = (reused * 100.0 / total) * 0.25; // 25% del peso se tutte replicate
+
+        double score = 100.0 - weakPenalty - oldPenalty - reusedPenalty;
+        return Math.max(Math.round(score * 10.0) / 10.0, 0.0); // Arrotonda a 1 decimale
     }
 }

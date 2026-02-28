@@ -108,7 +108,7 @@ The project demonstrates professional software engineering practices including:
 │  - PasswordEntryRepository (entry CRUD)                     │
 │  - PasswordResetTokenRepository (token management)          │
 │  - SafeSendRepository (temporary secret storage)            │
-│  - H2 Database (embedded file-based storage)                │
+│  - PostgreSQL Database (cloud-hosted relational DB)         │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -142,7 +142,7 @@ The project demonstrates professional software engineering practices including:
 - **Java 17**: Modern Java LTS version with records, sealed classes, and enhanced pattern matching
 - **Spring Boot 3.2.2**: Enterprise framework for dependency injection, transaction management, and data access
 - **JavaFX 17**: Modern desktop UI framework with FXML declarative layouts
-- **H2 Database**: Embedded file-based database for local storage
+- **PostgreSQL**: Production-grade relational database with cloud hosting (Neon)
 
 ### Security Libraries
 
@@ -155,6 +155,7 @@ The project demonstrates professional software engineering practices including:
 - **Mockito**: Mocking framework for unit testing
 - **Spring Boot Test**: Integration testing support with transaction rollback
 - **TestFX**: JavaFX UI testing framework
+- **JaCoCo**: Code coverage analysis tool
 
 ### Build Tools
 
@@ -1893,7 +1894,7 @@ package "Client Application" {
     component [JPA Repositories] as JPA
   }
   
-  database "H2 Database" as DB {
+  database "PostgreSQL Database" as DB {
     storage [users]
     storage [password_entries]
     storage [reset_tokens]
@@ -1930,6 +1931,96 @@ end note
 
 @enduml
 ```
+###  Package Diagram 
+
+```plantuml
+@startuml SafeCore_Package_Diagram
+!theme blueprint
+skinparam packageStyle folder
+
+folder "📦 com.safecore" {
+    folder "🖥️ ui" {
+        folder "controller" {
+            class LoginController
+            class RegisterController
+            class DashboardController
+            class AuditController
+            class SafeSendController
+            class PasswordResetController
+        }
+        folder "navigation" {
+            class SceneNavigator
+        }
+        folder "session" {
+            class SessionContext
+        }
+    }
+
+    folder "💼 business" {
+        folder "service" {
+            interface UserService
+            interface SecurityAuditService
+            interface SafeSendService
+            class VaultService
+            class PasswordHintService
+            
+            folder "impl" {
+                class UserServiceImpl
+                class SecurityAuditServiceImpl
+                class SafeSendServiceImpl
+            }
+        }
+        folder "domain" {
+            class User
+            class AuditResult
+            class PasswordEntry
+        }
+        folder "exception" {
+            class SafeCoreException
+            class WeakPasswordException
+        }
+    }
+
+    folder "🔐 security" {
+        interface EncryptionStrategy
+        class AESEncryptionStrategy
+        class KeyManager
+        class PasswordHasher
+        class PasswordStrengthEvaluator
+        class PasswordGenerator
+    }
+
+    folder "💾 persistence" {
+        folder "entity" {
+            class UserEntity
+            class PasswordEntryEntity
+            class SafeSendEntryEntity
+        }
+        folder "repository" {
+            interface UserRepository
+            interface PasswordEntryRepository
+            interface SafeSendRepository
+        }
+    }
+}
+
+' Dependencies
+ui ..> business
+business ..> security
+business ..> persistence
+security ..> persistence
+
+@enduml
+```
+
+**Key Packages:**
+- **ui** - Presentation layer (controllers, navigation, session)
+-  **business** - Business logic (services, domain models, exceptions)
+-  **security** - Security components (encryption, hashing, key management)
+-  **persistence** - Data access (JPA entities, Spring Data repositories)
+
+---
+
 
 ## Installation
 
@@ -1982,28 +2073,30 @@ java -jar target/SafeCore-1.0-SNAPSHOT.jar
 
 ### Database Configuration
 
-Edit `src/main/resources/application.properties`:
+The application uses PostgreSQL as its production database. Edit `src/main/resources/application.properties`:
 
 ```properties
-# H2 Database (file-based, persistent)
-spring.datasource.url=jdbc:h2:file:./safecore_db;AUTO_SERVER=TRUE
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
+# PostgreSQL Database (cloud-hosted on Neon)
+spring.datasource.url=jdbc:postgresql://[your-neon-host].neon.tech/neondb?sslmode=require&channelBinding=require
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.username=neondb_owner
+spring.datasource.password=${DB_PASSWORD}
 
 # JPA/Hibernate
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-
-# H2 Console (development only)
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-spring.h2.console.settings.web-allow-others=true
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 ```
 
-**Database Location**: `./safecore_db.mv.db` (file in project root)
+**Environment Variables**:
+- `DB_PASSWORD`: Set this environment variable with your PostgreSQL password
+
+**Database Setup**:
+1. Create a PostgreSQL database (e.g., on [Neon](https://neon.tech/), AWS RDS, or local PostgreSQL)
+2. Update the connection URL with your database host
+3. Set the `DB_PASSWORD` environment variable
+4. The application will automatically create tables on first run
 
 ### Security Configuration
 
@@ -2018,6 +2111,11 @@ public String hash(String plain) {
 **Recommendations**:
 - Development: Work factor 10-12 (faster)
 - Production: Work factor 12-14 (more secure, slower)
+
+**Encryption Configuration**:
+- AES-256-CBC with PBKDF2 key derivation
+- Unique IV (Initialization Vector) per password entry
+- Keys derived from user's master password + salt
 
 ### JavaFX UI Configuration
 
@@ -2559,7 +2657,7 @@ This project is licensed under the **MIT License**.
 ```
 MIT License
 
-Copyright (c) 2024 Dania Ciampalini
+Copyright (c) 2026 Dania Ciampalini, Cecilia Vignani
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -2580,18 +2678,26 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
+## Authors
+
+**Dania Ciampalini** & **Cecilia Vignani**
+
+This project was developed as part of a Software Engineering course, demonstrating enterprise-grade architecture, design patterns, and security best practices in a real-world password management application.
+
 ## Acknowledgments
 
 This project was built using outstanding open-source technologies:
 
 - **Spring Framework Team**: For Spring Boot 3.x, Spring Data JPA, and comprehensive dependency injection
 - **OpenJFX Community**: For JavaFX 17 and modern desktop UI capabilities
-- **H2 Database Team**: For lightweight, fast embedded database
+- **PostgreSQL Global Development Group**: For robust, production-grade relational database
+- **Neon**: For serverless PostgreSQL hosting with excellent developer experience
 - **jBCrypt Contributors**: For robust BCrypt implementation
 - **JUnit Team**: For JUnit 5 testing framework
 - **Mockito Contributors**: For powerful mocking capabilities
 - **PlantUML Project**: For UML diagram generation
 - **Maven Community**: For reliable build and dependency management
+- **JaCoCo Team**: For comprehensive code coverage analysis
 
 ### Special Thanks
 
@@ -2613,8 +2719,6 @@ Built with security, quality, and engineering excellence in mind.
 
 For support, please open an issue on [GitHub](https://github.com/DaniaCiampalini/SafeCoreProject/issues).
 
-Author: **Dania Ciampalini**
+Authors: **Dania Ciampalini** & **Cecilia Vignani**
 
-Email: dania.ciampalini@edu.unifi.it
-
-GitHub: [@DaniaCiampalini](https://github.com/DaniaCiampalini)
+GitHub: [@DaniaCiampalini](https://github.com/DaniaCiampalini) & [@CeciliaVignani](https://github.com/CeciliaVignani)

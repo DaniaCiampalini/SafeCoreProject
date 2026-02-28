@@ -4,65 +4,90 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.geometry.Insets?>
 
-<VBox xmlns:fx="http://javafx.com/fxml" spacing="25" alignment="CENTER" prefWidth="450"
-      prefHeight="650" xmlns="http://javafx.com/javafx/17"
+<VBox xmlns:fx="http://javafx.com/fxml" spacing="28" alignment="CENTER" prefWidth="600"
+      prefHeight="800" xmlns="http://javafx.com/javafx/17"
       fx:controller="com.safecore.ui.controller.RegisterController"
-      style="-fx-background-color: #ffffff; -fx-padding: 45;">
+      style="-fx-background-color: #f5f5f7; -fx-padding: 50;">
 
-    <VBox alignment="CENTER" spacing="10">
-        <Label text="Crea Account" styleClass="title-label" style="-fx-font-size: 32;"/>
-        <Label text="Inizia a proteggere i tuoi segreti oggi" style="-fx-text-fill: #64748b; -fx-font-size: 15;"/>
+    <!-- Header -->
+    <VBox alignment="CENTER" spacing="12">
+        <Label text="Crea Account" styleClass="title-label"
+               style="-fx-font-size: 36; -fx-font-weight: 700; -fx-text-fill: #1e293b;"/>
+        <Label text="Inizia a proteggere i tuoi segreti oggi"
+               style="-fx-text-fill: #64748b; -fx-font-size: 15;"/>
     </VBox>
 
-    <VBox spacing="15">
-        <VBox spacing="8">
-            <Label text="Email" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
-            <TextField fx:id="emailField" promptText="esempio@mail.com"/>
+    <!-- Form -->
+    <VBox spacing="18" maxWidth="450">
+        <VBox spacing="10">
+            <Label text="Email" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 600; -fx-font-size: 13;"/>
+            <TextField fx:id="emailField" promptText="esempio@mail.com"
+                       style="-fx-padding: 14; -fx-font-size: 14; -fx-background-radius: 10; -fx-border-radius: 10;"/>
         </VBox>
 
-        <VBox spacing="8">
-            <Label text="Password" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
+        <VBox spacing="10">
+            <Label text="Master Password" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 600; -fx-font-size: 13;"/>
             <HBox alignment="CENTER_LEFT"
-                  style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
+                  style="-fx-border-color: #e5e7eb; -fx-border-radius: 10; -fx-background-color: #ffffff; -fx-background-radius: 10; -fx-border-width: 1;">
                 <StackPane HBox.hgrow="ALWAYS">
                     <PasswordField fx:id="passwordField" promptText="Minimo 8 caratteri"
                                    onKeyReleased="#handlePasswordTyping"
-                                   style="-fx-background-color: transparent; -fx-padding: 12;"/>
+                                   style="-fx-background-color: transparent; -fx-padding: 14; -fx-font-size: 14;"/>
                     <TextField fx:id="passwordTextField" visible="false" onKeyReleased="#handlePasswordTyping"
-                               style="-fx-background-color: transparent; -fx-padding: 12;"/>
+                               style="-fx-background-color: transparent; -fx-padding: 14; -fx-font-size: 14;"/>
                 </StackPane>
                 <Button fx:id="togglePwdBtn" text="Show" onAction="#togglePasswordVisibility"
-                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #94a3b8;"/>
+                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #94a3b8; -fx-padding: 0 14 0 0;"/>
             </HBox>
             <Label fx:id="passwordStrengthLabel" styleClass="strength-label"/>
         </VBox>
 
-        <VBox spacing="8">
-            <Label text="Conferma Password" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 700;"/>
+        <VBox spacing="10">
+            <Label text="Conferma Master Password" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 600; -fx-font-size: 13;"/>
             <HBox alignment="CENTER_LEFT"
-                  style="-fx-border-color: #e5e7eb; -fx-border-radius: 12; -fx-background-color: #f9fafb; -fx-background-radius: 12;">
+                  style="-fx-border-color: #e5e7eb; -fx-border-radius: 10; -fx-background-color: #ffffff; -fx-background-radius: 10; -fx-border-width: 1;">
                 <StackPane HBox.hgrow="ALWAYS">
                     <PasswordField fx:id="confirmPasswordField" promptText="Ripeti password"
-                                   style="-fx-background-color: transparent; -fx-padding: 12;"/>
+                                   style="-fx-background-color: transparent; -fx-padding: 14; -fx-font-size: 14;"/>
                     <TextField fx:id="confirmPasswordTextField" visible="false"
-                               style="-fx-background-color: transparent; -fx-padding: 12;"/>
+                               style="-fx-background-color: transparent; -fx-padding: 14; -fx-font-size: 14;"/>
                 </StackPane>
                 <Button fx:id="toggleConfirmPwdBtn" text="Show" onAction="#toggleConfirmVisibility"
-                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #94a3b8;"/>
+                        style="-fx-background-color: transparent; -fx-cursor: hand; -fx-text-fill: #94a3b8; -fx-padding: 0 14 0 0;"/>
             </HBox>
         </VBox>
     </VBox>
 
-    <VBox spacing="12" alignment="CENTER">
-        <Button text="Registrati ora" onAction="#handleRegister" maxWidth="Infinity" styleClass="button-primary"
-                style="-fx-font-size: 16;"/>
+    <!-- Action Buttons -->
+    <VBox spacing="12" alignment="CENTER" maxWidth="450">
+        <Button text="Registrati Ora" onAction="#handleRegister" maxWidth="Infinity" styleClass="button-primary"
+                style="-fx-font-size: 16; -fx-padding: 14; -fx-background-radius: 10;"/>
         <Button text="Genera Password Suggerita" onAction="#handleGeneratePassword" maxWidth="Infinity"
-                styleClass="button-secondary"/>
+                styleClass="button-secondary" style="-fx-padding: 12; -fx-background-radius: 10;"/>
     </VBox>
 
-    <Label fx:id="messageLabel" wrapText="true" alignment="CENTER" style="-fx-font-size: 12px;"/>
+    <!-- Message Label -->
+    <Label fx:id="messageLabel" wrapText="true" alignment="CENTER"
+           style="-fx-font-size: 13; -fx-padding: 10;" maxWidth="450"/>
 
-    <Label text="Hai già un account? Accedi" onMouseClicked="#handleBackToLogin"
-           style="-fx-text-fill: #2563eb; -fx-cursor: hand; -fx-font-weight: 700;"/>
+    <!-- Avviso Zero-Knowledge sopra al link login -->
+    <VBox spacing="6" alignment="CENTER_LEFT" maxWidth="450"
+          style="-fx-background-color: #ffffff; -fx-padding: 14; -fx-border-color: #d1d5db; -fx-border-width: 1; -fx-border-radius: 6; -fx-background-radius: 6;">
+        <HBox spacing="5" alignment="CENTER_LEFT">
+            <Label text="IMPORTANTE:" style="-fx-text-fill: #dc2626; -fx-font-weight: 700; -fx-font-size: 12;"/>
+            <Label text="Architettura Zero-Knowledge" style="-fx-text-fill: #1f2937; -fx-font-weight: 700; -fx-font-size: 12;"/>
+        </HBox>
+        <Label text="SafeCore non memorizza la tua password d'accesso e non può aiutarti a recuperarla"
+               wrapText="true" maxWidth="420"
+               style="-fx-text-fill: #4b5563; -fx-font-size: 11; -fx-font-weight: 600;"/>
+    </VBox>
+
+    <!-- Footer -->
+    <VBox alignment="CENTER" spacing="12">
+        <Separator prefWidth="250" style="-fx-background-color: #e5e7eb;"/>
+        <Label text="Hai già un account? Accedi" onMouseClicked="#handleBackToLogin"
+               style="-fx-text-fill: #2563eb; -fx-cursor: hand; -fx-font-weight: 700; -fx-font-size: 14; -fx-underline: true;"/>
+    </VBox>
 
 </VBox>
+

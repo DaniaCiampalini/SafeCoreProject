@@ -89,10 +89,6 @@ public class LoginController {
         navigateTo("/com/safecore/ui/view/register.fxml", "SafeCore – Registrazione");
     }
 
-    @FXML
-    private void handleForgotPassword() {
-        navigateTo("/com/safecore/ui/view/reset-password.fxml", "SafeCore – Reset Password");
-    }
 
     /**
      * Helper per cambiare schermata

@@ -5,8 +5,9 @@ actor User
 participant LoginController
 participant UserService
 participant PasswordHasher
+participant KeyManager
 participant UserRepository
-database H2Database
+database PostgreSQL
 participant SessionContext
 participant SceneNavigator
 
@@ -22,9 +23,9 @@ else Email valida
 
     UserService -> UserRepository: findByEmail(email)
     activate UserRepository
-    UserRepository -> H2Database: SELECT * FROM users WHERE email = ?
-    H2Database --> UserRepository: User data
-    UserRepository --> UserService: Optional<User>
+    UserRepository -> PostgreSQL: SELECT * FROM users WHERE email = ?
+    PostgreSQL --> UserRepository: User data
+    UserRepository --> UserService: Optional<UserEntity>
     deactivate UserRepository
 
     alt User non trovato
@@ -37,6 +38,11 @@ else Email valida
         deactivate PasswordHasher
 
         alt Password corretta
+            UserService -> KeyManager: deriveKey(password, user.salt)
+            activate KeyManager
+            KeyManager --> UserService: SecretKey
+            deactivate KeyManager
+
             UserService --> LoginController: Optional<User>
             LoginController -> SessionContext: login(email)
             activate SessionContext

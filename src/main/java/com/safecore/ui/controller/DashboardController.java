@@ -145,20 +145,38 @@ public class DashboardController implements VaultObserver {
             alert.setTitle("Sicurezza Password");
             alert.setHeaderText("Attenzione: Password Poco Sicura");
             alert.setContentText(hint.getMessage() + "\n\nVuoi salvarla comunque?");
-            alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+            alert.getButtonTypes().setAll(ButtonType.NO, ButtonType.YES);
+
+            // Imposta NO come pulsante di default (blu) per motivi di sicurezza
+            Button noButton = (Button) alert.getDialogPane().lookupButton(ButtonType.NO);
+            noButton.setDefaultButton(true);
+            Button yesButton = (Button) alert.getDialogPane().lookupButton(ButtonType.YES);
+            yesButton.setDefaultButton(false);
 
             Optional<ButtonType> result = alert.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.NO) return;
+            if (result.isEmpty() || result.get() == ButtonType.NO) {
+                handleCloseOverlay(); // Chiudi l'overlay e torna alla dashboard
+                return;
+            }
         }
         if (hint.getLevel() == HintLevel.INFO) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setTitle("Sicurezza Password");
             alert.setHeaderText("Attenzione: Password Poco Sicura");
             alert.setContentText(hint.getMessage() + "\n\nVuoi salvarla comunque?");
-            alert.getButtonTypes().setAll(ButtonType.YES, ButtonType.NO);
+            alert.getButtonTypes().setAll(ButtonType.NO, ButtonType.YES);
+
+            // Imposta NO come pulsante di default (blu) per motivi di sicurezza
+            Button noButton = (Button) alert.getDialogPane().lookupButton(ButtonType.NO);
+            noButton.setDefaultButton(true);
+            Button yesButton = (Button) alert.getDialogPane().lookupButton(ButtonType.YES);
+            yesButton.setDefaultButton(false);
 
             Optional<ButtonType> result = alert.showAndWait();
-            if (result.isPresent() && result.get() == ButtonType.NO) return;
+            if (result.isEmpty() || result.get() == ButtonType.NO) {
+                handleCloseOverlay(); // Chiudi l'overlay e torna alla dashboard
+                return;
+            }
         }
 
         LocalDateTime expiry = (hours != null && hours > 0) ? LocalDateTime.now().plusHours(hours) : null;

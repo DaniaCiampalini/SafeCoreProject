@@ -109,7 +109,7 @@ Il progetto dimostra pratiche professionali di ingegneria del software tra cui:
 │  - PasswordEntryRepository (CRUD entry)                     │
 │  - PasswordResetTokenRepository (gestione token)            │
 │  - SafeSendRepository (archiviazione segreti temporanei)    │
-│  - Database H2 (storage embedded basato su file)            │
+│  - Database PostgreSQL (DB relazionale cloud-hosted)        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -143,7 +143,7 @@ Il progetto dimostra pratiche professionali di ingegneria del software tra cui:
 - **Java 17**: Versione LTS Java moderna con record, sealed classes e pattern matching avanzato
 - **Spring Boot 3.2.2**: Framework enterprise per dependency injection, gestione transazioni e accesso dati
 - **JavaFX 17**: Framework UI desktop moderno con layout dichiarativi FXML
-- **Database H2**: Database embedded basato su file per storage locale
+- **PostgreSQL**: Database relazionale production-grade con hosting cloud (Neon)
 
 ### Librerie Sicurezza
 
@@ -156,6 +156,7 @@ Il progetto dimostra pratiche professionali di ingegneria del software tra cui:
 - **Mockito**: Framework mocking per unit testing
 - **Spring Boot Test**: Supporto integration testing con rollback transazioni
 - **TestFX**: Framework testing UI JavaFX
+- **JaCoCo**: Strumento analisi code coverage
 
 ### Strumenti Build
 
@@ -1229,7 +1230,120 @@ public class SecurityAuditServiceImpl implements SecurityAuditService {
 
 ## Diagrammi UML
 
-### Diagramma Casi d'Uso
+Tutti i diagrammi UML sono disponibili in formato PlantUML nella directory `docs/uml/`. Puoi visualizzarli usando:
+- **Online**: https://www.plantuml.com/plantuml/ (copia & incolla contenuto .puml)
+- **VS Code**: Installa estensione "PlantUML"
+- **IntelliJ IDEA**: Installa plugin "PlantUML integration"
+- **CLI**: `java -jar plantuml.jar docs/uml/*.puml`
+
+### 1. 📦 Diagramma Package - Struttura Progetto
+
+**File:** `package-diagram.puml` ⭐ **MIGLIORATO** - Visualizzazione stile folder
+
+Il diagramma package mostra la struttura modulare completa con rappresentazione stile cartelle:
+
+```plantuml
+@startuml SafeCore_Package_Diagram
+!theme blueprint
+skinparam packageStyle folder
+
+folder "📦 com.safecore" {
+    folder "🖥️ ui" {
+        folder "controller" {
+            class LoginController
+            class RegisterController
+            class DashboardController
+            class AuditController
+            class SafeSendController
+            class PasswordResetController
+        }
+        folder "navigation" {
+            class SceneNavigator
+        }
+        folder "session" {
+            class SessionContext
+        }
+    }
+
+    folder "💼 business" {
+        folder "service" {
+            interface UserService
+            interface SecurityAuditService
+            interface SafeSendService
+            class VaultService
+            class PasswordHintService
+            
+            folder "impl" {
+                class UserServiceImpl
+                class SecurityAuditServiceImpl
+                class SafeSendServiceImpl
+            }
+        }
+        folder "domain" {
+            class User
+            class AuditResult
+            class PasswordEntry
+        }
+        folder "exception" {
+            class SafeCoreException
+            class WeakPasswordException
+        }
+    }
+
+    folder "🔐 security" {
+        interface EncryptionStrategy
+        class AESEncryptionStrategy
+        class KeyManager
+        class PasswordHasher
+        class PasswordStrengthEvaluator
+        class PasswordGenerator
+    }
+
+    folder "💾 persistence" {
+        folder "entity" {
+            class UserEntity
+            class PasswordEntryEntity
+            class SafeSendEntryEntity
+        }
+        folder "repository" {
+            interface UserRepository
+            interface PasswordEntryRepository
+            interface SafeSendRepository
+        }
+    }
+}
+
+' Dipendenze
+ui ..> business
+business ..> security
+business ..> persistence
+security ..> persistence
+
+@enduml
+```
+
+**Package Chiave:**
+- 🖥️ **ui** - Livello presentazione (controller, navigazione, sessione)
+- 💼 **business** - Logica business (service, modelli dominio, eccezioni)
+- 🔐 **security** - Componenti sicurezza (cifratura, hashing, gestione chiavi)
+- 💾 **persistence** - Accesso dati (entity JPA, repository Spring Data)
+
+---
+
+### 2. 🏗️ Diagramma Architettura Completa
+
+**File:** `architecture-complete.puml` ⭐ **NUOVO** - Architettura layered verticale
+
+Mostra il sistema completo con layer verticali (UI → Business → Security) e Persistence a destra.
+Vedi file per diagramma completo con 30+ componenti e dipendenze dettagliate.
+
+---
+
+### 3. 📊 Diagramma Classi
+
+**File:** `class-diagram.puml` - Relazioni classi dettagliate
+
+--- Diagramma Casi d'Uso
 
 ```plantuml
 @startuml
@@ -1894,7 +2008,7 @@ package "Applicazione Client" {
     component [Repository JPA] as JPA
   }
   
-  database "Database H2" as DB {
+  database "Database PostgreSQL" as DB {
     storage [users]
     storage [password_entries]
     storage [reset_tokens]
@@ -1983,28 +2097,30 @@ java -jar target/SafeCore-1.0-SNAPSHOT.jar
 
 ### Configurazione Database
 
-Modifica `src/main/resources/application.properties`:
+L'applicazione utilizza PostgreSQL come database di produzione. Modifica `src/main/resources/application.properties`:
 
 ```properties
-# Database H2 (basato su file, persistente)
-spring.datasource.url=jdbc:h2:file:./safecore_db;AUTO_SERVER=TRUE
-spring.datasource.driver-class-name=org.h2.Driver
-spring.datasource.username=sa
-spring.datasource.password=
+# Database PostgreSQL (cloud-hosted su Neon)
+spring.datasource.url=jdbc:postgresql://[your-neon-host].neon.tech/neondb?sslmode=require&channelBinding=require
+spring.datasource.driver-class-name=org.postgresql.Driver
+spring.datasource.username=neondb_owner
+spring.datasource.password=${DB_PASSWORD}
 
 # JPA/Hibernate
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.format_sql=true
-spring.jpa.database-platform=org.hibernate.dialect.H2Dialect
-
-# Console H2 (solo sviluppo)
-spring.h2.console.enabled=true
-spring.h2.console.path=/h2-console
-spring.h2.console.settings.web-allow-others=true
+spring.jpa.database-platform=org.hibernate.dialect.PostgreSQLDialect
 ```
 
-**Posizione Database**: `./safecore_db.mv.db` (file nella root progetto)
+**Variabili d'Ambiente**:
+- `DB_PASSWORD`: Imposta questa variabile d'ambiente con la password PostgreSQL
+
+**Setup Database**:
+1. Crea un database PostgreSQL (es. su [Neon](https://neon.tech/), AWS RDS, o PostgreSQL locale)
+2. Aggiorna l'URL di connessione con l'host del tuo database
+3. Imposta la variabile d'ambiente `DB_PASSWORD`
+4. L'applicazione creerà automaticamente le tabelle al primo avvio
 
 ### Configurazione Sicurezza
 
@@ -2019,6 +2135,11 @@ public String hash(String plain) {
 **Raccomandazioni**:
 - Sviluppo: Work factor 10-12 (più veloce)
 - Produzione: Work factor 12-14 (più sicuro, più lento)
+
+**Configurazione Cifratura**:
+- AES-256-CBC con derivazione chiave PBKDF2
+- IV (Initialization Vector) univoco per ogni entry password
+- Chiavi derivate dalla master password utente + salt
 
 ### Configurazione UI JavaFX
 
@@ -2156,8 +2277,8 @@ mvn test
 ### Copertura Test
 
 - **Test Unitari**: 45+ test che coprono business logic, sicurezza e accesso dati
-- **Test Integrazione**: Test workflow completi con database H2 in-memory
-- **Test Performance**: Validazione performance hashing BCrypt
+- **Test Integrazione**: Test workflow completi con Spring Boot Test e rollback transazioni
+- **Test Performance**: Validazione performance hashing BCrypt e cifratura AES
 
 ### Categorie Test
 
@@ -2560,7 +2681,7 @@ Questo progetto è rilasciato sotto **Licenza MIT**.
 ```
 Licenza MIT
 
-Copyright (c) 2024 Dania Ciampalini
+Copyright (c) 2026 Dania Ciampalini, Cecilia Vignani
 
 È concesso il permesso, gratuitamente, a chiunque ottenga una copia
 di questo software e dei file di documentazione associati (il "Software"),
@@ -2580,18 +2701,26 @@ ALTRA RESPONSABILITÀ, SIA IN UN'AZIONE CONTRATTUALE, ILLECITO O ALTRO, DERIVANT
 DA, FUORI O IN CONNESSIONE CON IL SOFTWARE O L'USO O ALTRE OPERAZIONI NEL SOFTWARE.
 ```
 
+## Autori
+
+**Dania Ciampalini** e **Cecilia Vignani**
+
+Questo progetto è stato sviluppato nell'ambito di un corso di Ingegneria del Software, dimostrando architettura enterprise-grade, design pattern e best practice di sicurezza in un'applicazione reale di gestione password.
+
 ## Ringraziamenti
 
 Questo progetto è stato costruito utilizzando eccezionali tecnologie open-source:
 
 - **Team Spring Framework**: Per Spring Boot 3.x, Spring Data JPA e dependency injection completa
 - **Community OpenJFX**: Per JavaFX 17 e capacità UI desktop moderne
-- **Team Database H2**: Per database embedded leggero e veloce
+- **PostgreSQL Global Development Group**: Per database relazionale robusto e production-grade
+- **Neon**: Per hosting PostgreSQL serverless con eccellente developer experience
 - **Contributori jBCrypt**: Per implementazione BCrypt robusta
 - **Team JUnit**: Per framework testing JUnit 5
 - **Contributori Mockito**: Per potenti capacità di mocking
 - **Progetto PlantUML**: Per generazione diagrammi UML
 - **Community Maven**: Per build affidabile e gestione dipendenze
+- **Team JaCoCo**: Per analisi completa code coverage
 
 ### Ringraziamenti Speciali
 
@@ -2613,10 +2742,6 @@ Costruito con sicurezza, qualità ed eccellenza ingegneristica.
 
 Per supporto, apri un'issue su [GitHub](https://github.com/DaniaCiampalini/SafeCoreProject/issues).
 
-Autore: **Dania Ciampalini**
+Autori: **Dania Ciampalini** & **Cecilia Vignani**
 
-Email: dania.ciampalini@edu.unifi.it
-
-GitHub: [@DaniaCiampalini](https://github.com/DaniaCiampalini)
-```
-
+GitHub: [@DaniaCiampalini](https://github.com/DaniaCiampalini) & [@CeciliaVignani](https://github.com/CeciliaVignani)

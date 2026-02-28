@@ -3,11 +3,13 @@
 
 actor User
 participant DashboardController
+participant PasswordHintService
 participant VaultService
 participant EncryptionFactory
 participant AESEncryptionStrategy
-participant VaultRepository
-database H2Database
+participant KeyManager
+participant PasswordEntryRepository
+database PostgreSQL
 
 User -> DashboardController: handleConfirmSave()
 activate DashboardController
@@ -16,36 +18,55 @@ DashboardController -> DashboardController: validateInput()
 alt Input non valido
     DashboardController -> User: showError("Campi obbligatori mancanti")
 else Input valido
-    DashboardController -> VaultService: save(vaultEntry)
+    DashboardController -> PasswordHintService: evaluatePassword(password)
+    activate PasswordHintService
+    PasswordHintService --> DashboardController: PasswordHint
+    deactivate PasswordHintService
+
+    alt Password debole o poco sicura
+        DashboardController -> User: showWarning("Password poco sicura")
+        User -> DashboardController: conferma salvataggio
+    end
+
+    DashboardController -> VaultService: addEntry(service, username, password, expiry)
     activate VaultService
 
-    VaultService -> EncryptionFactory: getStrategy()
+    VaultService -> EncryptionFactory: getDefaultStrategy()
     activate EncryptionFactory
     EncryptionFactory --> VaultService: AESEncryptionStrategy
     deactivate EncryptionFactory
 
-    VaultService -> AESEncryptionStrategy: encrypt(password)
+    VaultService -> AESEncryptionStrategy: encrypt(password.getBytes())
     activate AESEncryptionStrategy
     AESEncryptionStrategy -> AESEncryptionStrategy: generateIV()
-    AESEncryptionStrategy -> AESEncryptionStrategy: Cipher.doFinal()
-    AESEncryptionStrategy --> VaultService: encryptedPassword + IV
+    AESEncryptionStrategy -> KeyManager: deriveKey()
+    activate KeyManager
+    KeyManager --> AESEncryptionStrategy: SecretKey
+    deactivate KeyManager
+    AESEncryptionStrategy -> AESEncryptionStrategy: cipher.doFinal()
+    AESEncryptionStrategy --> VaultService: encryptedPassword (IV + ciphertext)
     deactivate AESEncryptionStrategy
 
-    VaultService -> VaultEntry: setEncryptedPassword()
-    VaultService -> VaultEntry: setIv()
+    VaultService -> VaultService: new PasswordEntryEntity()
+    VaultService -> VaultService: setServiceName(service)
+    VaultService -> VaultService: setUsername(username)
+    VaultService -> VaultService: setEncryptedPassword(encrypted)
+    VaultService -> VaultService: setExpiresAt(expiry)
+    VaultService -> VaultService: setUser(user)
 
-    VaultService -> VaultRepository: save(vaultEntry)
-    activate VaultRepository
-    VaultRepository -> H2Database: INSERT INTO vault_entries (...)
-    H2Database --> VaultRepository: id generato
-    VaultRepository --> VaultService: VaultEntry salvata
-    deactivate VaultRepository
+    VaultService -> PasswordEntryRepository: save(passwordEntry)
+    activate PasswordEntryRepository
+    PasswordEntryRepository -> PostgreSQL: INSERT INTO password_entries (...)
+    PostgreSQL --> PasswordEntryRepository: id generato
+    PasswordEntryRepository --> VaultService: PasswordEntryEntity salvata
+    deactivate PasswordEntryRepository
 
+    VaultService -> VaultService: notifyObservers()
     VaultService --> DashboardController: void
     deactivate VaultService
 
     DashboardController -> DashboardController: refreshVault()
-    DashboardController -> User: showSuccess("Entry salvata con successo")
+    DashboardController -> User: showToast("Entry salvata!")
 end
 
 deactivate DashboardController

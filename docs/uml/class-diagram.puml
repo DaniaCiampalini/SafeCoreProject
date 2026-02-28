@@ -1,152 +1,319 @@
 @startuml SafeCore_Class_Diagram
 !theme blueprint
+skinparam linetype ortho
+skinparam shadowing false
+skinparam packageStyle rectangle
+skinparam classAttributeIconSize 0
+skinparam defaultTextAlignment left
+skinparam class {
+    BackgroundColor White
+    BorderColor Black
+    ArrowColor Black
+}
 
-package "UI Layer" {
-    class LoginController {
+title SafeCore - Class Diagram (Layered Architecture)
+
+' ==================== UI LAYER ====================
+package ui <<Rectangle>> #E8F4F8 {
+    class RegisterController <<Controller>> {
         - userService: UserService
-        - emailField: TextField
-        - passwordField: PasswordField
-        + handleLogin(): void
-        + togglePasswordVisibility(): void
-        - isValidEmail(email: String): boolean
-    }
-
-    class DashboardController {
-        - vaultService: VaultService
-        - auditService: AuditService
-        - entries: ObservableList<VaultEntry>
-        + handleAddEntry(): void
-        + handleEditEntry(): void
-        + handleDeleteEntry(): void
-        + refreshVault(): void
-    }
-
-    class RegisterController {
-        - userService: UserService
+        - passwordHintService: PasswordHintService
+        __
         + handleRegister(): void
-        - validatePassword(password: String): boolean
+        + handlePasswordChange(): void
+    }
+
+    class LoginController <<Controller>> {
+        - userService: UserService
+        __
+        + handleLogin(): void
+        + handleForgotPassword(): void
+    }
+
+    class DashboardController <<Controller>> {
+        - vaultService: VaultService
+        - auditService: SecurityAuditService
+        - safeSendService: SafeSendService
+        - passwordGenerator: PasswordGenerator
+        __
+        + handleAddEntry(): void
+        + handleConfirmSave(): void
+        + refreshVault(): void
+        + handleLogout(): void
+    }
+
+    class SafeSendController <<Controller>> {
+        - safeSendService: SafeSendService
+        __
+        + handleCreateLink(): void
     }
 }
 
-package "Business Layer" {
-    interface UserService {
+' ==================== SERVICE LAYER ====================
+package service <<Rectangle>> #E8F8E8 {
+    interface UserService <<Service>> {
         + register(email: String, password: String): User
         + login(email: String, password: String): Optional<User>
+        + logout(): void
     }
 
-    class UserServiceImpl {
+    class UserServiceImpl <<Service>> {
         - userRepository: UserRepository
         - passwordHasher: PasswordHasher
+        - keyManager: KeyManager
+        - strengthEvaluator: PasswordStrengthEvaluator
+        __
         + register(email: String, password: String): User
         + login(email: String, password: String): Optional<User>
+        + logout(): void
     }
 
-    interface VaultService {
-        + save(entry: VaultEntry): void
-        + findAllByUser(userId: Long): List<VaultEntry>
-        + delete(entryId: Long): void
-    }
-
-    class VaultServiceImpl {
-        - vaultRepository: VaultRepository
+    class VaultService <<Service>> {
+        - passwordEntryRepository: PasswordEntryRepository
+        - userRepository: UserRepository
         - encryptionStrategy: EncryptionStrategy
-        + save(entry: VaultEntry): void
-        + findAllByUser(userId: Long): List<VaultEntry>
+        __
+        + addEntry(service: String, username: String, plain: String): void
+        + getEntriesForCurrentUser(): List<PasswordEntryEntity>
+        + decryptPassword(encrypted: byte[]): String
+        + deleteEntry(id: UUID): void
     }
 
-    class AuditService {
-        - passwordStrengthEvaluator: PasswordStrengthEvaluator
-        + analyzeVault(userId: Long): AuditResult
-        + checkWeakPasswords(): List<VaultEntry>
+    interface SecurityAuditService <<Service>> {
+        + runAudit(): AuditResult
     }
 
-    class SafeSendService {
-        - linkRepository: SafeSendLinkRepository
+    class SecurityAuditServiceImpl <<Service>> {
+        - vaultService: VaultService
+        - strengthEvaluator: PasswordStrengthEvaluator
+        __
+        + runAudit(): AuditResult
+    }
+
+    interface SafeSendService <<Service>> {
+        + createSafeLink(content: String, hours: int): String
+        + accessSafeLink(id: UUID, token: String): String
+    }
+
+    class SafeSendServiceImpl <<Service>> {
+        - safeSendRepository: SafeSendRepository
         - encryptionStrategy: EncryptionStrategy
-        + generateLink(data: String, expiresIn: int): String
-        + retrieveData(token: String): Optional<String>
+        - passwordHasher: PasswordHasher
+        __
+        + createSafeLink(content: String, hours: int): String
+        + accessSafeLink(id: UUID, token: String): String
     }
 }
 
-package "Security Layer" {
-    interface EncryptionStrategy {
-        + encrypt(data: String): String
-        + decrypt(data: String): String
-    }
-
-    class AESEncryptionStrategy {
-        - secretKey: SecretKey
-        - ivParameterSpec: IvParameterSpec
-        + encrypt(data: String): String
-        + decrypt(data: String): String
+' ==================== SECURITY LAYER ====================
+package security <<Rectangle>> #FFF8E8 {
+    class PasswordGenerator {
+        __
+        + generateSafe(length: int): String
     }
 
     class PasswordHasher {
-        + hash(password: String): String
-        + verify(password: String, hash: String): boolean
+        __
+        + hash(plain: String): String
+        + verify(plain: String, hash: String): boolean
     }
+
+    note right of PasswordHasher
+        BCrypt adaptive hashing
+        Work factor: 12
+    end note
+
+    interface EncryptionStrategy {
+        + encrypt(plaintext: String): byte[]
+        + decrypt(ciphertext: byte[]): String
+    }
+
+    class AESEncryptionStrategy {
+        - keyManager: KeyManager
+        __
+        + encrypt(plaintext: String): byte[]
+        + decrypt(ciphertext: byte[]): String
+    }
+
+    note right of AESEncryptionStrategy
+        AES-256-CBC
+        Unique IV per entry
+    end note
+
+    class KeyManager {
+        __
+        + deriveKey(password: String, salt: byte[]): SecretKey
+        + generateSalt(): byte[]
+    }
+
+    note right of KeyManager
+        PBKDF2 key derivation
+    end note
 
     class PasswordStrengthEvaluator {
+        __
         + evaluate(password: String): Strength
-        - hasUppercase(password: String): boolean
-        - hasLowercase(password: String): boolean
-        - hasDigit(password: String): boolean
+        + getScore(password: String): int
     }
 
-    enum Strength {
+    enum Strength <<enumeration>> {
         WEAK
         MEDIUM
         STRONG
     }
 }
 
-package "Persistence Layer" {
-    interface UserRepository {
-        + findByEmail(email: String): Optional<User>
+' ==================== PERSISTENCE LAYER ====================
+package persistence <<Rectangle>> #F8E8E8 {
+    interface UserRepository <<Repository>> {
+        + findByEmail(email: String): Optional<UserEntity>
         + existsByEmail(email: String): boolean
     }
 
-    interface VaultRepository {
-        + findAllByUserId(userId: Long): List<VaultEntry>
-        + deleteById(id: Long): void
+    interface PasswordEntryRepository <<Repository>> {
+        + findByUser(user: UserEntity): List<PasswordEntryEntity>
+        + deleteByExpiresAtBefore(date: LocalDateTime): void
     }
 
+    interface SafeSendRepository <<Repository>> {
+        + findById(id: UUID): Optional<SafeSendEntryEntity>
+        + deleteByExpiresAtBefore(date: LocalDateTime): void
+    }
+
+    interface PasswordResetTokenRepository <<Repository>> {
+        + findByTokenHash(hash: String): Optional<PasswordResetTokenEntity>
+        + deleteByExpiryDateBefore(date: LocalDateTime): void
+    }
+
+    note bottom of UserRepository
+        Extends JpaRepository<UserEntity, UUID>
+    end note
+}
+
+' ==================== DOMAIN LAYER ====================
+package domain <<Rectangle>> {
     class User {
-        - id: Long
+        - id: UUID
         - email: String
         - passwordHash: String
-        - mfaEnabled: boolean
     }
 
-    class VaultEntry {
-        - id: Long
-        - userId: Long
+    class PasswordEntry {
+        - id: UUID
         - serviceName: String
         - username: String
-        - encryptedPassword: String
-        - iv: String
+        - encryptedPassword: byte[]
+        - createdAt: LocalDateTime
+    }
+
+    class SafeSendEntry {
+        - id: UUID
+        - encryptedContent: byte[]
+        - tokenHash: String
+        - expiresAt: LocalDateTime
+        - oneTime: boolean
+    }
+
+    class PasswordResetToken {
+        - id: UUID
+        - email: String
+        - tokenHash: String
+        - expiryDate: LocalDateTime
+        - used: boolean
+    }
+
+    class UserEntity <<Entity>> {
+        - id: UUID
+        - email: String
+        - passwordHash: String
+        - derivationSalt: byte[]
+    }
+
+    class PasswordEntryEntity <<Entity>> {
+        - id: UUID
+        - serviceName: String
+        - username: String
+        - encryptedPassword: byte[]
+        - createdAt: LocalDateTime
+        - expiresAt: LocalDateTime
+        - user: UserEntity
+    }
+
+    class SafeSendEntryEntity <<Entity>> {
+        - id: UUID
+        - encryptedContent: byte[]
+        - tokenHash: String
+        - expiresAt: LocalDateTime
+        - oneTime: boolean
+        - accessCount: int
+        - user: UserEntity
+    }
+
+    class PasswordResetTokenEntity <<Entity>> {
+        - id: UUID
+        - email: String
+        - tokenHash: String
+        - expiryDate: LocalDateTime
+        - used: boolean
+    }
+
+    class AuditResult {
+        + score: int
+        + weakCount: int
+        + oldCount: int
+        + reusedCount: int
+        + totalPasswords: int
     }
 }
 
-' Relationships
+' ==================== RELATIONSHIPS ====================
+
+' UI -> Service Dependencies
+RegisterController ..> UserService
+LoginController ..> UserService
+DashboardController ..> VaultService
+DashboardController ..> SecurityAuditService
+DashboardController ..> SafeSendService
+DashboardController ..> PasswordGenerator
+SafeSendController ..> SafeSendService
+
+' Service Interface Realizations
 UserService <|.. UserServiceImpl
-VaultService <|.. VaultServiceImpl
+SecurityAuditService <|.. SecurityAuditServiceImpl
+SafeSendService <|.. SafeSendServiceImpl
 EncryptionStrategy <|.. AESEncryptionStrategy
-PasswordStrengthEvaluator --> Strength
 
-LoginController --> UserService
-DashboardController --> VaultService
-DashboardController --> AuditService
-RegisterController --> UserService
+' Service -> Repository Dependencies
+UserServiceImpl ..> UserRepository
+VaultService ..> PasswordEntryRepository
+VaultService ..> UserRepository
+SafeSendServiceImpl ..> SafeSendRepository
 
-UserServiceImpl --> UserRepository
-UserServiceImpl --> PasswordHasher
-VaultServiceImpl --> VaultRepository
-VaultServiceImpl --> EncryptionStrategy
-AuditService --> PasswordStrengthEvaluator
-SafeSendService --> EncryptionStrategy
+' Service -> Security Dependencies
+UserServiceImpl ..> PasswordHasher
+UserServiceImpl ..> KeyManager
+UserServiceImpl ..> PasswordStrengthEvaluator
+VaultService ..> EncryptionStrategy
+SafeSendServiceImpl ..> EncryptionStrategy
+SafeSendServiceImpl ..> PasswordHasher
+SecurityAuditServiceImpl ..> VaultService
+SecurityAuditServiceImpl ..> PasswordStrengthEvaluator
 
-UserRepository --> User
-VaultRepository --> VaultEntry
+' Security Internal Dependencies
+AESEncryptionStrategy ..> KeyManager
+PasswordStrengthEvaluator ..> Strength
+
+' Repository -> Entity Dependencies
+UserRepository ..> UserEntity
+PasswordEntryRepository ..> PasswordEntryEntity
+SafeSendRepository ..> SafeSendEntryEntity
+
+' Service -> Domain Dependencies
+UserServiceImpl ..> User
+VaultService ..> PasswordEntry
+SafeSendServiceImpl ..> SafeSendEntry
+SecurityAuditServiceImpl ..> AuditResult
 
 @enduml
+
+

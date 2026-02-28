@@ -29,15 +29,38 @@
             <ColumnConstraints hgrow="NEVER" minWidth="50"/>
         </columnConstraints>
 
-        <Label text="⚠ Password Deboli:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <Label text="Password Deboli:" GridPane.rowIndex="0" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
         <Label fx:id="weakCountLabel" text="0" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
 
-        <Label text="⚠ Password Riutilizzate:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <Label text="Password Riutilizzate:" GridPane.rowIndex="1" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
         <Label fx:id="reusedCountLabel" text="0" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
 
-        <Label text="⚠ Password Obsolete (>1 anno):" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
+        <Label text="Password Obsolete (>1 anno):" GridPane.rowIndex="2" GridPane.columnIndex="0" style="-fx-font-weight: bold;"/>
         <Label fx:id="oldCountLabel" text="0" GridPane.rowIndex="2" GridPane.columnIndex="1"/>
     </GridPane>
+
+    <Separator/>
+
+    <!-- Dettagli servizi con password deboli -->
+    <VBox spacing="8">
+        <Label text="Servizi con Password Deboli:" style="-fx-font-weight: bold; -fx-font-size: 14;"/>
+        <TextArea fx:id="weakServicesArea" editable="false" wrapText="true" prefRowCount="3"
+                  style="-fx-background-color: #fef2f2; -fx-border-color: #dc2626; -fx-border-radius: 5; -fx-background-radius: 5; -fx-font-family: monospace;"/>
+    </VBox>
+
+    <!-- Dettagli servizi con password replicate -->
+    <VBox spacing="8">
+        <Label text="Servizi con Password Replicate:" style="-fx-font-weight: bold; -fx-font-size: 14;"/>
+        <TextArea fx:id="reusedServicesArea" editable="false" wrapText="true" prefRowCount="3"
+                  style="-fx-background-color: #fef9e7; -fx-border-color: #d97706; -fx-border-radius: 5; -fx-background-radius: 5; -fx-font-family: monospace;"/>
+    </VBox>
+
+    <!-- Dettagli servizi con password vecchie -->
+    <VBox spacing="8">
+        <Label text="Servizi con Password Obsolete:" style="-fx-font-weight: bold; -fx-font-size: 14;"/>
+        <TextArea fx:id="oldServicesArea" editable="false" wrapText="true" prefRowCount="3"
+                  style="-fx-background-color: #fef9e7; -fx-border-color: #d97706; -fx-border-radius: 5; -fx-background-radius: 5; -fx-font-family: monospace;"/>
+    </VBox>
 
     <Region VBox.vgrow="ALWAYS"/>
 
