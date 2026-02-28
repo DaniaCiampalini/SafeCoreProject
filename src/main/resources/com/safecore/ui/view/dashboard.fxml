@@ -36,8 +36,17 @@
                     <VBox prefWidth="280" spacing="12" style="-fx-background-color: white; -fx-padding: 20; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 5);">
                         <Label text="Vault Status" style="-fx-font-weight: 800; -fx-text-fill: #1e3a8a; -fx-font-size: 16;"/>
                         <Label text="Protezione attiva: AES-256 GCM." wrapText="true" style="-fx-font-size: 13; -fx-text-fill: #6b7280;"/>
+                        <HBox spacing="10" alignment="CENTER_LEFT">
+                            <Label fx:id="healthScoreLabel" text="--/100" style="-fx-font-size: 24; -fx-font-weight: 800;"/>
+                            <VBox>
+                                <Label text="Punteggio Salute" style="-fx-font-size: 11; -fx-text-fill: #6b7280;"/>
+                                <Label fx:id="auditDetailLabel" text="Analisi in corso..." style="-fx-font-size: 11; -fx-text-fill: #6b7280;"/>
+                            </VBox>
+                        </HBox>
+
                         <Region VBox.vgrow="ALWAYS" prefHeight="10"/>
-                        <Button text="Aggiorna Dati" onAction="#refreshVault"
+
+                        <Button text="Esegui Analisi Completa" onAction="#handleFullAudit"
                                 style="-fx-background-color: #10b981; -fx-text-fill: white; -fx-cursor: hand; -fx-background-radius: 8;" maxWidth="Infinity"/>
                     </VBox>
 
