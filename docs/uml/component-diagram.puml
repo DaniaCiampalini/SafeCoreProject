@@ -1,0 +1,97 @@
+@startuml
+top to bottom direction
+skinparam componentStyle uml2
+skinparam style strictuml
+skinparam linetype ortho
+skinparam shadowing false
+skinparam monochrome true
+skinparam ranksep 40
+skinparam nodesep 80
+
+title SafeCore - Component Diagram
+
+' =====================================================
+' CORE ARCHITECTURE (CENTRAL COLUMN)
+' =====================================================
+
+package "Presentation Layer (JavaFX)" as Presentation {
+    component "JavaFX UI" as UI
+    component "UI Controllers" as Controllers
+    UI --> Controllers
+}
+
+package "Service Layer" as Service {
+    component "UserService" as UserSvc
+    component "VaultService" as VaultSvc
+    component "SafeSendService" as SendSvc
+}
+
+package "Security Module" as Security {
+    component "Password Hasher (BCrypt)" as Hasher
+    component "Encryption Engine (AES)" as AES
+    component "Key Manager" as KeyMgr
+    AES --> KeyMgr
+}
+
+package "Domain Model" as Domain {
+    component "User"
+    component "PasswordEntry"
+    component "SafeSendEntry"
+}
+
+' =====================================================
+' PERSISTENCE (RIGHT SIDE)
+' =====================================================
+
+package "Persistence Layer" as Persistence {
+
+    component "Spring Data Repositories" as Repos
+
+    component "Persistence Entities\n(UserEntity,\nPasswordEntryEntity,\nSafeSendEntryEntity)" as Entities
+
+    component "JPA / Hibernate ORM" as ORM
+}
+
+database "PostgreSQL Database" as DB
+
+' =====================================================
+' DEPENDENCIES (ARCHITECTURALLY CORRECT)
+' =====================================================
+
+' UI -> Services
+Controllers --> UserSvc
+Controllers --> VaultSvc
+Controllers --> SendSvc
+
+' Services -> Security
+UserSvc --> Hasher
+VaultSvc --> AES
+SendSvc --> AES
+
+' Services -> Domain (business logic uses domain model)
+UserSvc --> User
+VaultSvc --> PasswordEntry
+SendSvc --> SafeSendEntry
+
+' Services -> Persistence (PRIMARY DATA ACCESS DEPENDENCY)
+UserSvc --> Repos
+VaultSvc --> Repos
+SendSvc --> Repos
+
+' Repository layer uses persistence entities
+Repos --> Entities
+
+' ORM infrastructure
+Repos --> ORM
+ORM --> DB
+
+' =====================================================
+' LAYOUT CONTROL
+' =====================================================
+
+Presentation -[hidden]down- Service
+Service -[hidden]down- Security
+Security -[hidden]down- Domain
+Service -[hidden]right- Persistence
+Domain -[hidden]right- DB
+@enduml

@@ -1,0 +1,173 @@
+@startuml
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam backgroundColor #FFFFFF
+skinparam participantBackgroundColor #E8F4F8
+skinparam actorBackgroundColor #FFE5CC
+skinparam boxBackgroundColor #F0F0F0
+
+title SafeCore - Registration Flow (Complete Sequence Diagram)
+
+actor "New User" as User
+participant "RegisterController\n<<UI>>" as Controller
+participant "PasswordHintService\n<<Business>>" as HintService
+participant "PasswordStrengthEvaluator\n<<Security>>" as StrengthEval
+participant "PasswordGenerator\n<<Security>>" as Generator
+participant "UserService\n<<Business>>" as UserService
+participant "PasswordHasher\n<<Security>>" as Hasher
+participant "UserRepository\n<<Persistence>>" as Repository
+database "PostgreSQL" as DB
+
+== User Registration Flow ==
+
+User -> Controller: Clicks "Register" button
+activate Controller
+
+Controller -> Controller: Open registration form
+Controller --> User: Display registration UI
+
+User -> Controller: Enters email address
+
+User -> Controller: Types password
+activate Controller
+
+Controller -> StrengthEval: evaluate(password)
+activate StrengthEval
+StrengthEval -> StrengthEval: Check length >= 8
+StrengthEval -> StrengthEval: Check lowercase [a-z]
+StrengthEval -> StrengthEval: Check uppercase [A-Z]
+StrengthEval -> StrengthEval: Check digits [0-9]
+StrengthEval -> StrengthEval: Check symbols
+StrengthEval -> StrengthEval: Calculate score (0-4)
+StrengthEval --> Controller: Strength (WEAK/MEDIUM/STRONG)
+deactivate StrengthEval
+
+Controller -> HintService: getHints(password, strength)
+activate HintService
+HintService -> HintService: Build hint list
+alt Strength is WEAK
+    HintService --> Controller: Hints:\n- Add uppercase\n- Add numbers\n- Increase length
+else Strength is MEDIUM
+    HintService --> Controller: Hints:\n- Add special chars\n- Consider 12+ chars
+else Strength is STRONG
+    HintService --> Controller: "Excellent password!"
+end
+deactivate HintService
+
+Controller -> Controller: Update UI indicators\n(color, progress bar, hints)
+Controller --> User: Real-time feedback
+
+deactivate Controller
+
+alt User wants to generate password
+    User -> Controller: Clicks "Generate Password"
+    activate Controller
+
+    Controller -> Generator: generateSafe(length = 16)
+    activate Generator
+    Generator -> Generator: SecureRandom initialization
+    Generator -> Generator: Add lowercase char
+    Generator -> Generator: Add uppercase char
+    Generator -> Generator: Add digit
+    Generator -> Generator: Add special char
+    Generator -> Generator: Fill remaining (random)
+    Generator -> Generator: Shuffle with Fisher-Yates
+    Generator -> StrengthEval: evaluate(generated)
+    StrengthEval --> Generator: STRONG
+    Generator --> Controller: generatedPassword
+    deactivate Generator
+
+    Controller -> Controller: Display in password field
+    Controller --> User: Show generated password
+
+    deactivate Controller
+end
+
+User -> Controller: Confirms password (re-type)
+User -> Controller: Clicks "Register" button
+
+activate Controller
+
+Controller -> Controller: Validate form
+note right
+  Validations:
+  - Email not empty
+  - Valid email format
+  - Passwords match
+  - Strength >= MEDIUM
+end note
+
+alt Validation fails
+    Controller --> User: Show error message
+    deactivate Controller
+else Validation succeeds
+
+    Controller -> UserService: register(email, password)
+    activate UserService
+
+    UserService -> Repository: findByEmail(email)
+    activate Repository
+    Repository -> DB: SELECT * FROM users\nWHERE email = ?
+    DB --> Repository: Optional<UserEntity>
+    Repository --> UserService: Optional<UserEntity>
+    deactivate Repository
+
+    alt Email already exists
+        UserService --> Controller: throw UserAlreadyExistsException
+        Controller --> User: "Email already registered"
+        deactivate UserService
+        deactivate Controller
+    else Email available
+
+        UserService -> StrengthEval: evaluate(password)
+        activate StrengthEval
+        StrengthEval --> UserService: Strength
+        deactivate StrengthEval
+
+        alt Password too weak
+            UserService --> Controller: throw WeakPasswordException
+            Controller --> User: "Password too weak"
+            deactivate UserService
+            deactivate Controller
+        else Password acceptable
+
+            UserService -> Hasher: hash(password)
+            activate Hasher
+            Hasher -> Hasher: Generate random salt (128-bit)
+            Hasher -> Hasher: BCrypt.hashpw(password, salt)\nWork factor: 12 (4096 iterations)
+            Hasher --> UserService: hashedPassword\n($2a$12$...)
+            deactivate Hasher
+
+            UserService -> UserService: Create UserEntity:\n- email\n- passwordHash\n- createdAt
+
+            UserService -> Repository: save(userEntity)
+            activate Repository
+            Repository -> DB: INSERT INTO users\n(id, email, password_hash, created_at)
+            DB --> Repository: UserEntity (with ID)
+            Repository --> UserService: Saved UserEntity
+            deactivate Repository
+
+            UserService --> Controller: User (DTO)
+            deactivate UserService
+
+            Controller -> Controller: SessionContext.clear()
+            Controller --> User: "Registration successful!\nRedirecting to login..."
+
+            Controller -> Controller: Navigate to login screen
+            deactivate Controller
+        end
+    end
+end
+
+== Post-Registration State ==
+
+note over User, DB
+  User account created with:
+  - Unique email
+  - BCrypt hashed password (work factor 12)
+  - Created timestamp
+  - Ready for login
+end note
+
+@enduml
+

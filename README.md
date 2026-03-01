@@ -1230,52 +1230,116 @@ public class SecurityAuditServiceImpl implements SecurityAuditService {
 
 ## UML Diagrams
 
+SafeCore provides comprehensive UML documentation covering use cases, architecture, and workflow sequences.
+
 ### Use Case Diagram
 
-```plantuml
-@startuml
-left to right direction
-skinparam packageStyle rectangle
+[View full diagram](docs/uml/use-case.puml)
 
-actor "User" as User
-actor "New User" as NewUser
-actor "Link Recipient" as Recipient
+**Key Use Cases**:
+1. **UC-1**: User Registration with password strength validation
+2. **UC-2**: User Login with BCrypt authentication
+3. **UC-3**: Add Password Entry with AES-256 encryption
+4. **UC-4**: Security Audit analyzing weak/old/reused passwords
+5. **UC-5**: Generate Secure Password with cryptographic randomness
+6. **UC-6**: Export Vault Backup as encrypted .safe file
+7. **UC-7**: Import Vault Backup with decryption and re-encryption
+8. **UC-8**: SafeSend Secure Sharing with one-time links
+9. **UC-9**: SafeSend Access Secret with auto-destruction
+10. **UC-10**: Password Reset Request with time-limited tokens
 
-rectangle "SafeCore Password Manager" {
-  usecase "Register Account" as UC1
-  usecase "Login" as UC2
-  usecase "Add Entry" as UC3
-  usecase "Generate Password" as UC4
-  usecase "View Vault" as UC5
-  usecase "Edit Entry" as UC6
-  usecase "Delete Entry" as UC7
-  usecase "Security Audit" as UC8
-  usecase "Export Backup" as UC9
-  usecase "Import Backup" as UC10
-  usecase "Create SafeSend Link" as UC11
-  usecase "Access SafeSend" as UC12
-  usecase "Password Reset" as UC13
-}
+### Sequence Diagrams
 
-NewUser --> UC1
-User --> UC2
-User --> UC3
-User --> UC5
-User --> UC6
-User --> UC7
-User --> UC8
-User --> UC9
-User --> UC10
-User --> UC11
-User --> UC13
+#### Registration Flow
+[View diagram](docs/uml/sequence-register.puml)
 
-Recipient --> UC12
+Complete registration workflow showing:
+- Real-time password strength evaluation
+- Password hint generation
+- Optional password generation
+- BCrypt hashing with work factor 12
+- User entity creation and persistence
+- Form validation and error handling
 
-UC3 ..> UC4 : <<include>>
-UC8 ..> UC5 : <<include>>
+#### Login Flow
+[View diagram](docs/uml/sequence-login.puml)
 
-@enduml
+Authentication workflow showing:
+- Email/password validation
+- BCrypt password verification
+- Session initialization
+- Dashboard navigation
+- Vault loading and display
+
+#### Add Entry Flow
+[View diagram](docs/uml/sequence-save-entry.puml)
+
+Password storage workflow showing:
+- Form validation
+- AES-256-CBC encryption with unique IV
+- Password entry entity creation
+- Database persistence
+- Observer notification pattern
+- Dashboard refresh
+
+#### Security Audit Flow
+[View diagram](docs/uml/sequence-audit.puml)
+
+Vault analysis workflow showing:
+- Retrieval of all encrypted entries
+- Batch decryption for analysis
+- Weak password detection
+- Old password identification (> 1 year)
+- Reused password detection
+- Health score calculation (0-100)
+- Results visualization with recommendations
+
+### Component Diagram
+
+[View diagram](docs/uml/component-diagram.puml)
+
+**Architecture Overview**:
 ```
+Presentation Layer (JavaFX UI + Controllers)
+         ↓
+Service Layer (UserService, VaultService, SecurityAuditService, 
+              SafeSendService, BackupService, PasswordHintService,
+              PasswordGenerator)
+         ↓
+Security Module (AES Encryption, BCrypt Hasher, Key Manager,
+                Password Strength Evaluator)
+         ↓
+Persistence Layer (Spring Data Repositories, JPA/Hibernate ORM)
+         ↓
+Database (PostgreSQL)
+```
+
+**Key Components**:
+- **8 Service Layer Components**: All business logic services
+- **4 Security Components**: Encryption, hashing, key management, strength evaluation
+- **Repository Pattern**: Spring Data JPA with custom queries
+- **Observer Pattern**: VaultService notifies dashboard on changes
+
+### Package Diagram
+
+[View diagram](docs/uml/package-diagram.puml)
+
+Shows package dependencies and layering:
+- `com.safecore.ui` - Presentation layer (controllers, navigation, session)
+- `com.safecore.business` - Business logic (services, domain, exceptions)
+- `com.safecore.security` - Security components (encryption, hashing, generation)
+- `com.safecore.persistence` - Data access (entities, repositories)
+
+### Class Diagrams
+
+Detailed class diagrams split by architectural layer:
+
+1. **[UI & Navigation](docs/uml/class-diagram-part1-ui-navigation.puml)**: Controllers, SceneNavigator, SessionContext
+2. **[Business Logic](docs/uml/class-diagram-part2-business-logic.puml)**: Services, domain objects, exceptions
+3. **[Persistence](docs/uml/class-diagram-part3-persistence.puml)**: Entities, repositories, JPA mappings
+4. **[Security](docs/uml/class-diagram-part4-security.puml)**: Encryption, hashing, key management, password utilities
+
+**[Complete System Diagram](docs/uml/class-diagram.puml)**: All classes and relationships
 
 ### Class Diagram - Complete System Architecture
 
