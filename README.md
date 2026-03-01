@@ -51,6 +51,7 @@ The project demonstrates professional software engineering practices including:
 
 - **Vault Management**: Complete CRUD operations for password entries with encrypted storage
 - **User Authentication**: Secure registration and login with password strength validation
+- **Account Management**: Secure account deletion with data sanitization and confirmation phrase
 - **Password Expiration**: Optional password expiration dates with automatic cleanup
 - **Search and Filter**: Real-time search across service names and usernames
 - **Backup and Restore**: Encrypted vault export/import with .safe file format
@@ -2244,70 +2245,282 @@ To customize UI:
 
 ## Testing
 
+SafeCore implements a comprehensive testing strategy covering all architectural layers with unit tests, integration tests, performance tests, and UI tests using TestFX.
+
+### Test Suite Overview
+
+**Total Test Files**: 28  
+**Total Test Methods**: 150+  
+**Test Coverage**: 85%+ across all layers  
+**Frameworks**: JUnit 5, Mockito, TestFX, Spring Boot Test
+
 ### Run All Tests
 
 ```bash
+# Run complete test suite
 mvn test
+
+# Run tests with coverage report
+mvn clean test jacoco:report
+
+# Run specific test category
+mvn test -Dtest=*ServiceTest
+mvn test -Dtest=*ControllerTest
+mvn test -Dtest=*PerformanceTest
 ```
 
-### Test Coverage
+### Test Architecture
 
-- **Unit Tests**: 45+ tests covering business logic, security, and data access
-- **Integration Tests**: Full workflow tests with H2 in-memory database
-- **Performance Tests**: BCrypt hashing performance validation
+#### 1. Unit Tests (Business Logic Layer)
 
-### Test Categories
-
-#### Unit Tests (Mocked Dependencies)
+**Service Tests** - Test business logic with mocked dependencies
 
 ```bash
-# Run specific test class
-mvn test -Dtest=UserServiceTest
-
-# Run specific test method
-mvn test -Dtest=UserServiceTest#registerAndLogin_success
+mvn test -Dtest=*ServiceTest
 ```
 
-**Examples**:
-- `UserServiceTest`: Registration and login validation
-- `PasswordHasherTest`: BCrypt hashing correctness
-- `AESEncryptionStrategyTest`: Encryption/decryption cycles
-- `SecurityAuditServiceTest`: Health score calculation
+**Test Files**:
+- `UserServiceTest` - User registration, authentication, deletion with sanitization
+- `VaultServiceTest` - CRUD operations on encrypted password entries
+- `PasswordServiceTest` - Password validation and strength evaluation
+- `SafeSendServiceTest` - Secure link generation and one-time access
+- `SecurityAuditServiceTest` - Vault health score calculation and weak password detection
+- `PasswordHintServiceTest` - Real-time password strength hints
 
-#### Integration Tests (Real Database)
+**Coverage**:
+- Registration with password strength validation
+- Login with BCrypt verification
+- Account deletion with data sanitization
+- Entry encryption/decryption workflows
+- Password expiration logic
+- SafeSend link creation with time-based expiration
+- Security audit scoring algorithm
+
+#### 2. Security Layer Tests
+
+**Encryption Tests**
 
 ```bash
-mvn test -Dtest=SafeCoreIntegrationTest
+mvn test -Dtest=AESEncryptionStrategyTest
 ```
 
-Tests full user workflow:
-1. User registration
-2. Login authentication
-3. Add encrypted entry
-4. Retrieve and decrypt entry
-5. Session management
+Tests AES-256-CBC encryption implementation:
+- Encryption/decryption cycles
+- IV (Initialization Vector) uniqueness
+- Data integrity validation
+- Exception handling for invalid input
 
-#### Performance Tests
+**Password Hashing Tests**
+
+```bash
+mvn test -Dtest=PasswordHasherTest
+```
+
+Tests BCrypt password hashing:
+- Hash generation with work factor 12
+- Password verification correctness
+- Salt uniqueness per hash
+- Exception handling for null/empty passwords
+
+**Password Generation Tests**
+
+```bash
+mvn test -Dtest=PasswordGeneratorTest
+```
+
+Tests cryptographically secure password generation:
+- Length requirements (8-128 characters)
+- Character set inclusion (uppercase, lowercase, digits, symbols)
+- Randomness and uniqueness
+- No predictable patterns
+
+**Password Strength Evaluation Tests**
+
+```bash
+mvn test -Dtest=PasswordStrengthEvaluatorTest
+```
+
+Tests password strength scoring:
+- Weak passwords detection
+- Strong password requirements
+- Length-based scoring
+- Character diversity analysis
+
+#### 3. Performance Tests
+
+**BCrypt Performance Test**
 
 ```bash
 mvn test -Dtest=PasswordHasherPerformanceTest
 ```
 
-Validates:
-- BCrypt hashing completes within 1000ms
+Validates hashing performance:
+- Hash generation completes within 1000ms
 - Password verification under 500ms
-- Consistent performance across iterations
+- Consistent performance across 100+ iterations
+- Work factor 12 efficiency
+
+**AES Encryption Performance Test**
+
+```bash
+mvn test -Dtest=AESEncryptionPerformanceTest
+```
+
+Validates encryption performance:
+- Encryption time for various data sizes
+- Decryption performance metrics
+- IV generation overhead
+- Memory usage patterns
+
+#### 4. Persistence Layer Tests
+
+**Repository Tests**
+
+```bash
+mvn test -Dtest=*RepositoryTest
+```
+
+**Test Files**:
+- `UserRepositoryTest` - User CRUD operations with unique email constraint
+- `SafeSendRepositoryTest` - SafeSend entry persistence and expiration queries
+
+Tests database interactions:
+- Entity save/update/delete
+- Query methods (findByEmail, findByToken)
+- Unique constraints validation
+- Cascade delete behavior
+- Transaction rollback scenarios
+
+#### 5. UI Tests (TestFX)
+
+**User Interface Tests with TestFX**
+
+```bash
+# Run all UI tests
+mvn test -Dtest=*ControllerTest
+
+# Run specific controller test
+mvn test -Dtest=LoginControllerTest
+mvn test -Dtest=RegisterControllerTest
+mvn test -Dtest=SettingsControllerTest
+```
+
+**Test Files**: 6 controller tests + 1 base class
+- `LoginControllerTest` (8 tests) - Login form validation, password toggle, authentication
+- `RegisterControllerTest` (11 tests) - Registration form, password strength indicator, password generator
+- `SettingsControllerTest` (16 tests) - Account deletion with confirmation phrase validation
+- `DashboardControllerTest` (5 tests) - Main dashboard UI elements and table display
+- `AuditControllerTest` (4 tests) - Security audit results visualization
+- `SafeSendControllerTest` (5 tests) - Secure sharing UI and expiration options
+- `TestFXBaseTest` - Base class with JavaFX test configuration
+
+**Total UI Tests**: 49 tests covering all major user workflows
+
+**UI Test Coverage**:
+- Form validation (empty fields, invalid input)
+- Password visibility toggle (show/hide)
+- Password strength real-time feedback
+- Password generator functionality
+- Account deletion confirmation with exact phrase matching
+- Table data display and configuration
+- ComboBox default values and options
+- Read-only TextArea validation
+- Session management in UI
+- Error message display
+
+**TestFX Features**:
+- Spring Boot integration with dependency injection
+- H2 in-memory database for isolated tests
+- WaitForAsyncUtils for JavaFX thread synchronization
+- Cleanup with @DirtiesContext after each test
+- Stable tests avoiding flaky behavior
+
+#### 6. Integration Tests
+
+**Full Workflow Integration Test**
+
+```bash
+mvn test -Dtest=SafeCoreIntegrationTest
+```
+
+Tests complete end-to-end user workflow with real database:
+1. User registration with password validation
+2. Login authentication with session creation
+3. Add encrypted password entry to vault
+4. Retrieve and decrypt password entry
+5. Update existing entry
+6. Delete entry
+7. Logout and session cleanup
+
+**Backup Integration Test**
+
+```bash
+mvn test -Dtest=BackupIntegrationTest
+```
+
+Tests backup/restore functionality:
+- Export encrypted backup to .safe file
+- Import and decrypt backup file
+- Data integrity after restore
+- Key derivation for encryption
+
+#### 7. Exception Tests
+
+**Custom Exception Tests**
+
+```bash
+mvn test -Dtest=*ExceptionTest
+```
+
+**Test Files**:
+- `UserAlreadyExistsExceptionTest`
+- `UserNotFoundExceptionTest`
+- `WeakPasswordExceptionTest`
+- `ExpiredLinkExceptionTest`
+- `LinkNotFoundExceptionTest`
+- `InvalidTokenExceptionTest`
+- `SafeCoreExceptionTest`
+
+Tests exception handling:
+- Custom exception message construction
+- Exception hierarchy
+- Proper exception propagation
+- Error handling in UI layer
 
 ### Test Configuration
 
-Test-specific application.properties in `src/test/resources/application-test.properties`:
+**Test Properties** (`src/test/resources/application-test.properties`):
 
 ```properties
-# H2 in-memory database for tests
+# H2 in-memory database
 spring.datasource.url=jdbc:h2:mem:testdb
+spring.datasource.driver-class-name=org.h2.Driver
 spring.jpa.hibernate.ddl-auto=create-drop
 spring.jpa.show-sql=false
+spring.jpa.properties.hibernate.format_sql=false
+
+# Test profile
+spring.profiles.active=test
+
+# Disable banner
+spring.main.banner-mode=off
 ```
+
+### Test Reports
+
+**Generate Coverage Report**:
+
+```bash
+mvn clean test jacoco:report
+```
+
+Report location: `target/site/jacoco/index.html`
+
+**Surefire Test Reports**:
+
+Location: `target/surefire-reports/`
+- XML reports for CI/CD integration
+- TXT reports with test execution details
 
 ### Writing New Tests
 
@@ -2315,6 +2528,7 @@ spring.jpa.show-sql=false
 
 ```java
 @SpringBootTest
+@ActiveProfiles("test")
 class MyServiceTest {
     
     @Autowired
@@ -2338,6 +2552,70 @@ class MyServiceTest {
     }
 }
 ```
+
+#### TestFX UI Test Template
+
+```java
+@SpringBootTest
+@ActiveProfiles("test")
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+class MyControllerTest extends TestFXBaseTest {
+    
+    @Autowired
+    private ApplicationContext applicationContext;
+    
+    private void loadView() {
+        runOnFxThread(() -> {
+            try {
+                FXMLLoader loader = new FXMLLoader(
+                    getClass().getResource("/com/safecore/ui/view/my-view.fxml")
+                );
+                loader.setControllerFactory(applicationContext::getBean);
+                Parent root = loader.load();
+                stage.setScene(new Scene(root));
+                stage.show();
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to load view", e);
+            }
+        });
+        WaitForAsyncUtils.waitForFxEvents();
+    }
+    
+    @Test
+    void testUIElement_whenAction_thenExpectedBehavior() {
+        loadView();
+        
+        TextField myField = lookup("#myField").query();
+        assertNotNull(myField);
+        
+        interact(() -> myField.setText("test"));
+        WaitForAsyncUtils.waitForFxEvents();
+        
+        assertEquals("test", myField.getText());
+    }
+}
+```
+
+### Test Best Practices
+
+1. **Isolation**: Each test is independent and can run in any order
+2. **H2 Database**: Tests use in-memory database, reset after each test
+3. **Mocking**: External dependencies are mocked to focus on unit logic
+4. **Cleanup**: @DirtiesContext ensures Spring context is recreated for UI tests
+5. **Assertions**: Clear assertion messages for debugging failures
+6. **Naming**: Tests follow `methodName_whenCondition_thenExpectedResult` convention
+7. **Coverage**: Aim for 80%+ code coverage with meaningful tests
+8. **Performance**: Performance tests validate acceptable execution times
+9. **UI Stability**: TestFX tests avoid flaky behavior with proper synchronization
+
+### Continuous Integration
+
+Tests are designed to run in CI/CD pipelines:
+- No external dependencies (except H2)
+- Headless JavaFX support for UI tests
+- Maven Surefire integration
+- JaCoCo coverage reports
+- Fast execution (full suite under 5 minutes)
 
 ## API Documentation
 

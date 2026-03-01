@@ -1,0 +1,87 @@
+@startuml SafeCore_Class_Diagram_Part3_Persistence
+
+top to bottom direction
+
+skinparam style strictuml
+skinparam linetype ortho
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultTextAlignment left
+hide empty members
+
+title SafeCore - Class Diagram Part 3/4: Persistence Layer
+
+package "persistence.entity" {
+
+    class UserEntity <<Entity>> {
+        - id: UUID {PK}
+        - email: String {unique}
+        - passwordHash: String
+        - derivationSalt: byte[] {unique}
+        __
+        + UserEntity()
+        + UserEntity(email: String, passwordHash: String)
+    }
+
+    class PasswordEntryEntity <<Entity>> {
+        - id: UUID {PK}
+        - serviceName: String
+        - username: String
+        - encryptedPassword: byte[]
+        - createdAt: LocalDateTime {readonly}
+        - expiresAt: LocalDateTime
+        - user: UserEntity {FK}
+        __
+        + PasswordEntryEntity()
+    }
+
+    class SafeSendEntryEntity <<Entity>> {
+        - id: UUID {PK}
+        - oneTime: boolean
+        - encryptedContent: byte[]
+        - tokenHash: String {unique}
+        - expiresAt: LocalDateTime
+        - accessCount: int
+        - user: UserEntity {FK}
+        __
+        + SafeSendEntryEntity()
+    }
+}
+
+package "persistence.repository" {
+
+    interface UserRepository <<Repository>> {
+        __
+        + findByEmail(email: String): Optional<UserEntity>
+        + existsByEmail(email: String): boolean
+    }
+
+    interface PasswordEntryRepository <<Repository>> {
+        __
+        + findByUser(user: UserEntity): List<PasswordEntryEntity>
+        + findByUserEmail(email: String): List<PasswordEntryEntity>
+        + deleteByExpiresAtBefore(now: LocalDateTime): void
+    }
+
+    interface SafeSendRepository <<Repository>> {
+        __
+        + deleteByExpiresAtBefore(now: LocalDateTime): void
+    }
+}
+
+interface "JpaRepository<T, ID>" as JpaRepository <<Framework>>
+
+UserEntity "1" *-- "0..*" PasswordEntryEntity
+UserEntity "1" *-- "0..*" SafeSendEntryEntity
+
+UserRepository --|> JpaRepository : <<UserEntity, UUID>>
+PasswordEntryRepository --|> JpaRepository : <<PasswordEntryEntity, UUID>>
+SafeSendRepository --|> JpaRepository : <<SafeSendEntryEntity, UUID>>
+
+UserRepository ..> UserEntity : <<manages>>
+PasswordEntryRepository ..> PasswordEntryEntity : <<manages>>
+SafeSendRepository ..> SafeSendEntryEntity : <<manages>>
+
+@enduml
+

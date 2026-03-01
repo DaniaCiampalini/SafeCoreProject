@@ -1,0 +1,109 @@
+@startuml SafeCore_Class_Diagram_Part4_Security
+
+top to bottom direction
+
+skinparam style strictuml
+skinparam linetype ortho
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultTextAlignment left
+hide empty members
+
+title SafeCore - Class Diagram Part 4/4: Security Layer
+
+package "security" {
+
+    interface EncryptionStrategy <<interface>> {
+        + encrypt(plainText: String): byte[]
+        + decrypt(encrypted: byte[]): String
+    }
+
+    class AESEncryptionStrategy <<Strategy>> {
+        - cipher: Cipher
+        - keySpec: SecretKeySpec
+        - {static} ALGORITHM: String
+        - {static} TRANSFORMATION: String
+        __
+        + AESEncryptionStrategy(key: byte[])
+        + encrypt(plainText: String): byte[]
+        + decrypt(encrypted: byte[]): String
+        - generateIV(): byte[]
+        - extractIV(encrypted: byte[]): byte[]
+        - extractCiphertext(encrypted: byte[]): byte[]
+    }
+
+    class EncryptionFactory <<Factory>> {
+        - keyManager: KeyManager
+        __
+        + EncryptionFactory(keyManager: KeyManager)
+        + createEncryptionStrategy(): EncryptionStrategy
+        + getDefaultStrategy(): EncryptionStrategy
+    }
+
+    class PasswordHasher <<Component>> {
+        - {static} WORK_FACTOR: int
+        __
+        + hash(plainPassword: String): String
+        + verify(plainPassword: String, hash: String): boolean
+    }
+
+    class PasswordGenerator <<Utility>> {
+        - {static} secureRandom: SecureRandom
+        - {static} UPPERCASE: String
+        - {static} LOWERCASE: String
+        - {static} DIGITS: String
+        - {static} SYMBOLS: String
+        __
+        + generate(length: int, includeSymbols: boolean): String
+        + generate(length: int): String
+    }
+
+    class PasswordStrengthEvaluator <<Utility>> {
+        - {static} MIN_LENGTH: int
+        - {static} WEAK_THRESHOLD: int
+        - {static} STRONG_THRESHOLD: int
+        __
+        + evaluate(password: String): int
+        + isWeak(password: String): boolean
+        + isStrong(password: String): boolean
+    }
+
+    class KeyManager <<Component>> {
+        - encryptionKey: byte[]
+        - {static} ALGORITHM: String
+        - {static} ITERATIONS: int
+        - {static} KEY_LENGTH: int
+        __
+        + deriveKey(password: String, salt: byte[]): byte[]
+        + storeKey(key: byte[]): void
+        + getKey(): byte[]
+        + clearKey(): void
+        + hasKey(): boolean
+    }
+}
+
+AESEncryptionStrategy ..|> EncryptionStrategy
+
+EncryptionFactory ..> EncryptionStrategy : <<creates>>
+EncryptionFactory ..> AESEncryptionStrategy : <<creates>>
+EncryptionFactory ..> KeyManager : <<use>>
+
+note right of KeyManager
+  **Key Derivation Process**
+  Algorithm: PBKDF2WithHmacSHA256
+  Iterations: 100,000
+  Key Length: 256 bits
+  Input: user password + unique salt
+  Output: AES-256 encryption key
+end note
+
+note right of AESEncryptionStrategy
+  **AES-256-CBC Encryption**
+  Generates unique IV per operation
+  IV prepended to ciphertext
+  Format: [16-byte IV][Encrypted Data]
+end note
+
+@enduml
+

@@ -1,0 +1,265 @@
+@startuml SafeCore_Class_Diagram_Part2_Business_Logic_Vertical
+
+top to bottom direction
+
+skinparam style strictuml
+skinparam linetype ortho
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultTextAlignment left
+hide empty members
+
+' Ottimizzazione distanze
+skinparam nodesep 60
+skinparam ranksep 80
+
+title SafeCore - Class Diagram Part 2/4: Business Logic (Vertical Layout)
+
+package "business.service" {
+    interface UserService <<interface>> {
+        + register(email: String, password: String): void
+        + login(email: String, password: String): Optional<UserEntity>
+        + deleteUser(email: String): void
+    }
+
+    interface SafeSendService <<interface>> {
+        + createSafeLink(content: String, hours: int): String
+        + accessSafeLink(id: UUID, token: String): String
+    }
+
+    interface SecurityAuditService <<interface>> {
+        + runAudit(): AuditResult
+    }
+
+    interface BackupService <<interface>> {
+        + exportBackup(file: File): void
+        + importBackup(file: File): void
+    }
+
+    interface VaultObserver <<interface>> {
+        + onUpdate(): void
+    }
+
+    class VaultService <<Service>> {
+        - passwordEntryRepository: PasswordEntryRepository
+        - userRepository: UserRepository
+        - encryptionStrategy: EncryptionStrategy
+        - objectMapper: ObjectMapper
+        - observers: List<VaultObserver>
+        __
+        + addEntry(service: String, username: String, plain: String): void
+        + addEntry(service: String, username: String, plain: String, expiry: LocalDateTime): void
+        + getEntriesForCurrentUser(): List<PasswordEntryEntity>
+        + decryptPassword(encrypted: byte[]): String
+        + deleteEntry(id: UUID): void
+        + cleanupExpiredEntries(): void
+        + addObserver(observer: VaultObserver): void
+        + removeObserver(observer: VaultObserver): void
+        - notifyObservers(): void
+    }
+
+    class PasswordHintService <<Service>> {
+        - rules: List<PasswordRule>
+        __
+        + evaluatePassword(password: String): PasswordHint
+        + getHints(password: String): List<PasswordHint>
+    }
+
+    ' Disposizione interna package service
+    UserService -[hidden]right- SafeSendService
+    SafeSendService -[hidden]right- SecurityAuditService
+    SecurityAuditService -[hidden]right- BackupService
+    BackupService -[hidden]down- VaultService
+    VaultService -[hidden]right- PasswordHintService
+}
+
+package "business.service.impl" {
+    class UserServiceImpl <<Service>> {
+        - userRepository: UserRepository
+        - passwordHasher: PasswordHasher
+        - keyManager: KeyManager
+        - strengthEvaluator: PasswordStrengthEvaluator
+        - passwordEntryRepository: PasswordEntryRepository
+        __
+        + register(email: String, password: String): void
+        + login(email: String, password: String): Optional<UserEntity>
+        + deleteUser(email: String): void
+        - validatePasswordStrength(password: String): void
+        - sanitizeUserData(email: String): void
+    }
+
+    class SafeSendServiceImpl <<Service>> {
+        - safeSendRepository: SafeSendRepository
+        - encryptionStrategy: EncryptionStrategy
+        - passwordHasher: PasswordHasher
+        __
+        + createSafeLink(content: String, hours: int): String
+        + accessSafeLink(id: UUID, token: String): String
+        - generateToken(): String
+        - buildShareableLink(id: UUID, token: String): String
+    }
+
+    class SecurityAuditServiceImpl <<Service>> {
+        - vaultService: VaultService
+        - strengthEvaluator: PasswordStrengthEvaluator
+        __
+        + runAudit(): AuditResult
+        - calculateHealthScore(weak: int, reused: int, old: int, total: int): double
+        - findWeakPasswords(): List<String>
+        - findReusedPasswords(): Map<String, List<String>>
+        - findOldPasswords(months: int): List<String>
+    }
+
+    class BackupServiceImpl <<Service>> {
+        - vaultService: VaultService
+        - encryptionStrategy: EncryptionStrategy
+        - objectMapper: ObjectMapper
+        __
+        + exportBackup(file: File): void
+        + importBackup(file: File): void
+        - serializeVault(): byte[]
+        - deserializeVault(data: byte[]): List<PasswordEntryEntity>
+    }
+
+    ' Griglia per le implementazioni
+    UserServiceImpl -[hidden]right- SafeSendServiceImpl
+    SafeSendServiceImpl -[hidden]down- SecurityAuditServiceImpl
+    SecurityAuditServiceImpl -[hidden]right- BackupServiceImpl
+}
+
+"business.service" -[hidden]down- "business.service.impl"
+
+package "business.domain" {
+    class User <<Domain>> {
+        - id: UUID
+        - email: String
+        - passwordHash: String
+        __
+        + User(id: UUID, email: String, passwordHash: String)
+        + getId(): UUID
+        + getEmail(): String
+        + getPasswordHash(): String
+    }
+
+    class PasswordEntry <<Domain>> {
+        - id: UUID
+        - serviceName: String
+        - username: String
+        - encryptedPassword: byte[]
+        - createdAt: LocalDateTime
+        - expiresAt: LocalDateTime
+        __
+        + {static} builder(): Builder
+        + getId(): UUID
+        + getServiceName(): String
+        + getUsername(): String
+        + getEncryptedPassword(): byte[]
+        + getCreatedAt(): LocalDateTime
+        + getExpiresAt(): LocalDateTime
+    }
+
+    class AuditResult <<Record>> {
+        - score: double
+        - weakCount: int
+        - reusedCount: int
+        - oldCount: int
+        - weakPasswordServices: List<String>
+        - reusedPasswordServices: Map<String, List<String>>
+        - oldPasswordServices: List<String>
+        __
+        + score(): double
+        + weakCount(): int
+        + reusedCount(): int
+        + oldCount(): int
+    }
+
+    class UserFactory <<Factory>> {
+        - UserFactory()
+        + {static} createNew(id: UUID, email: String, passwordHash: String): User
+    }
+
+    class UserBuilder <<Builder>> {
+        - email: String
+        - passwordHash: String
+        __
+        + email(email: String): UserBuilder
+        + passwordHash(hash: String): UserBuilder
+        + build(): User
+    }
+
+    User -[hidden]right- PasswordEntry
+    PasswordEntry -[hidden]right- AuditResult
+    AuditResult -[hidden]down- UserFactory
+    UserFactory -[hidden]right- UserBuilder
+}
+
+"business.service.impl" -[hidden]down- "business.domain"
+
+package "business.hints" {
+    class PasswordHint <<ValueObject>> {
+        - message: String
+        - level: HintLevel
+        __
+        + PasswordHint(message: String, level: HintLevel)
+    }
+
+    enum HintLevel {
+        INFO, WARNING, ERROR
+    }
+
+    interface PasswordRule <<interface>>
+    class MinLengthRule <<Strategy>>
+    class ComplexityRule <<Strategy>>
+
+    PasswordHint -[hidden]right- HintLevel
+    HintLevel -[hidden]right- PasswordRule
+    PasswordRule -[hidden]down- MinLengthRule
+    MinLengthRule -[hidden]right- ComplexityRule
+}
+
+package "business.exception" {
+    class SafeCoreException <<Exception>>
+    class UserAlreadyExistsException <<Exception>>
+    class UserNotFoundException <<Exception>>
+    class WeakPasswordException <<Exception>>
+}
+
+"business.domain" -[hidden]down- "business.hints"
+"business.hints" -[hidden]down- "business.exception"
+
+' Interfacce e classi esterne (disposte in fondo)
+interface UserRepository <<Repository>>
+interface PasswordEntryRepository <<Repository>>
+class PasswordHasher <<Component>>
+class KeyManager <<Component>>
+class PasswordStrengthEvaluator <<Component>>
+
+' Relazioni (Logica mantenuta)
+UserServiceImpl ..|> UserService
+SafeSendServiceImpl ..|> SafeSendService
+SecurityAuditServiceImpl ..|> SecurityAuditService
+BackupServiceImpl ..|> BackupService
+
+UserServiceImpl ..> UserRepository
+UserServiceImpl ..> PasswordHasher
+UserServiceImpl ..> KeyManager
+UserServiceImpl ..> PasswordStrengthEvaluator
+
+VaultService ..> PasswordEntryRepository
+VaultService o-- "0..*" VaultObserver
+
+MinLengthRule ..|> PasswordRule
+ComplexityRule ..|> PasswordRule
+PasswordHintService o-- "1..*" PasswordRule
+
+UserFactory ..> User : <<create>>
+UserBuilder ..> User : <<create>>
+
+UserAlreadyExistsException --|> SafeCoreException
+UserNotFoundException --|> SafeCoreException
+
+SecurityAuditService ..> AuditResult : <<return>>
+VaultService ..> PasswordEntryEntity : <<return>>
+
+@enduml

@@ -1,0 +1,230 @@
+@startuml SafeCore_Class_Diagram_Part1_UI_Navigation_Complete_Vertical
+
+top to bottom direction
+
+skinparam style strictuml
+skinparam linetype ortho
+skinparam monochrome true
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+skinparam defaultTextAlignment left
+hide empty members
+
+' Distanza tra i nodi per evitare sovrapposizioni
+skinparam nodesep 60
+skinparam ranksep 80
+
+title SafeCore - Class Diagram Part 1/4: UI & Navigation (Full Version)
+
+package "ui.controller" {
+
+    class LoginController <<Controller>> {
+        - userService: UserService
+        - navigation: SceneNavigator
+        - emailField: TextField
+        - passwordField: PasswordField
+        - passwordTextField: TextField
+        - togglePasswordBtn: Button
+        - messageLabel: Label
+        - isPasswordVisible: boolean
+        __
+        ~ handleLogin(): void
+        ~ togglePasswordVisibility(): void
+        ~ navigateToRegister(): void
+        - showError(message: String): void
+    }
+
+    class RegisterController <<Controller>> {
+        - userService: UserService
+        - passwordHintService: PasswordHintService
+        - passwordGenerator: PasswordGenerator
+        - emailField: TextField
+        - passwordField: PasswordField
+        - confirmPasswordField: PasswordField
+        - passwordTextField: TextField
+        - confirmPasswordTextField: TextField
+        - togglePwdBtn: Button
+        - toggleConfirmPwdBtn: Button
+        - passwordStrengthLabel: Label
+        - messageLabel: Label
+        __
+        + initialize(): void
+        ~ handleRegister(): void
+        ~ onPasswordChange(): void
+        ~ generatePassword(): void
+        ~ togglePasswordVisibility(): void
+        ~ toggleConfirmPasswordVisibility(): void
+        - showError(message: String): void
+    }
+
+    class DashboardController <<Controller>> {
+        - vaultService: VaultService
+        - auditService: SecurityAuditService
+        - safeSendService: SafeSendService
+        - backupService: BackupService
+        - passwordGenerator: PasswordGenerator
+        - passwordTable: TableView<PasswordEntryEntity>
+        - searchField: TextField
+        - healthScoreLabel: Label
+        - overlay: Region
+        __
+        + initialize(): void
+        + onUpdate(): void
+        ~ refreshVault(): void
+        ~ handleAddEntry(): void
+        ~ handleDelete(id: UUID): void
+        ~ handleLogout(): void
+        ~ handleGeneratePassword(): void
+        ~ handleCopyPassword(entry: PasswordEntryEntity): void
+    }
+
+    class SettingsController <<Controller>> {
+        - userService: UserService
+        - emailLabel: Label
+        - confirmationField: TextField
+        - deleteButton: Button
+        - messageLabel: Label
+        __
+        + initialize(): void
+        ~ handleDeleteAccount(): void
+        ~ onConfirmationChange(): void
+        ~ updateButtonStyle(): void
+        ~ handleClose(): void
+    }
+
+    ' --- TRUCCO DI LAYOUT: Forza la riga successiva ---
+    LoginController -[hidden]right- RegisterController
+    RegisterController -[hidden]right- DashboardController
+    DashboardController -[hidden]right- SettingsController
+
+    ' Queste classi staranno SOTTO le precedenti
+    class SafeSendController <<Controller>> {
+        - safeSendService: SafeSendService
+        - safeSendTextArea: TextArea
+        - safeSendIdField: TextField
+        - safeSendResultArea: TextArea
+        - safeSendExpiryCombo: ComboBox<Integer>
+        __
+        + initialize(): void
+        ~ handleConfirmSafeSend(): void
+        ~ handleAccessSafeSend(): void
+        - copyToClipboard(text: String): void
+    }
+
+    class BackupController <<Controller>> {
+        - backupService: BackupService
+        __
+        ~ onExportAction(event: ActionEvent): void
+        ~ onImportAction(event: ActionEvent): void
+    }
+
+    class AuditController <<Controller>> {
+        - auditService: SecurityAuditService
+        - scoreLabel: Label
+        - weakCountLabel: Label
+        - reusedCountLabel: Label
+        - oldCountLabel: Label
+        - weakServicesArea: TextArea
+        __
+        + initialize(): void
+        + refreshAudit(): void
+    }
+
+    class AddEntryController <<Controller>> {
+        - vaultService: VaultService
+        - passwordGenerator: PasswordGenerator
+        - newServiceField: TextField
+        - newUsernameField: TextField
+        - newPasswordField: PasswordField
+        - expiryComboBox: ComboBox<Integer>
+        __
+        + initialize(): void
+        ~ handleSave(): void
+        ~ handleCancel(): void
+        ~ handleGeneratePassword(): void
+    }
+
+    ' Forza la seconda riga
+    LoginController -[hidden]down- SafeSendController
+    SafeSendController -[hidden]right- BackupController
+    BackupController -[hidden]right- AuditController
+    AuditController -[hidden]right- AddEntryController
+}
+
+package "ui.infrastructure" {
+    class SessionContext <<Singleton>> {
+        - {static} loggedUserEmail: String
+        - {static} loginTime: LocalDateTime
+        __
+        - SessionContext()
+        + {static} login(email: String): void
+        + {static} logout(): void
+        + {static} getCurrentUserEmail(): String
+        + {static} isLoggedIn(): boolean
+    }
+
+    class SceneNavigator <<Component>> {
+        - applicationContext: ApplicationContext
+        - primaryStage: Stage
+        __
+        + switchTo(view: ViewType): void
+        + getCurrentStage(): Stage
+        + setPrimaryStage(stage: Stage): void
+    }
+
+    enum ViewType {
+        LOGIN, REGISTER, DASHBOARD, SETTINGS
+    }
+
+    class GlobalExceptionHandler <<Component>> {
+        __
+        + {static} handleException(exception: Exception, stage: Stage): void
+        + {static} showError(title: String, message: String): void
+        + {static} showInfo(title: String, message: String): void
+    }
+}
+
+' Forza i package di business sotto la UI per non allargare
+"ui.controller" -[hidden]down- "ui.infrastructure"
+
+package "business.interfaces" {
+    interface UserService <<Service>>
+    interface VaultService <<Service>>
+    interface SecurityAuditService <<Service>>
+    interface SafeSendService <<Service>>
+    interface BackupService <<Service>>
+    interface PasswordHintService <<Service>>
+    interface VaultObserver <<Observer>>
+}
+
+"ui.infrastructure" -[hidden]down- "business.interfaces"
+
+' Relazioni (Mantenute tutte come l'originale)
+LoginController ..> UserService
+LoginController ..> SceneNavigator
+LoginController ..> SessionContext
+
+RegisterController ..> UserService
+RegisterController ..> PasswordHintService
+RegisterController ..> SceneNavigator
+
+DashboardController ..> VaultService
+DashboardController ..> SecurityAuditService
+DashboardController ..> SafeSendService
+DashboardController ..> BackupService
+DashboardController ..> SessionContext
+DashboardController ..|> VaultObserver
+
+SettingsController ..> UserService
+SettingsController ..> SessionContext
+
+SafeSendController ..> SafeSendService
+BackupController ..> BackupService
+AuditController ..> SecurityAuditService
+AddEntryController ..> VaultService
+
+SceneNavigator o-- ViewType
+LoginController ..> GlobalExceptionHandler
+DashboardController ..> GlobalExceptionHandler
+
+@enduml
