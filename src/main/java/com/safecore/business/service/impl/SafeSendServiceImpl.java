@@ -61,9 +61,8 @@ public class SafeSendServiceImpl implements SafeSendService {
         UserEntity user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new RuntimeException("Utente non trovato"));
 
-        byte[] encrypted = encryptionStrategy.encrypt(content);
-
         String token = generateToken();
+        byte[] encrypted = encryptionStrategy.encryptWithToken(content, token);
         String tokenHash = passwordHasher.hash(token);
 
         SafeSendEntryEntity entry = new SafeSendEntryEntity();
@@ -104,7 +103,7 @@ public class SafeSendServiceImpl implements SafeSendService {
             throw new InvalidTokenException("Token non valido o link manomesso.");
         }
 
-        String decrypted = encryptionStrategy.decrypt(entry.getEncryptedContent());
+        String decrypted = encryptionStrategy.decryptWithToken(entry.getEncryptedContent(), token);
 
         safeSendRepository.delete(entry);
 

@@ -7,6 +7,8 @@ package com.safecore.security;
 
 public interface EncryptionStrategy {
     byte[] encrypt(String plaintext);
-
     String decrypt(byte[] ciphertext);
+
+    byte[] encryptWithToken(String content, String token);
+    String decryptWithToken(byte[] cipherText, String token);
 }

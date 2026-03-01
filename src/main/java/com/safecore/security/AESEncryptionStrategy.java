@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
 
@@ -63,6 +64,50 @@ public class AESEncryptionStrategy implements EncryptionStrategy {
             return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
         } catch (Exception e) {
             throw new SecurityException("Decryption failed", e);
+        }
+    }
+
+    @Override
+    public byte[] encryptWithToken(String content, String token) {
+        try {
+            // We turn the Token string into a 16-byte key
+            SecretKeySpec tokenKey = new SecretKeySpec(token.substring(0, 16).getBytes(StandardCharsets.UTF_8), "AES");
+
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            byte[] iv = new byte[16];
+            new SecureRandom().nextBytes(iv);
+            IvParameterSpec ivSpec = new IvParameterSpec(iv);
+
+            cipher.init(Cipher.ENCRYPT_MODE, tokenKey, ivSpec);
+            byte[] encrypted = cipher.doFinal(content.getBytes(StandardCharsets.UTF_8));
+
+            byte[] result = new byte[iv.length + encrypted.length];
+            System.arraycopy(iv, 0, result, 0, iv.length);
+            System.arraycopy(encrypted, 0, result, iv.length, encrypted.length);
+            return result;
+        } catch (Exception e) {
+            throw new SecurityException("SafeSend encryption failed", e);
+        }
+    }
+
+    @Override
+    public String decryptWithToken(byte[] cipherText, String token) {
+        if (cipherText == null || cipherText.length < 16) throw new IllegalArgumentException("Invalid ciphertext");
+        try {
+            byte[] iv = new byte[16];
+            byte[] encrypted = new byte[cipherText.length - 16];
+            System.arraycopy(cipherText, 0, iv, 0, 16);
+            System.arraycopy(cipherText, 16, encrypted, 0, encrypted.length);
+
+            byte[] keyBytes = token.substring(0, 16).getBytes(StandardCharsets.UTF_8);
+            SecretKeySpec tokenKey = new SecretKeySpec(keyBytes, "AES");
+
+            Cipher cipher = Cipher.getInstance(ALGORITHM);
+            cipher.init(Cipher.DECRYPT_MODE, tokenKey, new IvParameterSpec(iv));
+
+            return new String(cipher.doFinal(encrypted), StandardCharsets.UTF_8);
+        } catch (Exception e) {
+            throw new SecurityException("SafeSend decryption failed", e);
         }
     }
 }
