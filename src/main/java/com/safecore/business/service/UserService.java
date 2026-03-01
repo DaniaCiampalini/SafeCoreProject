@@ -16,4 +16,15 @@ public interface UserService {
     Optional<User> login(String email, String plainPassword);
 
     public void logout();
+
+    /**
+     * Elimina in modo sicuro l'account dell'utente dopo aver verificato la password.
+     * Sovrascrive i dati sensibili prima della cancellazione fisica.
+     *
+     * @param email l'email dell'utente
+     * @param plainPassword la password in chiaro per la riautenticazione
+     * @throws com.safecore.business.exception.UserNotFoundException se l'utente non esiste
+     * @throws com.safecore.business.exception.InvalidTokenException se la password è errata
+     */
+    void secureDeleteAccount(String email, String plainPassword);
 }

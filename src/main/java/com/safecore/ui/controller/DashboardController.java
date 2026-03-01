@@ -59,7 +59,7 @@ public class DashboardController implements VaultObserver {
     @FXML private TableColumn<PasswordEntryEntity, Void> actionsColumn;
 
     @FXML private Region overlay;
-    @FXML private VBox addEntryCard, generatePasswordCard, safeSendOverlayCard, auditOverlayCard;
+    @FXML private VBox addEntryCard, generatePasswordCard, safeSendOverlayCard, auditOverlayCard, settingsOverlayCard;
 
     @FXML private TextField newServiceField, newUsernameField, generatedPasswordField;
     @FXML private PasswordField newPasswordField;
@@ -231,6 +231,7 @@ public class DashboardController implements VaultObserver {
         generatePasswordCard.setVisible(false);
         safeSendOverlayCard.setVisible(false);
         auditOverlayCard.setVisible(false);
+        settingsOverlayCard.setVisible(false);
     }
 
     @FXML
@@ -259,6 +260,35 @@ public class DashboardController implements VaultObserver {
     @FXML
     private void handleFullAudit() {
         loadDynamicModule("/com/safecore/ui/view/audit-view.fxml", auditOverlayCard);
+    }
+
+    @FXML
+    private void handleSettings() {
+        loadSettingsModule("/com/safecore/ui/view/settings-view.fxml", settingsOverlayCard);
+    }
+
+    private void loadSettingsModule(String fxmlPath, VBox container) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            loader.setControllerFactory(applicationContext::getBean);
+            VBox view = loader.load();
+
+            // Ottieni il controller e imposta la callback di chiusura
+            SettingsController controller = loader.getController();
+            if (controller != null) {
+                controller.setOnCloseCallback(this::handleCloseOverlay);
+            }
+
+            Platform.runLater(() -> {
+                handleCloseOverlay();
+                container.getChildren().setAll(view);
+                overlay.setVisible(true);
+                container.setVisible(true);
+            });
+        } catch (Exception e) {
+            showToast("Errore caricamento impostazioni");
+            e.printStackTrace();
+        }
     }
 
     private void loadDynamicModule(String fxmlPath, VBox container) {
