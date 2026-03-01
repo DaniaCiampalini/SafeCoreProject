@@ -1,5 +1,8 @@
 package com.safecore.business.service.impl;
 
+import com.safecore.business.exception.ExpiredLinkException;
+import com.safecore.business.exception.InvalidTokenException;
+import com.safecore.business.exception.LinkNotFoundException;
 import com.safecore.business.service.SafeSendService;
 import com.safecore.business.service.VaultService;
 import com.safecore.persistence.entity.SafeSendEntryEntity;
@@ -89,16 +92,16 @@ public class SafeSendServiceImpl implements SafeSendService {
     @Transactional
     public String accessSafeLink(UUID id, String token) {
         SafeSendEntryEntity entry = safeSendRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Il link non esiste più o è stato già usato."));
+                .orElseThrow(() -> new LinkNotFoundException("Il link non esiste più o è stato già usato."));
 
         if (entry.getExpiresAt().isBefore(LocalDateTime.now())) {
             safeSendRepository.delete(entry);
             vaultService.notifyObservers();
-            throw new RuntimeException("Questo link è scaduto.");
+            throw new ExpiredLinkException("Questo link è scaduto.");
         }
 
         if (entry.getTokenHash() == null || !passwordHasher.verify(token, entry.getTokenHash())) {
-            throw new RuntimeException("Token non valido o link manomesso.");
+            throw new InvalidTokenException("Token non valido o link manomesso.");
         }
 
         String decrypted = encryptionStrategy.decrypt(entry.getEncryptedContent());

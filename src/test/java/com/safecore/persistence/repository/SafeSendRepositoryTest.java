@@ -10,6 +10,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -42,6 +43,9 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("main-test@example.com");
         user.setPasswordHash("hash");
+        byte[] salt = new byte[32];
+        new SecureRandom().nextBytes(salt); // Genera salt univoco
+        user.setDerivationSalt(salt);
         user = entityManager.persistAndFlush(user);
 
         // Entry attiva (non scaduta)
@@ -68,6 +72,9 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("saveandfind-" + UUID.randomUUID() + "@example.com");
         user.setPasswordHash("hash");
+        byte[] salt = new byte[32];
+        new SecureRandom().nextBytes(salt); // Genera salt univoco
+        user.setDerivationSalt(salt);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntryEntity newEntry = new SafeSendEntryEntity();
@@ -92,6 +99,9 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("findall-" + UUID.randomUUID() + "@example.com");
         user.setPasswordHash("hash");
+        byte[] salt = new byte[32];
+        new SecureRandom().nextBytes(salt); // Genera salt univoco
+        user.setDerivationSalt(salt);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntryEntity entry3 = new SafeSendEntryEntity();
@@ -163,11 +173,12 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("nullcontent-" + UUID.randomUUID() + "@example.com");
         user.setPasswordHash("hash");
+        user.setDerivationSalt(new byte[32]); // Salt richiesto
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntryEntity entry = new SafeSendEntryEntity();
         entry.setEncryptedContent(null); // Questo deve scatenare l'errore
-        entry.setTokenHash("token-null-content");
+        entry.setTokenHash("token-null-content-" + UUID.randomUUID()); // Token univoco richiesto
         entry.setExpiresAt(LocalDateTime.now().plusHours(1));
         entry.setOneTime(true);
         entry.setUser(user);
@@ -182,12 +193,15 @@ class SafeSendRepositoryTest {
         UserEntity user = new UserEntity();
         user.setEmail("nullexpires-" + UUID.randomUUID() + "@example.com");
         user.setPasswordHash("hash");
+        byte[] salt = new byte[32];
+        new SecureRandom().nextBytes(salt); // Genera salt univoco
+        user.setDerivationSalt(salt);
         user = entityManager.persistAndFlush(user);
 
         SafeSendEntryEntity entry = new SafeSendEntryEntity();
         entry.setEncryptedContent("data".getBytes());
         entry.setExpiresAt(null); // Questo deve scatenare l'errore
-        entry.setTokenHash("token-null-expiry");
+        entry.setTokenHash("token-null-expiry-" + UUID.randomUUID()); // Token univoco richiesto
         entry.setOneTime(true);
         entry.setUser(user);
 

@@ -1,5 +1,8 @@
 package com.safecore.business.service;
 
+import com.safecore.business.exception.ExpiredLinkException;
+import com.safecore.business.exception.InvalidTokenException;
+import com.safecore.business.exception.LinkNotFoundException;
 import com.safecore.business.service.impl.SafeSendServiceImpl;
 import com.safecore.persistence.entity.SafeSendEntryEntity;
 import com.safecore.persistence.entity.UserEntity;
@@ -167,7 +170,7 @@ class SafeSendServiceTest {
 
         when(safeSendRepository.findById(id)).thenReturn(Optional.of(entry));
 
-        RuntimeException ex = assertThrows(RuntimeException.class, () ->
+        ExpiredLinkException ex = assertThrows(ExpiredLinkException.class, () ->
                 service.accessSafeLink(id, "any_token")
         );
 
@@ -187,7 +190,7 @@ class SafeSendServiceTest {
         when(safeSendRepository.findById(id)).thenReturn(Optional.of(entry));
         when(passwordHasher.verify("wrong_token", correctHash)).thenReturn(false);
 
-        assertThrows(RuntimeException.class, () ->
+        assertThrows(InvalidTokenException.class, () ->
                 service.accessSafeLink(id, "wrong_token")
         );
 
@@ -201,7 +204,7 @@ class SafeSendServiceTest {
         UUID id = UUID.randomUUID();
         when(safeSendRepository.findById(id)).thenReturn(Optional.empty());
 
-        assertThrows(RuntimeException.class, () ->
+        assertThrows(LinkNotFoundException.class, () ->
                 service.accessSafeLink(id, "token")
         );
     }

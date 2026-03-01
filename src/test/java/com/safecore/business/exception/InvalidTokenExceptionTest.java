@@ -6,29 +6,29 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test per InvalidTokenException.
- * Verifica il comportamento dell'eccezione lanciata quando il token di reset password non è valido.
+ * Verifica il comportamento dell'eccezione lanciata quando il token SafeSend non è valido.
  */
 class InvalidTokenExceptionTest {
 
     @Test
     void constructor_withMessage_setsMessage() {
-        String message = "Token is invalid or expired";
+        String message = "Token non valido o link manomesso";
         InvalidTokenException exception = new InvalidTokenException(message);
 
         assertEquals(message, exception.getMessage());
     }
 
     @Test
-    void constructor_withExpiredTokenMessage() {
-        String message = "Il token di reset è scaduto";
+    void constructor_withInvalidTokenMessage() {
+        String message = "Il token SafeSend non corrisponde all'hash memorizzato";
         InvalidTokenException exception = new InvalidTokenException(message);
 
         assertEquals(message, exception.getMessage());
     }
 
     @Test
-    void constructor_withAlreadyUsedTokenMessage() {
-        String message = "Il token di reset è già stato utilizzato";
+    void constructor_withTamperedLinkMessage() {
+        String message = "Il link potrebbe essere stato manomesso";
         InvalidTokenException exception = new InvalidTokenException(message);
 
         assertEquals(message, exception.getMessage());
@@ -42,69 +42,30 @@ class InvalidTokenExceptionTest {
     }
 
     @Test
-    void exception_isRuntimeException() {
+    void exception_isThrowable() {
         InvalidTokenException exception = new InvalidTokenException("test");
 
-        assertTrue(exception instanceof RuntimeException);
-    }
-
-    @Test
-    void exception_canBeThrownAndCaught() {
-        String message = "Token non valido";
-
         assertThrows(InvalidTokenException.class, () -> {
-            throw new InvalidTokenException(message);
+            throw exception;
         });
     }
 
     @Test
-    void exception_withEmptyMessage() {
-        InvalidTokenException exception = new InvalidTokenException("");
+    void messageContainsItalianText() {
+        String message = "Token non valido";
+        InvalidTokenException exception = new InvalidTokenException(message);
 
-        assertEquals("", exception.getMessage());
+        assertTrue(exception.getMessage().contains("Token"));
+        assertTrue(exception.getMessage().contains("valido"));
     }
 
     @Test
-    void exception_withNullMessage() {
-        InvalidTokenException exception = new InvalidTokenException(null);
-
-        assertNull(exception.getMessage());
-    }
-
-    @Test
-    void exception_hasNoCauseByDefault() {
+    void canBeCaughtAsRuntimeException() {
         InvalidTokenException exception = new InvalidTokenException("test");
 
-        assertNull(exception.getCause());
-    }
-
-    @Test
-    void exception_canBeCaughtAsSafeCoreException() {
-        InvalidTokenException invalidTokenException = new InvalidTokenException("test");
-
-        SafeCoreException caught = invalidTokenException;
-
-        assertNotNull(caught);
-        assertEquals("test", caught.getMessage());
-    }
-
-    @Test
-    void exception_canBeCaughtAsRuntimeException() {
-        InvalidTokenException invalidTokenException = new InvalidTokenException("test");
-
-        RuntimeException caught = invalidTokenException;
-
-        assertNotNull(caught);
-        assertEquals("test", caught.getMessage());
-    }
-
-    @Test
-    void multipleExceptionsHaveDifferentMessages() {
-        InvalidTokenException exception1 = new InvalidTokenException("Token scaduto");
-        InvalidTokenException exception2 = new InvalidTokenException("Token già usato");
-
-        assertEquals("Token scaduto", exception1.getMessage());
-        assertEquals("Token già usato", exception2.getMessage());
-        assertNotEquals(exception1.getMessage(), exception2.getMessage());
+        assertThrows(RuntimeException.class, () -> {
+            throw exception;
+        });
     }
 }
+

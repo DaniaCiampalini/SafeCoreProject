@@ -13,6 +13,7 @@ class AESEncryptionStrategyTest {
     void setUp() {
         // Creiamo il KeyManager (che ora è un bean/componente)
         KeyManager keyManager = new KeyManager();
+        keyManager.initialize("TestPassword123!", new byte[32]); // Inizializza con password e salt
         // Lo iniettiamo manualmente nella strategia per il test unitario
         this.strategy = new AESEncryptionStrategy(keyManager);
     }

@@ -17,11 +17,13 @@ import static org.mockito.Mockito.*;
 /**
  * Test di unità per SecurityAuditService.
  * Verifica il calcolo dello Health Score e la rilevazione delle vulnerabilità.
- * * Criteri di test:
+ *
+ * Algoritmo di scoring (percentuale):
  * - Vault vuoto = 100/100
- * - Password debole = -10 punti
- * - Password vecchia (> 1 anno) = -5 punti
- * - Password riutilizzata = -15 punti per ogni occorrenza
+ * - weakPenalty = (weak/total * 100) * 0.5   (50% se tutte deboli)
+ * - oldPenalty = (old/total * 100) * 0.25     (25% se tutte vecchie)
+ * - reusedPenalty = (reused/total * 100) * 0.25 (25% se tutte replicate)
+ * - Score finale = 100 - weakPenalty - oldPenalty - reusedPenalty (min 0)
  */
 class SecurityAuditServiceTest {
 
@@ -61,14 +63,15 @@ class SecurityAuditServiceTest {
         AuditResult result = auditService.runAudit();
 
         assertEquals(1, result.weakCount());
-        assertEquals(90, result.score(), "Una password debole deve sottrarre 10 punti");
+        // 1 su 1 = 100% debole -> penalità = 100% * 0.5 = 50% -> score = 100 - 50 = 50.0
+        assertEquals(50.0, result.score(), "Una password debole (100%) deve dare score 50.0");
     }
 
     @Test
-    @DisplayName("Rilevamento Password Vecchia: verifica penalità per obsolescenza")
+    @DisplayName("Rilevamento Password Vecchia: verifica penalità per password obsoleta")
     void runAudit_detectsOldPassword() {
-        // Password creata 2 anni fa
-        PasswordEntryEntity entry = mockEntry("old_pwd", LocalDateTime.now().minusYears(2));
+        // Password creata 1 anni fa
+        PasswordEntryEntity entry = mockEntry("old_pwd", LocalDateTime.now().minusYears(1));
 
         when(vaultService.getEntriesForCurrentUser()).thenReturn(List.of(entry));
         when(vaultService.decryptPassword(any())).thenReturn("StrongPass!2022");
@@ -77,7 +80,8 @@ class SecurityAuditServiceTest {
         AuditResult result = auditService.runAudit();
 
         assertEquals(1, result.oldCount());
-        assertEquals(95, result.score(), "Una password vecchia deve sottrarre 5 punti");
+        // 1 su 1 = 100% vecchia -> penalità = 100% * 0.25 = 25% -> score = 100 - 25 = 75.0
+        assertEquals(75.0, result.score(), "Una password vecchia (100%) deve dare score 75.0");
     }
 
     @Test
@@ -94,8 +98,8 @@ class SecurityAuditServiceTest {
         AuditResult result = auditService.runAudit();
 
         assertEquals(2, result.reusedCount(), "Entrambe le entry devono essere segnate come riutilizzate");
-        // -15 * 2 = -30 punti. 100 - 30 = 70.
-        assertEquals(70, result.score());
+        // 2 su 2 = 100% riutilizzate -> penalità = 100% * 0.25 = 25% -> score = 100 - 25 = 75.0
+        assertEquals(75.0, result.score(), "Due password riutilizzate (100%) devono dare score 75.0");
     }
 
     @Test
@@ -111,9 +115,10 @@ class SecurityAuditServiceTest {
 
         AuditResult result = auditService.runAudit();
 
-        // Penalità teorica: (2 * Weak: -20) + (2 * Old: -10) + (2 * Reused: -30) = -60
-        // Score atteso: 40
-        assertEquals(40, result.score());
+        // 2 su 2 = 100% per ogni categoria
+        // Penalità: weak(100% * 0.5) + old(100% * 0.25) + reused(100% * 0.25) = 50 + 25 + 25 = 100
+        // Score: 100 - 100 = 0.0
+        assertEquals(0.0, result.score(), "Caso peggiore (tutto 100%) deve dare score 0.0");
         assertEquals(2, result.weakCount());
         assertEquals(2, result.reusedCount());
         assertEquals(2, result.oldCount());
@@ -146,6 +151,7 @@ class SecurityAuditServiceTest {
         PasswordEntryEntity entry = mock(PasswordEntryEntity.class);
         when(entry.getEncryptedPassword()).thenReturn(pwd.getBytes());
         when(entry.getCreatedAt()).thenReturn(createdAt);
+        when(entry.getServiceName()).thenReturn("Service_" + pwd);
         return entry;
     }
 }

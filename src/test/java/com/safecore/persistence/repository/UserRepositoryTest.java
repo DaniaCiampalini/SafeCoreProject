@@ -9,6 +9,7 @@ import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ActiveProfiles;
 
+import java.security.SecureRandom;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -36,6 +37,9 @@ class UserRepositoryTest {
         testUser = new UserEntity();
         testUser.setEmail("test@example.com");
         testUser.setPasswordHash("hashedPassword123");
+        byte[] salt = new byte[32];
+        new SecureRandom().nextBytes(salt); // Genera salt univoco
+        testUser.setDerivationSalt(salt);
         testUser = entityManager.persistAndFlush(testUser);
     }
 
@@ -109,6 +113,9 @@ class UserRepositoryTest {
         UserEntity newUser = new UserEntity();
         newUser.setEmail("newuser@example.com");
         newUser.setPasswordHash("passwordHash");
+        byte[] salt = new byte[32];
+        new SecureRandom().nextBytes(salt); // Genera salt univoco
+        newUser.setDerivationSalt(salt);
 
         UserEntity saved = userRepository.save(newUser);
         entityManager.flush();
@@ -138,11 +145,17 @@ class UserRepositoryTest {
         UserEntity user2 = new UserEntity();
         user2.setEmail("user2@example.com");
         user2.setPasswordHash("hash2");
+        byte[] salt2 = new byte[32];
+        new SecureRandom().nextBytes(salt2); // Genera salt univoco
+        user2.setDerivationSalt(salt2);
         entityManager.persistAndFlush(user2);
 
         UserEntity user3 = new UserEntity();
         user3.setEmail("user3@example.com");
         user3.setPasswordHash("hash3");
+        byte[] salt3 = new byte[32];
+        new SecureRandom().nextBytes(salt3); // Genera salt univoco
+        user3.setDerivationSalt(salt3);
         entityManager.persistAndFlush(user3);
 
         var users = userRepository.findAll();
@@ -155,6 +168,9 @@ class UserRepositoryTest {
         UserEntity user2 = new UserEntity();
         user2.setEmail("user2@example.com");
         user2.setPasswordHash("hash2");
+        byte[] salt = new byte[32];
+        new SecureRandom().nextBytes(salt); // Genera salt univoco
+        user2.setDerivationSalt(salt);
         entityManager.persistAndFlush(user2);
 
         long count = userRepository.count();
