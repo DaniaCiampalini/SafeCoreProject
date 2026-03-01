@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns:fx="http://javafx.com/fxml" xmlns="http://javafx.com/javafx/17"
+      fx:controller="com.safecore.ui.controller.SettingsController"
+      maxWidth="650" maxHeight="600" spacing="25"
+      style="-fx-background-color: white; -fx-padding: 35; -fx-background-radius: 20; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 25, 0, 0, 10);">
+
+    <!-- Header -->
+    <HBox alignment="CENTER_LEFT" spacing="15">
+        <Label text="⚙" style="-fx-font-size: 32; -fx-text-fill: #1e3a8a;"/>
+        <Label text="Impostazioni Account" style="-fx-font-size: 24; -fx-font-weight: bold; -fx-text-fill: #1e3a8a;"/>
+    </HBox>
+
+    <Separator/>
+
+    <!-- Sezione Info Account -->
+    <VBox spacing="15" style="-fx-background-color: #f9fafb; -fx-padding: 20; -fx-background-radius: 12;">
+        <Label text="Informazioni Account" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #374151;"/>
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Email:" style="-fx-font-weight: 600; -fx-text-fill: #6b7280;"/>
+            <Label fx:id="emailLabel" text="user@example.com" style="-fx-text-fill: #1e3a8a; -fx-font-weight: 600;"/>
+        </HBox>
+    </VBox>
+
+    <!-- Sezione Eliminazione Account -->
+    <VBox spacing="20" style="-fx-background-color: #fef2f2; -fx-padding: 20; -fx-background-radius: 12; -fx-border-color: #fee2e2; -fx-border-width: 2; -fx-border-radius: 12;">
+
+        <!-- Intestazione Eliminazione Account -->
+        <VBox spacing="10">
+            <Label text="ELIMINAZIONE ACCOUNT" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #dc2626;"/>
+            <Label text="⚠ ATTENZIONE: Questa azione è IRREVERSIBILE!"
+                   style="-fx-font-weight: bold; -fx-text-fill: #dc2626; -fx-font-size: 13;"/>
+            <Label text="L'eliminazione dell'account comporterà:"
+                   style="-fx-text-fill: #7f1d1d; -fx-font-size: 13;" wrapText="true"/>
+
+            <VBox spacing="5" style="-fx-padding: 0 0 0 15;">
+                <Label text="• Cancellazione definitiva di tutte le password salvate nel Vault"
+                       style="-fx-text-fill: #7f1d1d; -fx-font-size: 12;" wrapText="true"/>
+                <Label text="• Eliminazione di tutti i link SafeSend creati"
+                       style="-fx-text-fill: #7f1d1d; -fx-font-size: 12;" wrapText="true"/>
+                <Label text="• Rimozione permanente dell'account e di tutti i dati associati"
+                       style="-fx-text-fill: #7f1d1d; -fx-font-size: 12;" wrapText="true"/>
+            </VBox>
+        </VBox>
+
+
+        <!-- Campo di conferma -->
+        <VBox spacing="10">
+            <Label text="Per confermare, digita esattamente:"
+                   style="-fx-font-weight: 600; -fx-text-fill: #991b1b; -fx-font-size: 13;"/>
+            <Label text="Elimina il mio account SafeCore"
+                   style="-fx-font-family: 'Monospace'; -fx-font-weight: bold; -fx-text-fill: #dc2626; -fx-font-size: 14; -fx-background-color: white; -fx-padding: 8; -fx-background-radius: 6;"/>
+
+            <TextField fx:id="confirmationField" promptText="Digita qui la frase di conferma..."
+                       style="-fx-border-color: #ef4444; -fx-border-width: 2; -fx-border-radius: 8; -fx-background-radius: 8; -fx-padding: 10;"/>
+        </VBox>
+
+        <!-- Pulsante Elimina -->
+        <Button fx:id="deleteButton" text="Conferma Eliminazione" disable="true"
+                onAction="#handleDeleteAccount"
+                maxWidth="Infinity"
+                style="-fx-background-color: #9ca3af; -fx-text-fill: white; -fx-font-weight: bold; -fx-font-size: 14; -fx-padding: 12; -fx-background-radius: 8; -fx-cursor: not-allowed;"/>
+    </VBox>
+
+    <!-- Pulsanti Azione -->
+    <HBox spacing="15" alignment="CENTER_RIGHT" style="-fx-padding: 10 0 0 0;">
+        <Button text="Chiudi" onAction="#handleClose"
+                style="-fx-background-color: #e5e7eb; -fx-text-fill: #374151; -fx-font-weight: 600; -fx-background-radius: 8; -fx-padding: 10 20; -fx-cursor: hand;"/>
+    </HBox>
+
+</VBox>
+
