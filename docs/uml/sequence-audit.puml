@@ -1,0 +1,210 @@
+@startuml
+skinparam sequenceMessageAlign center
+skinparam responseMessageBelowArrow true
+skinparam backgroundColor #FFFFFF
+skinparam participantBackgroundColor #E8F4F8
+skinparam actorBackgroundColor #FFE5CC
+skinparam boxBackgroundColor #F0F0F0
+
+title SafeCore - Security Audit Flow (Complete Sequence Diagram)
+
+actor "Authenticated\nUser" as User
+participant "DashboardController\n<<UI>>" as Dashboard
+participant "SecurityAuditService\n<<Business>>" as AuditService
+participant "VaultService\n<<Business>>" as VaultService
+participant "PasswordStrengthEvaluator\n<<Security>>" as StrengthEval
+participant "EncryptionStrategy\n<<Security>>" as Encryption
+participant "PasswordEntryRepository\n<<Persistence>>" as Repository
+database "PostgreSQL" as DB
+
+== Security Audit Initiation ==
+
+User -> Dashboard: Clicks "Security Audit" button
+activate Dashboard
+
+Dashboard -> Dashboard: Show audit overlay
+
+Dashboard -> AuditService: runAudit()
+activate AuditService
+
+note right of AuditService
+  Audit analyzes vault for:
+  - Weak passwords (< STRONG)
+  - Old passwords (> 1 year)
+  - Reused passwords (duplicates)
+end note
+
+== Retrieve All Vault Entries ==
+
+AuditService -> VaultService: getEntriesForCurrentUser()
+activate VaultService
+
+VaultService -> VaultService: SessionContext.getCurrentUserEmail()
+VaultService -> Repository: findByUserEmail(email)
+activate Repository
+Repository -> DB: SELECT * FROM password_entries\nWHERE user_email = ?\nORDER BY created_at DESC
+DB --> Repository: List<PasswordEntryEntity>
+Repository --> VaultService: List<PasswordEntryEntity>
+deactivate Repository
+
+VaultService --> AuditService: List<PasswordEntryEntity>
+deactivate VaultService
+
+alt Vault is empty
+    AuditService -> AuditService: Create perfect audit:\nscore=100, weak=0, old=0, reused=0
+    AuditService --> Dashboard: AuditResult(100, 0, 0, 0, 0)
+    Dashboard --> User: "Perfect! No entries to audit"
+    deactivate AuditService
+    deactivate Dashboard
+else Vault has entries
+
+    == Decrypt All Passwords for Analysis ==
+
+    loop For each PasswordEntryEntity
+        AuditService -> VaultService: decryptPassword(entry.encryptedPassword)
+        activate VaultService
+
+        VaultService -> Encryption: decrypt(encryptedBytes)
+        activate Encryption
+
+        Encryption -> Encryption: Extract IV (first 16 bytes)
+        Encryption -> Encryption: Extract ciphertext (remaining bytes)
+        Encryption -> Encryption: Initialize AES cipher (DECRYPT mode)\nKey: 256-bit\nIV: extracted\nMode: CBC\nPadding: PKCS5
+        Encryption -> Encryption: cipher.doFinal(ciphertext)
+
+        Encryption --> VaultService: plainPassword (String)
+        deactivate Encryption
+
+        VaultService --> AuditService: plainPassword
+        deactivate VaultService
+    end
+
+    note right of AuditService
+      Now we have:
+      - All entries (metadata)
+      - All decrypted passwords (plaintext)
+      Ready for analysis
+    end note
+
+    == Analyze Weak Passwords ==
+
+    loop For each decrypted password
+        AuditService -> StrengthEval: evaluate(password)
+        activate StrengthEval
+
+        StrengthEval -> StrengthEval: Check length >= 8
+        StrengthEval -> StrengthEval: Count criteria:\n- lowercase\n- uppercase\n- digits\n- symbols
+        StrengthEval -> StrengthEval: Calculate score
+
+        alt Score < 4 criteria OR length < 8
+            StrengthEval --> AuditService: Strength.WEAK
+            AuditService -> AuditService: weakCount++
+            AuditService -> AuditService: Add to weakServices list
+        else Score == 3 criteria
+            StrengthEval --> AuditService: Strength.MEDIUM
+            AuditService -> AuditService: weakCount++ (not STRONG)
+            AuditService -> AuditService: Add to weakServices list
+        else Score == 4 criteria
+            StrengthEval --> AuditService: Strength.STRONG
+            AuditService -> AuditService: (no penalty)
+        end
+        deactivate StrengthEval
+    end
+
+    == Analyze Old Passwords ==
+
+    loop For each entry
+        AuditService -> AuditService: Check if createdAt < (now - 1 year)
+        alt Password older than 1 year
+            AuditService -> AuditService: oldCount++
+        end
+    end
+
+    == Analyze Reused Passwords ==
+
+    AuditService -> AuditService: Group passwords by value
+    AuditService -> AuditService: Find duplicates
+
+    loop For each duplicate group
+        AuditService -> AuditService: reusedCount += (group.size - 1)
+        note right
+          If same password used 3 times,
+          we count 2 reuses
+        end note
+    end
+
+    == Calculate Health Score ==
+
+    AuditService -> AuditService: Calculate score:\nbase = 100\nscore -= (weakCount × 10)\nscore -= (oldCount × 5)\nscore -= (reusedCount × 15)
+
+    note right of AuditService
+      Scoring penalties:
+      - Weak password: -10 points
+      - Old password: -5 points
+      - Reused password: -15 points
+
+      Final score = max(0, calculated_score)
+    end note
+
+    AuditService -> AuditService: Create AuditResult:\n- score\n- weakCount\n- oldCount\n- reusedCount\n- totalPasswords
+
+    AuditService --> Dashboard: AuditResult
+    deactivate AuditService
+
+    == Display Results to User ==
+
+    Dashboard -> Dashboard: Update UI with results
+
+    Dashboard -> Dashboard: Set health score label
+
+    alt Score >= 80
+        Dashboard -> Dashboard: Set indicator GREEN
+        Dashboard -> Dashboard: Message: "Excellent security!"
+    else Score >= 50
+        Dashboard -> Dashboard: Set indicator YELLOW
+        Dashboard -> Dashboard: Message: "Good, but can improve"
+    else Score < 50
+        Dashboard -> Dashboard: Set indicator RED
+        Dashboard -> Dashboard: Message: "Security needs attention!"
+    end
+
+    Dashboard -> Dashboard: Display weak passwords count
+    Dashboard -> Dashboard: Display old passwords count
+    Dashboard -> Dashboard: Display reused passwords count
+
+    Dashboard -> Dashboard: Generate recommendations:\n"- Strengthen weak passwords\n- Update old passwords\n- Use unique passwords"
+
+    Dashboard --> User: Show audit results overlay
+    deactivate Dashboard
+
+    == User Actions Post-Audit ==
+
+    alt User wants to improve
+        User -> Dashboard: Identifies weak/old/reused entries
+        User -> Dashboard: Updates passwords one by one
+        note right
+          User can:
+          - Edit weak entries
+          - Generate new strong passwords
+          - Delete old unused entries
+          - Run audit again to verify
+        end note
+    else User closes audit
+        User -> Dashboard: Clicks "Close"
+        Dashboard -> Dashboard: Hide audit overlay
+    end
+end
+
+== Post-Audit State ==
+
+note over User, DB
+  Audit complete with:
+  - Health score calculated
+  - Vulnerabilities identified
+  - Recommendations provided
+  - No data modified (read-only analysis)
+  - User aware of security posture
+end note
+
+@enduml
+

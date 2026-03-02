@@ -1231,6 +1231,119 @@ public class SecurityAuditServiceImpl implements SecurityAuditService {
 
 ## Diagrammi UML
 
+SafeCore fornisce documentazione UML completa che copre casi d'uso, architettura e sequenze di workflow.
+
+### Diagramma Casi d'Uso
+
+[Visualizza diagramma completo](docs/uml/use-case.puml)
+
+**Casi d'Uso Principali**:
+1. **UC-1**: Registrazione Utente con validazione robustezza password
+2. **UC-2**: Login Utente con autenticazione BCrypt
+3. **UC-3**: Aggiunta Entry Password con cifratura AES-256
+4. **UC-4**: Audit Sicurezza analizzando password deboli/vecchie/riutilizzate
+5. **UC-5**: Generazione Password Sicura con casualità crittografica
+6. **UC-6**: Export Backup Vault come file .safe cifrato
+7. **UC-7**: Import Backup Vault con decifratura e ri-cifratura
+8. **UC-8**: Condivisione Sicura SafeSend con link monouso
+9. **UC-9**: Accesso Segreto SafeSend con auto-distruzione
+10. **UC-10**: Richiesta Reset Password con token a tempo limitato
+
+### Diagrammi di Sequenza
+
+#### Flusso Registrazione
+[Visualizza diagramma](docs/uml/sequence-register.puml)
+
+Workflow completo di registrazione che mostra:
+- Valutazione robustezza password in tempo reale
+- Generazione suggerimenti password
+- Generazione password opzionale
+- Hashing BCrypt con work factor 12
+- Creazione e persistenza entity utente
+- Validazione form e gestione errori
+
+#### Flusso Login
+[Visualizza diagramma](docs/uml/sequence-login.puml)
+
+Workflow autenticazione che mostra:
+- Validazione email/password
+- Verifica password BCrypt
+- Inizializzazione sessione
+- Navigazione dashboard
+- Caricamento e visualizzazione vault
+
+#### Flusso Aggiunta Entry
+[Visualizza diagramma](docs/uml/sequence-save-entry.puml)
+
+Workflow archiviazione password che mostra:
+- Validazione form
+- Cifratura AES-256-CBC con IV univoco
+- Creazione entity entry password
+- Persistenza database
+- Pattern notifica observer
+- Aggiornamento dashboard
+
+#### Flusso Audit Sicurezza
+[Visualizza diagramma](docs/uml/sequence-audit.puml)
+
+Workflow analisi vault che mostra:
+- Recupero tutte entry cifrate
+- Decifratura batch per analisi
+- Rilevamento password deboli
+- Identificazione password vecchie (> 1 anno)
+- Rilevamento password riutilizzate
+- Calcolo punteggio salute (0-100)
+- Visualizzazione risultati con raccomandazioni
+
+### Diagramma Componenti
+
+[Visualizza diagramma](docs/uml/component-diagram.puml)
+
+**Panoramica Architettura**:
+```
+Livello Presentazione (JavaFX UI + Controllers)
+         ↓
+Livello Service (UserService, VaultService, SecurityAuditService, 
+                SafeSendService, BackupService, PasswordHintService,
+                PasswordGenerator)
+         ↓
+Modulo Sicurezza (Cifratura AES, Hasher BCrypt, Key Manager,
+                  Valutatore Robustezza Password)
+         ↓
+Livello Persistenza (Spring Data Repositories, JPA/Hibernate ORM)
+         ↓
+Database (PostgreSQL)
+```
+
+**Componenti Chiave**:
+- **8 Componenti Livello Service**: Tutti i servizi logica business
+- **4 Componenti Sicurezza**: Cifratura, hashing, gestione chiavi, valutazione robustezza
+- **Pattern Repository**: Spring Data JPA con query personalizzate
+- **Pattern Observer**: VaultService notifica dashboard sui cambiamenti
+
+### Diagramma Package
+
+[Visualizza diagramma](docs/uml/package-diagram.puml)
+
+Mostra dipendenze package e layering:
+- `com.safecore.ui` - Livello presentazione (controllers, navigation, session)
+- `com.safecore.business` - Logica business (services, domain, exceptions)
+- `com.safecore.security` - Componenti sicurezza (encryption, hashing, generation)
+- `com.safecore.persistence` - Accesso dati (entities, repositories)
+
+### Diagrammi Classi
+
+Diagrammi classi dettagliati suddivisi per livello architetturale:
+
+1. **[UI & Navigazione](docs/uml/class-diagram-part1-ui-navigation.puml)**: Controllers, SceneNavigator, SessionContext
+2. **[Logica Business](docs/uml/class-diagram-part2-business-logic.puml)**: Services, oggetti dominio, exceptions
+3. **[Persistenza](docs/uml/class-diagram-part3-persistence.puml)**: Entities, repositories, mapping JPA
+4. **[Sicurezza](docs/uml/class-diagram-part4-security.puml)**: Encryption, hashing, gestione chiavi, utilità password
+
+**[Diagramma Sistema Completo](docs/uml/class-diagram.puml)**: Tutte le classi e relazioni
+
+### Visualizzazione Diagrammi
+
 Tutti i diagrammi UML sono disponibili in formato PlantUML nella directory `docs/uml/`. Puoi visualizzarli usando:
 - **Online**: https://www.plantuml.com/plantuml/ (copia & incolla contenuto .puml)
 - **VS Code**: Installa estensione "PlantUML"
