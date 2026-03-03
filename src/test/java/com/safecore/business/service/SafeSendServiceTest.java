@@ -87,7 +87,7 @@ class SafeSendServiceTest {
         saved.setId(UUID.randomUUID());
 
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
-        when(encryptionStrategy.encrypt(content)).thenReturn("encrypted_data".getBytes());
+        when(encryptionStrategy.encryptWithToken(eq(content), anyString())).thenReturn("encrypted_data".getBytes());
         when(passwordHasher.hash(anyString())).thenReturn("hashed_token");
         when(safeSendRepository.save(any(SafeSendEntryEntity.class))).thenReturn(saved);
 
@@ -102,6 +102,7 @@ class SafeSendServiceTest {
         // Verifica che il pattern Observer sia scattato (fondamentale per 30L)
         verify(vaultService, times(1)).notifyObservers();
         verify(safeSendRepository).save(any(SafeSendEntryEntity.class));
+        verify(encryptionStrategy).encryptWithToken(eq(content), anyString());
     }
 
     @Test
@@ -118,7 +119,7 @@ class SafeSendServiceTest {
     void createSafeLink_VerifyEntityMapping() {
         UserEntity user = new UserEntity();
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
-        when(encryptionStrategy.encrypt(anyString())).thenReturn(new byte[0]);
+        when(encryptionStrategy.encryptWithToken(anyString(), anyString())).thenReturn(new byte[0]);
         when(passwordHasher.hash(anyString())).thenReturn("hash");
 
         ArgumentCaptor<SafeSendEntryEntity> captor = ArgumentCaptor.forClass(SafeSendEntryEntity.class);
@@ -149,7 +150,7 @@ class SafeSendServiceTest {
 
         when(safeSendRepository.findById(id)).thenReturn(Optional.of(entry));
         when(passwordHasher.verify(token, tokenHash)).thenReturn(true);
-        when(encryptionStrategy.decrypt(encryptedData)).thenReturn("Messaggio in chiaro");
+        when(encryptionStrategy.decryptWithToken(encryptedData, token)).thenReturn("Messaggio in chiaro");
 
         // Act
         String result = service.accessSafeLink(id, token);
@@ -160,6 +161,7 @@ class SafeSendServiceTest {
         // Verifica il principio "Burn after reading"
         verify(safeSendRepository).delete(entry);
         verify(vaultService).notifyObservers();
+        verify(encryptionStrategy).decryptWithToken(encryptedData, token);
     }
 
     @Test

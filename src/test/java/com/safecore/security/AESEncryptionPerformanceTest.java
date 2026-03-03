@@ -204,6 +204,19 @@ class AESEncryptionPerformanceTest {
     }
 
     @Test
+    @DisplayName("Token-based encrypt operation should complete within reasonable time")
+    void encryptWithTokenPerformance_shouldCompleteWithinTimeLimit() {
+        String content = "This is a test content for SafeSend";
+        String token = "this-is-a-secure-token-123456";
+
+        long time = measureEncryptWithTokenTime(content, token);
+
+        // La cifratura con token deve essere veloce (< 10ms)
+        assertTrue(time < 10_000,
+                "Token encrypt operation took too long: " + time + "μs");
+    }
+
+    @Test
     @DisplayName("Decrypt operation should be fast enough for real-time use")
     void decryptPerformance_shouldBeFastEnoughForRealTime() {
         String plainText = "Real-time password entry";
@@ -224,6 +237,22 @@ class AESEncryptionPerformanceTest {
         // Ogni operazione dovrebbe essere molto veloce (< 1ms)
         assertTrue(avgTimeMicros < 1_000,
                 "Average decrypt time is too slow for real-time: " + avgTimeMicros + "μs");
+    }
+
+    @Test
+    @DisplayName("Token-based decrypt operation should complete within reasonable time")
+    void decryptWithTokenPerformance_shouldCompleteWithinTimeLimit() {
+        String content = "This is a test content for SafeSend";
+        String token = "this-is-a-secure-token-123456";
+        byte[] encrypted = encryptionStrategy.encryptWithToken(content, token);
+
+        long time = measureDecryptWithTokenTime(encrypted, token);
+
+        // La decifratura con token deve essere altrettanto veloce
+        assertTrue(time < 10_000,
+                "Token decrypt operation took too long: " + time + "μs");
+
+        assertEquals(content, encryptionStrategy.decryptWithToken(encrypted, token));
     }
 
     @Test
@@ -323,6 +352,20 @@ class AESEncryptionPerformanceTest {
             }
         }
 
+        long endTime = System.nanoTime();
+        return (endTime - startTime) / 1_000; // microseconds
+    }
+
+    private long measureEncryptWithTokenTime(String content, String token) {
+        long startTime = System.nanoTime();
+        encryptionStrategy.encryptWithToken(content, token);
+        long endTime = System.nanoTime();
+        return (endTime - startTime) / 1_000; // microseconds
+    }
+
+    private long measureDecryptWithTokenTime(byte[] encrypted, String token) {
+        long startTime = System.nanoTime();
+        encryptionStrategy.decryptWithToken(encrypted, token);
         long endTime = System.nanoTime();
         return (endTime - startTime) / 1_000; // microseconds
     }
