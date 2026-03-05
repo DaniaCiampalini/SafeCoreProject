@@ -23,11 +23,4 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     boolean existsByEmail(String email);
 
-    /**
-     * Aggiorna la password di un utente.
-     * Qui usiamo una query JPQL perché è un aggiornamento diretto.
-     */
-    @Modifying
-    @Query("UPDATE UserEntity u SET u.passwordHash = :pwd WHERE u.email = :email")
-    void updatePassword(@Param("email") String email, @Param("pwd") String hashedPassword);
 }
