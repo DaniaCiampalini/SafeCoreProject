@@ -1,0 +1,241 @@
+@startuml SafeCore_PageNavigation
+!theme plain
+skinparam backgroundColor white
+skinparam state {
+    BackgroundColor WhiteSmoke
+    BorderColor DarkSlateGray
+    BorderThickness 2
+    FontSize 12
+    FontStyle bold
+    ArrowColor Black
+    ArrowThickness 2
+}
+
+skinparam note {
+    BackgroundColor LightYellow
+    BorderColor DarkGoldenRod
+}
+
+title SafeCore - Page Navigation Diagram\nJavaFX Application Flow
+
+' ============================================
+'  DEFINIZIONE STATI (PAGINE E DIALOG)
+' ============================================
+
+state "Login Page" as Login {
+    Login : login.fxml - LoginController
+    Login : --
+    Login : Autenticazione utente
+    Login : Input: email, password master
+    Login : Derivazione chiave AES (PBKDF2)
+}
+
+state "Register Page" as Register {
+    Register : register.fxml - RegisterController
+    Register : --
+    Register : Registrazione nuovo utente
+    Register : Validazione forza password
+    Register : BCrypt hashing + salt
+    Register : Controllo unicità email
+}
+
+state "Dashboard Page" as Dashboard {
+    Dashboard : dashboard.fxml - DashboardController
+    Dashboard : --
+    Dashboard : <b>Hub centrale dell'applicazione</b>
+    Dashboard : • TableView con password entries
+    Dashboard : • Ricerca real-time
+    Dashboard : • Azioni inline (edit, delete, copy)
+    Dashboard : • Overlay per add/generate/audit/settings
+}
+
+state "Dashboard: Add Entry Overlay" as AddEntryOverlay {
+    AddEntryOverlay : Card overlay in Dashboard
+    AddEntryOverlay : --
+    AddEntryOverlay : Input: servizio, username, password
+    AddEntryOverlay : Opzione scadenza (30/90/365 giorni)
+    AddEntryOverlay : Link a Password Generator
+}
+
+state "Dashboard: Generate Password Overlay" as GeneratePasswordOverlay {
+    GeneratePasswordOverlay : Card overlay in Dashboard
+    GeneratePasswordOverlay : --
+    GeneratePasswordOverlay : Configurazione lunghezza/complessità
+    GeneratePasswordOverlay : Preview real-time
+    GeneratePasswordOverlay : Copia negli appunti (auto-clear 60s)
+}
+
+state "Audit Page" as Audit {
+    Audit : audit-view.fxml - AuditController
+    Audit : --
+    Audit : Security Audit del vault
+    Audit : Health Score (0-100)
+    Audit : Password deboli/vecchie/duplicate
+    Audit : Grafici e statistiche
+}
+
+state "SafeSend Page" as SafeSend {
+    SafeSend : safesend-view.fxml - SafeSendController
+    SafeSend : --
+    SafeSend : Condivisione sicura temporanea
+    SafeSend : Generazione link + token
+    SafeSend : Lista link attivi
+    SafeSend : Configurazione TTL e max views
+}
+
+state "SafeSend Access (Public)" as SafeSendAccess {
+    SafeSendAccess : Pagina pubblica esterna
+    SafeSendAccess : --
+    SafeSendAccess : Accesso senza autenticazione
+    SafeSendAccess : Validazione token
+    SafeSendAccess : One-time view
+    SafeSendAccess : Auto-destruction post-access
+}
+
+state "Backup Page" as Backup {
+    Backup : backup-view.fxml - BackupController
+    Backup : --
+    Backup : Export vault → file .safe cifrato
+    Backup : Import da backup esistente
+    Backup : Verifica integrità pre-import
+}
+
+state "Settings Page" as Settings {
+    Settings : settings-view.fxml - SettingsController
+    Settings : --
+    Settings : Cambio password master
+    Settings : Eliminazione account (secure delete)
+    Settings : Preferenze UI/tema
+}
+
+' ============================================
+'  TRANSIZIONI PRINCIPALI
+' ============================================
+
+[*] --> Login : AppLauncher.start()\nCarioca login.fxml
+
+' Da Login
+Login --> Dashboard : Autenticazione OK\n+ Derivazione chiave
+Login --> Login : Credenziali errate\n(mostra errore)
+Login --> Register : Click "Non hai un account?"
+
+' Da Register
+Register --> Login : Registrazione completata\n(mostra success)
+Register --> Register : Validazione fallita\n(password debole)
+Register --> Login : Click "Hai già un account?"
+
+' Da Dashboard (Hub Centrale)
+Dashboard --> AddEntryOverlay : Click "+ Aggiungi Password"
+Dashboard --> GeneratePasswordOverlay : Click "Genera Password"
+Dashboard --> Audit : Click "Security Audit"
+Dashboard --> SafeSend : Click "SafeSend"
+Dashboard --> Backup : Click "Backup & Restore"
+Dashboard --> Settings : Click "Impostazioni"
+Dashboard --> Login : Logout\n(SessionContext.clear)
+
+' Overlay Add Entry
+AddEntryOverlay --> Dashboard : Click "Salva"\n(VaultService.addEntry)
+AddEntryOverlay --> Dashboard : Click "Annulla"\n(chiude overlay)
+AddEntryOverlay --> GeneratePasswordOverlay : Click "Genera"\n(switch overlay)
+
+' Overlay Generate Password
+GeneratePasswordOverlay --> AddEntryOverlay : Click "Usa questa"\n(popola campo password)
+GeneratePasswordOverlay --> Dashboard : Click "Chiudi"
+
+' Azioni inline nella Dashboard (no pagina separata)
+Dashboard --> Dashboard : Edit entry\n(dialog inline)
+Dashboard --> Dashboard : Delete entry\n(confirm dialog)
+Dashboard --> Dashboard : Copy password\n(clipboard 60s)
+
+' Da Audit
+Audit --> Dashboard : Click "Torna al Vault"
+
+' Da SafeSend
+SafeSend --> Dashboard : Click "Torna al Vault"
+
+' SafeSend Access (Flusso pubblico separato)
+[*] --> SafeSendAccess : URL esterno\n/safesend/{token}
+SafeSendAccess --> [*] : Segreto visualizzato\n+ auto-destruction
+
+' Da Backup
+Backup --> Dashboard : Click "Torna al Vault"
+
+' Da Settings
+Settings --> Dashboard : Click "Salva e Torna"
+Settings --> Login : "Elimina Account"\n+ conferma\n(utente rimosso)
+
+' ============================================
+'  NOTE ESPLICATIVE
+' ============================================
+
+note right of Login
+  <b>Entry Point</b>
+  Prima schermata caricata
+  da AppLauncher.start().
+
+  SceneNavigator.switchTo()
+  gestisce il caricamento FXML
+  con Spring IoC integration.
+end note
+
+note right of Dashboard
+  <b>Navigation Hub</b>
+  Tutte le funzionalità principali
+  accessibili da qui.
+
+  Usa overlay VBox (visibility toggle)
+  invece di dialog separati per
+  mantenere il contesto visivo.
+
+  SessionContext mantiene:
+  • User email
+  • AES key in RAM
+end note
+
+note left of SafeSendAccess
+  <b>Flusso Pubblico</b>
+  Non richiede login.
+  Controller separato o endpoint web.
+
+  Token JWT validato lato server.
+  Accesso limitato a 1 view.
+end note
+
+note bottom of AddEntryOverlay
+  <b>Overlay Pattern</b>
+  Implementato come VBox in Dashboard
+  con visibility toggle.
+
+  Vantaggi:
+  • No modal blocking
+  • Mantiene contesto tabella
+  • Transizioni fluide
+end note
+
+' ============================================
+'  LEGENDA
+' ============================================
+
+legend bottom right
+  <b>Tecnologie:</b>
+  • JavaFX 17 + FXML
+  • Spring Boot IoC
+  • SceneNavigator (custom)
+
+  <b>Pattern UI:</b>
+  • Dashboard = Single Page Hub
+  • Overlay = Card visibility toggle
+  • Dialog = JavaFX Alert/Dialog
+
+  <b>Controller Mapping:</b>
+  Login → LoginController
+  Register → RegisterController
+  Dashboard → DashboardController
+  Audit → AuditController
+  SafeSend → SafeSendController
+  Backup → BackupController
+  Settings → SettingsController
+endlegend
+
+@enduml
+

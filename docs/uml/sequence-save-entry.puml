@@ -1,5 +1,5 @@
 @startuml SafeCore_SaveEntry_Sequence
-!theme blueprint
+skinparam backgroundColor white
 
 actor User
 participant DashboardController
