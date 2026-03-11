@@ -108,7 +108,6 @@ Il progetto dimostra pratiche professionali di ingegneria del software tra cui:
 │                  (Repository JPA)                           │
 │  - UserRepository (CRUD utenti)                             │
 │  - PasswordEntryRepository (CRUD entry)                     │
-│  - PasswordResetTokenRepository (gestione token)            │
 │  - SafeSendRepository (archiviazione segreti temporanei)    │
 │  - Database PostgreSQL (DB relazionale cloud-hosted)        │
 └─────────────────────────────────────────────────────────────┘
@@ -172,7 +171,6 @@ SafeCoreProject/
 │   ├── main/
 │   │   ├── java/com/safecore/
 │   │   │   ├── SafeCoreApplication.java          # Entry point applicazione
-│   │   │   ├── DatabaseDemoRunner.java           # Runner demo sviluppo
 │   │   │   ├── business/                         # Livello business logic
 │   │   │   │   ├── domain/                       # Modelli dominio (immutabili)
 │   │   │   │   │   ├── User.java
@@ -185,46 +183,38 @@ SafeCoreProject/
 │   │   │   │   │   ├── UserAlreadyExistsException.java
 │   │   │   │   │   ├── UserNotFoundException.java
 │   │   │   │   │   ├── WeakPasswordException.java
-│   │   │   │   │   └── InvalidTokenException.java
+│   │   │   │   │   ├── InvalidTokenException.java
+│   │   │   │   │   ├── ExpiredLinkException.java
+│   │   │   │   │   └── LinkNotFoundException.java
 │   │   │   │   ├── hints/                        # Regole validazione password
 │   │   │   │   │   ├── HintLevel.java
 │   │   │   │   │   ├── PasswordHint.java
 │   │   │   │   │   └── rules/
 │   │   │   │   │       ├── PasswordRule.java
 │   │   │   │   │       ├── MinLengthRule.java
-│   │   │   │   │       └── ComplexitycaseRule.java
-│   │   │   │   └── service/                      # Interfacce service
+│   │   │   │   │       └── ComplexityRule.java
+│   │   │   │   └── service/                      # Interfacce e implementazioni service
 │   │   │   │       ├── UserService.java
 │   │   │   │       ├── VaultService.java
 │   │   │   │       ├── SecurityAuditService.java
 │   │   │   │       ├── SafeSendService.java
 │   │   │   │       ├── BackupService.java
-│   │   │   │       ├── PasswordService.java
-│   │   │   │       ├── PasswordResetService.java
 │   │   │   │       ├── PasswordHintService.java
 │   │   │   │       ├── VaultObserver.java
-│   │   │   │       ├── SessionLougoutObserver.java
-│   │   │   │       ├── PasswordResetCompletedEvent.java
-│   │   │   │       ├── PasswordResetEventPublisher.java
-│   │   │   │       ├── PasswordResetObserver.java
-│   │   │   │       ├── PasswordResetRequestResult.java
 │   │   │   │       └── impl/                     # Implementazioni service
 │   │   │   │           ├── UserServiceImpl.java
 │   │   │   │           ├── PasswordServiceImpl.java
 │   │   │   │           ├── SecurityAuditServiceImpl.java
 │   │   │   │           ├── SafeSendServiceImpl.java
-│   │   │   │           ├── BackupServiceImpl.java
-│   │   │   │           └── PasswordResetServiceImpl.java
+│   │   │   │           └── BackupServiceImpl.java
 │   │   │   ├── persistence/                      # Livello accesso dati
 │   │   │   │   ├── entity/                       # Entity JPA
 │   │   │   │   │   ├── UserEntity.java
 │   │   │   │   │   ├── PasswordEntryEntity.java
-│   │   │   │   │   ├── PasswordResetTokenEntity.java
 │   │   │   │   │   └── SafeSendEntryEntity.java
 │   │   │   │   └── repository/                   # Repository Spring Data
 │   │   │   │       ├── UserRepository.java
 │   │   │   │       ├── PasswordEntryRepository.java
-│   │   │   │       ├── PasswordResetTokenRepository.java
 │   │   │   │       └── SafeSendRepository.java
 │   │   │   ├── security/                         # Livello sicurezza
 │   │   │   │   ├── EncryptionStrategy.java       # Interfaccia pattern Strategy
@@ -244,7 +234,7 @@ SafeCoreProject/
 │   │   │       │   ├── AuditController.java
 │   │   │       │   ├── SafeSendController.java
 │   │   │       │   ├── AddEntryController.java
-│   │   │       │   ├── PasswordResetController.java
+│   │   │       │   ├── SettingsController.java
 │   │   │       │   └── BackupController.java
 │   │   │       ├── navigation/
 │   │   │       │   └── SceneNavigator.java
@@ -252,14 +242,14 @@ SafeCoreProject/
 │   │   │           └── SessionContext.java
 │   │   └── resources/
 │   │       ├── application.properties            # Configurazione Spring
+│   │       ├── style.css                         # Foglio di stile applicazione
 │   │       └── com/safecore/ui/view/            # View FXML
 │   │           ├── login.fxml
 │   │           ├── register.fxml
 │   │           ├── dashboard.fxml
 │   │           ├── audit-view.fxml
-│   │           ├── reset-password.fxml
 │   │           ├── safesend-view.fxml
-│   │           └── password_reset.fxml
+│   │           └── settings-view.fxml
 │   └── test/
 │       ├── java/com/safecore/                   # Suite test
 │       │   ├── SafeCoreIntegrationTest.java
@@ -268,15 +258,13 @@ SafeCoreProject/
 │       │   │   ├── PasswordServiceTest.java
 │       │   │   ├── SecurityAuditServiceTest.java
 │       │   │   ├── BackupIntegrationTest.java
-│       │   │   ├── PasswordResetEventPublisherTest.java
-│       │   │   ├── PasswordResetServiceTest.java
-│       │   │   ├── SafeSendServiceTest.java
-│       │   │   ├── SessionLogoutObserverTest.java
-│       │   │   └── VaultServiceTest.java
+│       │   │   └── SafeSendServiceTest.java
 │       │   ├── business/exception/
 │       │   │   ├── UserNotFoundExceptionTest.java
 │       │   │   ├── UserAlreadyExistsExceptionTest.java
 │       │   │   ├── InvalidTokenExceptionTest.java
+│       │   │   ├── ExpiredLinkExceptionTest.java
+│       │   │   ├── LinkNotFoundExceptionTest.java
 │       │   │   ├── SafeCoreExceptionTest.java
 │       │   │   └── WeakPasswordExceptionTest.java
 │       │   ├── business/hints/
@@ -288,17 +276,31 @@ SafeCoreProject/
 │       │   │   ├── PasswordStrengthEvaluatorTest.java
 │       │   │   ├── PasswordHasherTest.java
 │       │   │   └── PasswordHasherPerformanceTest.java
-│       │   └── persistence/repository/
-│       │       ├── PasswordResetTokenRepositoryTest.java
-│       │       ├── SafeSendRepositoryTest.java
-│       │       └── UserRepositoryTest.java
+│       │   ├── persistence/repository/
+│       │   │   ├── SafeSendRepositoryTest.java
+│       │   │   └── UserRepositoryTest.java
+│       │   └── ui/
+│       │       ├── TestFXBaseTest.java
+│       │       └── controller/
+│       │           ├── LoginControllerTest.java
+│       │           ├── RegisterControllerTest.java
+│       │           ├── SafeSendControllerTest.java
+│       │           └── SettingsControllerTest.java
 │       └── resources
 │           └── application-test.properties
 ├── docs/
 │   └── uml/
-│       ├── class-diagram.puml                   # Diagrammi PlantUML
+│       ├── class-diagram.puml                   # Diagramma classi sistema completo
+│       ├── class-diagram-part1-ui-navigation.puml
+│       ├── class-diagram-part2-business-logic.puml
+│       ├── class-diagram-part3-persistence.puml
+│       ├── class-diagram-part4-security.puml
+│       ├── component-diagram.puml
+│       ├── package-diagram.puml
 │       ├── sequence-login.puml
+│       ├── sequence-register.puml
 │       ├── sequence-save-entry.puml
+│       ├── sequence-audit.puml
 │       └── use-case.puml
 ├── pom.xml                                      # Configurazione Maven
 ├── README.md                                    # Documentazione inglese
@@ -1369,7 +1371,7 @@ folder "📦 com.safecore" {
             class DashboardController
             class AuditController
             class SafeSendController
-            class PasswordResetController
+            class SettingsController
         }
         folder "navigation" {
             class SceneNavigator
@@ -2125,7 +2127,6 @@ package "Applicazione Client" {
   database "Database PostgreSQL" as DB {
     storage [users]
     storage [password_entries]
-    storage [reset_tokens]
     storage [safesend_entries]
   }
 }
@@ -2386,8 +2387,8 @@ SafeCore implementa una strategia di testing completa che copre tutti i livelli 
 
 ### Panoramica Suite Test
 
-**File Test Totali**: 28  
-**Metodi Test Totali**: 150+  
+**File Test Totali**: 27  
+**Metodi Test Totali**: 100+  
 **Copertura Test**: 85%+ su tutti i livelli  
 **Framework**: JUnit 5, Mockito, TestFX, Spring Boot Test
 
@@ -2418,7 +2419,6 @@ mvn test -Dtest=*ServiceTest
 
 **File Test**:
 - `UserServiceTest` - Registrazione utente, autenticazione, cancellazione con sanitizzazione
-- `VaultServiceTest` - Operazioni CRUD su entry password cifrate
 - `PasswordServiceTest` - Validazione password e valutazione forza
 - `SafeSendServiceTest` - Generazione link sicuri e accesso one-time
 - `SecurityAuditServiceTest` - Calcolo health score vault e rilevamento password deboli
@@ -2542,16 +2542,14 @@ mvn test -Dtest=RegisterControllerTest
 mvn test -Dtest=SettingsControllerTest
 ```
 
-**File Test**: 6 test controller + 1 classe base
+**File Test**: 4 test controller + 1 classe base
 - `LoginControllerTest` (8 test) - Validazione form login, toggle password, autenticazione
 - `RegisterControllerTest` (11 test) - Form registrazione, indicatore forza password, generatore password
 - `SettingsControllerTest` (16 test) - Cancellazione account con validazione frase conferma
-- `DashboardControllerTest` (5 test) - Elementi UI dashboard principale e visualizzazione tabella
-- `AuditControllerTest` (4 test) - Visualizzazione risultati audit sicurezza
 - `SafeSendControllerTest` (5 test) - UI condivisione sicura e opzioni scadenza
 - `TestFXBaseTest` - Classe base con configurazione test JavaFX
 
-**Test UI Totali**: 49 test che coprono tutti i workflow utente principali
+**Test UI Totali**: 40+ test che coprono tutti i workflow utente principali
 
 **Copertura Test UI**:
 - Validazione form (campi vuoti, input non valido)
