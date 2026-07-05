@@ -1,6 +1,30 @@
 # SafeCore - Secure Password Manager
 
-[English] | [Italiano](README.it.md)
+<p align="right">
+  <strong>[English]</strong> | <a href="README.it.md">[Italiano]</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Java-17-007396?logo=openjdk&logoColor=white" alt="Java" />
+  <img src="https://img.shields.io/badge/Spring%20Boot-3.2.2-6DB33F?logo=springboot&logoColor=white" alt="Spring Boot" />
+  <img src="https://img.shields.io/badge/JavaFX-17-FF6F00?logo=openjfx&logoColor=white" alt="JavaFX" />
+  <img src="https://img.shields.io/badge/PostgreSQL-Database-4169E1?logo=postgresql&logoColor=white" alt="PostgreSQL" />
+  <img src="https://img.shields.io/badge/Maven-Build-C71A36?logo=apachemaven&logoColor=white" alt="Maven" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/JUnit-5-25A162?logo=junit5&logoColor=white" alt="JUnit 5" />
+  <img src="https://img.shields.io/badge/Mockito-Testing-78A641" alt="Mockito" />
+  <img src="https://img.shields.io/badge/TestFX-UI%20Testing-4C8CBF" alt="TestFX" />
+  <img src="https://img.shields.io/badge/JaCoCo-Coverage-BDCB0B" alt="JaCoCo" />
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/Architecture-4--Layer-blue" alt="Architecture" />
+  <img src="https://img.shields.io/badge/Security-AES--256%20%7C%20BCrypt-darkgreen" alt="Security" />
+  <img src="https://img.shields.io/badge/License-MIT-black" alt="License" />
+</p>
+
 
 A zero-knowledge desktop password manager built with enterprise-grade architecture, implementing Software Engineering best practices through layered design, security patterns, and comprehensive testing.
 
